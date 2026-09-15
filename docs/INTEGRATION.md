@@ -46,11 +46,30 @@ per-analyzer model directory names and recommended checkpoints.
 npm install narrative-lens
 ```
 
-Requires building with the `node-api` feature (`napi build --release --features
-node-api`, see `package.json`'s `build` script); this produces the native addon
-`index.js`/`index.mjs` load. The TypeScript definitions in `index.d.ts` are generated
-from the Rust types via `ts-rs`/`schemars` (the `bindings` feature) -- see
-`scripts/` and `bindings/` for the regeneration path.
+```js
+import { computeReadability, checkGrammar, listStructureTemplates } from 'narrative-lens';
+```
+
+The current bindings (`src/napi_bindings.rs`) expose a small, deliberately incomplete
+slice of the full analyzer set: `computeReadability`, `checkGrammar`, and
+`listStructureTemplates`. It's a thin conversion layer over the pure-Rust analyzers,
+not a 1:1 mirror of every function in `craft`/`structure`/`continuity`/`substrate` --
+add a new `#[napi]` function there, following the existing pattern (a small `*Js`
+struct + a `From<CoreType>` impl), whenever a JS consumer needs one that isn't
+exposed yet.
+
+To build locally: `npm run build:debug` (or `npm run build` for a release build) runs
+`napi build --platform --features node-api`, which compiles the native addon and
+regenerates `index.js` (the platform-detecting CommonJS loader) and `index.d.ts`
+(TypeScript definitions, generated directly from the `#[napi]` attributes -- no
+separate schema-generation step). `index.mjs` is a small hand-maintained ESM wrapper
+around `index.js`, since a native addon loads via `require`; keep its named exports in
+sync with `index.d.ts` when adding a binding. The platform-specific `.node` binary
+itself is gitignored -- published per-platform via `napi artifacts`/`napi prepublish`,
+not committed to source.
+
+The `ts-rs`/`schemars` `bindings` feature is a separate, unrelated mechanism (JSON
+Schema / pure-type generation for non-napi consumers) and is not part of this path.
 
 ## Embedding narrative-lens in a tool
 

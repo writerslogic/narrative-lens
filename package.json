@@ -38,8 +38,8 @@
     ]
   },
   "scripts": {
-    "build": "napi build --release --features node-api",
-    "build:debug": "napi build --features node-api",
+    "build": "napi build --platform --release --features node-api",
+    "build:debug": "napi build --platform --features node-api",
     "prepublishOnly": "napi prepublish -t npm",
     "artifacts": "napi artifacts",
     "version": "napi version",
@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@napi-rs/cli": "^3",
+    "@types/node": "^26.6.0",
     "typescript": "^5"
   },
   "engines": {

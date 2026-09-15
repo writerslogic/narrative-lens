@@ -1,11 +1,5 @@
 // Node.js binding smoke test, run via `npm test` (node --test).
-//
-// The native addon (`index.js`/`index.mjs`, built from `src/napi_bindings.rs`
-// via `napi build --features node-api`) is not implemented yet -- see
-// docs/INTEGRATION.md's "As a Node.js package" section. Until then this test
-// skips cleanly instead of failing CI on a binding that was never meant to
-// exist yet; once `napi_bindings.rs` exports real functions, replace the
-// `t.skip(...)` below with assertions against them.
+// Requires the native addon to be built first: `npm run build:debug`.
 
 const test = require('node:test');
 const assert = require('node:assert');
@@ -18,11 +12,34 @@ try {
 }
 
 test('narrative-lens native addon', (t) => {
-  if (!addon || Object.keys(addon).length === 0) {
-    t.skip('native addon not built / napi_bindings.rs has no exports yet');
+  if (!addon) {
+    t.skip('native addon not built -- run `npm run build:debug` first');
     return;
   }
-  // Once real bindings exist, assert their shape here, e.g.:
-  // assert.strictEqual(typeof addon.computeReadability, 'function');
-  assert.ok(addon);
+
+  t.test('computeReadability returns real metrics for real prose', () => {
+    const result = addon.computeReadability(
+      'Maren stood at the edge of the dock, watching the last ferry pull away without her.'
+    );
+    assert.strictEqual(typeof result.fkgl, 'number');
+    assert.ok(result.wordCount > 0);
+    assert.ok(result.sentenceCount > 0);
+    assert.strictEqual(typeof result.gradeLevels.fkgl, 'string');
+  });
+
+  t.test('computeReadability handles empty text', () => {
+    const result = addon.computeReadability('');
+    assert.strictEqual(result.wordCount, 0);
+  });
+
+  t.test('checkGrammar flags a doubled word', () => {
+    const findings = addon.checkGrammar('She was was tired.');
+    assert.ok(findings.some((f) => f.kind === 'repetition'));
+  });
+
+  t.test('listStructureTemplates returns the built-in templates', () => {
+    const names = addon.listStructureTemplates();
+    assert.ok(Array.isArray(names));
+    assert.ok(names.includes('three_act'));
+  });
 });

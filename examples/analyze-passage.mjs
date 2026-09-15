@@ -1,13 +1,21 @@
-// Node.js usage example -- currently illustrative, not runnable.
+// Node.js usage example.
 //
-// The native addon (built from src/napi_bindings.rs via `napi build --features
-// node-api`) has no exports yet, so there is nothing to `require`/`import` and
-// run here. See docs/INTEGRATION.md's "As a Node.js package" section, and
-// tests/node/api.test.cjs, which skips for the same reason. Once
-// napi_bindings.rs exports real functions and `npm run build` produces
-// index.js, replace this comment with a working example against them, e.g.:
+// Requires the native addon to be built first: `npm run build:debug`.
 //
-//   import { computeReadability } from '../index.js';
-//
-//   const passage = 'Maren stood at the edge of the dock...';
-//   console.log(computeReadability(passage));
+//   node examples/analyze-passage.mjs
+
+import { computeReadability, checkGrammar, listStructureTemplates } from '../index.mjs';
+
+const passage =
+  'Maren stood at the edge of the dock, watching the last ferry pull away ' +
+  'without her. The water slapped against the pilings, cold and indifferent.';
+
+const readability = computeReadability(passage);
+console.log(
+  `readability: fkgl=${readability.fkgl.toFixed(1)} (${readability.wordCount} words, ${readability.sentenceCount} sentences)`
+);
+
+const findings = checkGrammar(passage);
+console.log(`grammar: ${findings.length} finding(s)`);
+
+console.log(`available structure templates: ${listStructureTemplates().join(', ')}`);
