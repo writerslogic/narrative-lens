@@ -1,0 +1,12 @@
+{
+  "scenes": [
+    "Maren stood at the edge of the dock, watching the last ferry pull away without her. The water slapped against the pilings, cold and indifferent. She had missed it on purpose, though she was not yet ready to admit that to herself.",
+    "\"You knew the schedule,\" said Adrian, coming up behind her. \"Why didn't you get on?\"\n\"I don't know,\" Maren said, though she did.\nAdrian studied her face for a long moment, then looked out at the water himself.",
+    "The house on Cobalt Street had been empty for three years. Maren remembered it full: her grandmother's radio in the kitchen, the smell of bread, Adrian as a boy chasing her through the yard. Now the windows were boarded, and the yard had gone to weeds.",
+    "By morning, the storm had passed. Maren walked back to the dock alone. The ferry was there, waiting, as if it had never left. She got on without looking back."
+  ],
+  "readability_sample": "The quick brown fox jumps over the lazy dog. This is a simple sentence used for readability testing.",
+  "genre_themes": ["memory", "homecoming", "estrangement"],
+  "tension_pattern": [0.2, 0.35, 0.3, 0.6],
+  "characters": ["Maren", "Adrian"]
+}
