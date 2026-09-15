@@ -82,6 +82,7 @@ pub fn resolve_entities(
 pub fn resolve_entities_with_corrections(
     mentions: Vec<(String, Vec<f64>)>,
     kind: String,
+    #[napi(ts_arg_type = "Array<{ surface: string; action: { kind: 'assign'; canonical: string } | { kind: 'reject' } }>")]
     corrections: Vec<serde_json::Value>,
 ) -> napi::Result<serde_json::Value> {
     let kind = parse_entity_type(&kind)?;

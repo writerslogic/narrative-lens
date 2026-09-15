@@ -318,7 +318,7 @@ export declare function resolveEntities(mentions: Array<[string, Array<number>]>
  * {"kind": "assign", "canonical": "..."}}` or `{"kind": "reject"}`) over the
  * automatic result.
  */
-export declare function resolveEntitiesWithCorrections(mentions: Array<[string, Array<number>]>, kind: string, corrections: Array<any>): Array<{ id: string; canonical: string; kind: 'character' | 'setting' | 'symbol' | 'other'; aliases: Array<string>; mentionCount: number; confidence: number; provenance: 'ai_derived' | 'user_edited' }>
+export declare function resolveEntitiesWithCorrections(mentions: Array<[string, Array<number>]>, kind: string, corrections: Array<{ surface: string; action: { kind: 'assign'; canonical: string } | { kind: 'reject' } }>): Array<{ id: string; canonical: string; kind: 'character' | 'setting' | 'symbol' | 'other'; aliases: Array<string>; mentionCount: number; confidence: number; provenance: 'ai_derived' | 'user_edited' }>
 
 /** Suggest the best-fitting structure template for a set of scene tensions/purposes. */
 export declare function suggestBestTemplate(sceneTensions: Array<number>, scenePurposes: Array<string>): string
