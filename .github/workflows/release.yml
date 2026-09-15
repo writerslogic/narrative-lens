@@ -31,7 +31,7 @@ jobs:
             target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.host }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -64,7 +64,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Use Node.js
         uses: actions/setup-node@v7
