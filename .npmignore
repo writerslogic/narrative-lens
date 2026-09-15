@@ -1,0 +1,13 @@
+/target
+/src
+/tests
+/examples
+/docs
+/.github
+Cargo.toml
+Cargo.lock
+build.rs
+*.rs
+.gitignore
+.editorconfig
+deny.toml

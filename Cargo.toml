@@ -1,0 +1,68 @@
+[package]
+name = "narrative-lens"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.87"
+license = "Apache-2.0"
+authors = ["WritersLogic, Inc. <david@writerslogic.com>"]
+description = "Local, deterministic prose and narrative-craft analysis -- readability, pacing, voice, foreshadowing, continuity -- extracted from Emathy's meaning engine."
+repository = "https://github.com/writerslogic/narrative-lens"
+homepage = "https://github.com/writerslogic/narrative-lens"
+documentation = "https://docs.rs/narrative-lens"
+readme = "README.md"
+keywords = ["nlp", "text-analysis", "writing", "readability", "narrative"]
+categories = ["algorithms", "text-processing"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+regex = "1.10"
+log = "0.4"
+aho-corasick = "1"
+petgraph = "0.6"
+nalgebra = "0.32"
+napi = { version = "3.9", features = ["async", "serde-json"], optional = true }
+napi-derive = { version = "3.5", optional = true }
+ts-rs = { version = "12", features = ["serde-compat"], optional = true }
+schemars = { version = "1.2", features = ["derive"], optional = true }
+
+[build-dependencies]
+napi-build = { version = "2.2", optional = true }
+
+[features]
+default = []
+# Node.js bindings via napi. Off by default so a pure-Rust consumer pulls in
+# nothing but serde.
+node-api = ["napi", "napi-derive", "dep:napi-build"]
+# ts-rs/schemars type-binding generation. Only needed when regenerating the
+# TypeScript definitions in bindings/, not at runtime.
+bindings = ["ts-rs", "schemars"]
+# Local ONNX-model-backed analysis: SBERT sentence embeddings (theme/genre/
+# narrative_entropy semantic similarity), NER (entity resolution), and NLI
+# (contradiction detection). Bring your own model -- no download, no bundled
+# weights. See docs/ARCHITECTURE.md.
+onnx = ["dep:tokenizers", "dep:ort", "dep:tract-onnx"]
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+ort = { version = "2.0.0-rc.12", optional = true }
+tokenizers = { version = "0.21", default-features = false, features = ["onig"], optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tract-onnx = { version = "0.21", optional = true }
+tokenizers = { version = "0.21", default-features = false, features = ["unstable_wasm"], optional = true }
+getrandom = { version = "0.2", features = ["js"] }
+
+[dev-dependencies]
+serde_json = "1.0"
+
+# Ported analysis functions take many tuned parameters and build rich result
+# types; param-struct refactors would add churn without clarity. Most sites
+# index 2D matrices / DP tables / parallel arrays where an index is the
+# natural idiom. `structure::structure` names the beat-structure analyzer, not
+# a nesting mistake.
+[lints.clippy]
+too_many_arguments = "allow"
+needless_range_loop = "allow"
+module_inception = "allow"

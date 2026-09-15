@@ -1,0 +1,40 @@
+name: Bug report
+description: Something in narrative-lens produced a wrong or crashing result
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected vs. what you got. Include the exact error/panic message if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal repro
+      description: The smallest input text + function call that reproduces it. A snippet beats a whole manuscript.
+      render: rust
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: narrative-lens version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: interface
+    attributes:
+      label: Interface
+      options:
+        - Rust crate
+        - Node.js (napi bindings)
+    validations:
+      required: true
+  - type: input
+    id: features
+    attributes:
+      label: Cargo features enabled (if Rust)
+      placeholder: "default, onnx, node-api, ..."

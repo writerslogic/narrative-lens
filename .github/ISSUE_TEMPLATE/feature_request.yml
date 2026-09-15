@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a new analyzer, an improvement to an existing one, or a new integration
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What manuscript-analysis problem does this solve
+      description: What are you trying to measure or detect that the crate can't do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: A new analyzer function, a change to an existing one's signature/output, a new integration surface, etc.
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Closest existing category
+      options:
+        - craft (prose-level)
+        - structure (manuscript-level shape)
+        - continuity (cross-chapter consistency)
+        - substrate (shared primitive)
+        - none of these / new category
+    validations:
+      required: true

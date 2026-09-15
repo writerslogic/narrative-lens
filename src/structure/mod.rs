@@ -1,0 +1,9 @@
+pub mod foreshadow;
+pub mod genre;
+pub mod genre_compliance;
+pub mod narrative_entropy;
+pub mod opening_analysis;
+pub mod promise_payoff;
+pub mod structure;
+pub mod theme;
+pub mod thematic_argument;

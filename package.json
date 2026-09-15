@@ -1,0 +1,56 @@
+{
+  "name": "narrative-lens",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "author": "WritersLogic, Inc. <david@writerslogic.com>",
+  "description": "Local, deterministic prose and narrative-craft analysis -- readability, pacing, voice, foreshadowing, continuity -- extracted from Emathy's meaning engine.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/writerslogic/narrative-lens"
+  },
+  "homepage": "https://writerslogic.com/narrative-lens",
+  "keywords": [
+    "nlp",
+    "text-analysis",
+    "writing",
+    "readability",
+    "narrative",
+    "local-first",
+    "rust",
+    "napi"
+  ],
+  "main": "index.js",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js"
+    }
+  },
+  "types": "index.d.ts",
+  "napi": {
+    "binaryName": "narrative-lens",
+    "targets": [
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-pc-windows-msvc"
+    ]
+  },
+  "scripts": {
+    "build": "napi build --release --features node-api",
+    "build:debug": "napi build --features node-api",
+    "prepublishOnly": "napi prepublish -t npm",
+    "artifacts": "napi artifacts",
+    "version": "napi version",
+    "test": "node --test tests/node/*.test.cjs",
+    "test:types": "tsc --noEmit --strict --target es2022 --module nodenext --moduleResolution nodenext --types node tests/node/types.test.mts"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
