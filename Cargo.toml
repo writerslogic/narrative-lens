@@ -22,7 +22,7 @@ regex = "1.10"
 log = "0.4"
 aho-corasick = "1"
 petgraph = "0.6"
-nalgebra = "0.32"
+nalgebra = "0.35"
 napi = { version = "3.9", features = ["async", "serde-json"], optional = true }
 napi-derive = { version = "3.5", optional = true }
 # Only pulled in by the `node-api` feature, as the JSON bridge napi_bindings/
