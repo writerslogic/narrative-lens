@@ -6,6 +6,7 @@ use crate::substrate::utils::split_sentences;
 
 /// A single piece of information in the story world.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StoryFact {
     pub id: usize,
     pub content: String,
@@ -35,6 +36,7 @@ impl std::hash::Hash for StoryFact {
 
 /// Per-character knowledge state.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EpistemicState {
     pub character: String,
     pub knows: HashSet<usize>,
@@ -44,6 +46,7 @@ pub struct EpistemicState {
 
 /// The reader's knowledge state (always knows everything shown).
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ReaderEpistemicState {
     pub knows: HashSet<usize>,
     pub scene: usize,
@@ -51,6 +54,7 @@ pub struct ReaderEpistemicState {
 
 /// Epistemic asymmetry measurement.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EpistemicAsymmetry {
     pub scene: usize,
     pub reader_advantage: f64,
@@ -61,6 +65,7 @@ pub struct EpistemicAsymmetry {
 
 /// Information revelation event.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RevelationEvent {
     pub scene: usize,
     pub fact_id: usize,
@@ -71,6 +76,7 @@ pub struct RevelationEvent {
 
 /// Suspense curve point.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SuspensePoint {
     pub scene: usize,
     pub suspense_level: f64,
@@ -78,6 +84,7 @@ pub struct SuspensePoint {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EpistemicResult {
     pub facts: Vec<StoryFact>,
     pub character_states: HashMap<String, EpistemicState>,

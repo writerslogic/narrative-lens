@@ -22,6 +22,7 @@ use serde::{Deserialize, Serialize};
 /// here (only a `String` and a `usize`; no floats), unlike float-carrying
 /// payloads elsewhere.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WordCount {
     /// The content word, lowercased.
     pub word: String,

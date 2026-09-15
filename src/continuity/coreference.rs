@@ -162,6 +162,7 @@ fn compute_confidence(
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Mention {
     pub text: String,
     pub resolved_to: Option<String>,
@@ -171,6 +172,7 @@ pub struct Mention {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CorefResult {
     pub mentions: Vec<Mention>,
     pub character_mentions: HashMap<String, usize>,

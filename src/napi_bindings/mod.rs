@@ -4,14 +4,33 @@
 //! analyzer types directly: the core types use `&'static str` grade labels and
 //! internal enums that don't need to carry napi's derive machinery, and this
 //! keeps the pure-Rust API (see `docs/ARCHITECTURE.md`'s design rule) free of
-//! any Node-specific concern. Add a function here, mirroring its Rust analyzer
-//! 1:1, whenever a new one needs a JS surface -- this is not meant to be
-//! exhaustive over every analyzer, only the ones a JS consumer has asked for.
+//! any Node-specific concern. Two conventions coexist: the 3 functions in this
+//! file hand-write a `*Js` DTO + `From<CoreType>` impl per return type; the
+//! `craft`/`structure_bindings`/`continuity`/`substrate` submodules use a
+//! `serde_json::Value` JSON bridge instead, which scales to many-field nested
+//! return types at the cost of precise TypeScript typing -- see
+//! `docs/INTEGRATION.md` for what's covered and what's deliberately not.
+//!
+//! `#[allow(dead_code)]` on the submodule declarations below: every `#[napi]`
+//! function's only caller is the FFI/JS boundary, which is invisible to
+//! rustc's reachability analysis in the `cargo test` target (unlike a
+//! `cdylib` build, where a `pub` item is implicitly exported). The 3
+//! functions in this file don't need it because their own `#[cfg(test)]`
+//! block below calls them directly.
 
 use napi_derive::napi;
 
 use crate::craft::{grammar, readability};
 use crate::structure::structure;
+
+#[allow(dead_code)]
+mod continuity;
+#[allow(dead_code)]
+mod craft;
+#[allow(dead_code)]
+mod structure_bindings;
+#[allow(dead_code)]
+mod substrate;
 
 #[napi(object)]
 pub struct GradeLevelsJs {

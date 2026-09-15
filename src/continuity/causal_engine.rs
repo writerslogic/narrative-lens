@@ -10,6 +10,7 @@ use crate::substrate::utils::split_sentences;
 
 /// A narrative event node in the causal graph.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CausalEvent {
     pub id: usize,
     pub scene: usize,
@@ -30,6 +31,7 @@ pub enum CausalEventType {
 
 /// A causal link between events.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CausalLink {
     pub cause: usize,
     pub effect: usize,
@@ -47,6 +49,7 @@ pub enum CausalLinkType {
 
 /// A counterfactual: "What if event X hadn't happened?"
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Counterfactual {
     pub removed_event: usize,
     pub question: String,
@@ -56,6 +59,7 @@ pub struct Counterfactual {
 
 /// A plot hole: weak or broken causal chain.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PlotHole {
     pub scene: usize,
     pub description: String,
@@ -65,6 +69,7 @@ pub struct PlotHole {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CausalAnalysisResult {
     pub events: Vec<CausalEvent>,
     pub links: Vec<CausalLink>,

@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GenreConvention {
     pub name: String,
     pub description: String,
@@ -17,6 +18,7 @@ pub enum ConventionStatus {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GenreComplianceResult {
     pub genre: String,
     pub conventions: Vec<GenreConvention>,

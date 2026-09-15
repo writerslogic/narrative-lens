@@ -108,7 +108,8 @@ const TENSION_WORDS: &[&str] = &[
     "rage",
 ];
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ForeshadowingItem {
     pub setup_term: String,
     pub setup_scene: usize,

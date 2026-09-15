@@ -50,6 +50,7 @@ impl Mention {
 
 /// A resolved entity: its canonical form, observed surface forms, and evidence.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Entity {
     pub id: String,
     pub canonical: String,

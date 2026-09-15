@@ -1,4 +1,5 @@
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StructureBeat {
     pub name: String,
     pub target_pct: f64,
@@ -25,7 +26,8 @@ impl StructureBeat {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StructureTemplate {
     pub name: String,
     pub description: String,
@@ -49,7 +51,8 @@ impl StructureTemplate {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BeatMatch {
     pub beat_name: String,
     pub expected_pct: f64,
@@ -58,7 +61,8 @@ pub struct BeatMatch {
     pub confidence: f64,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StructureReport {
     pub template: String,
     pub health_pct: f64,

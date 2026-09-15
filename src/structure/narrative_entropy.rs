@@ -10,6 +10,7 @@ pub enum NarrativeThread {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PossibleOutcome {
     pub description: String,
     pub probability: f64,
@@ -17,6 +18,7 @@ pub struct PossibleOutcome {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NarrativeQuestion {
     pub id: usize,
     pub question: String,
@@ -28,6 +30,7 @@ pub struct NarrativeQuestion {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EntropyPoint {
     pub scene: usize,
     pub per_question_entropy: Vec<(usize, f64)>,
@@ -59,6 +62,7 @@ pub enum EntropyDiagnosis {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PacingNote {
     pub scene_range: (usize, usize),
     pub issue: String,
@@ -67,6 +71,7 @@ pub struct PacingNote {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NarrativeEntropyResult {
     pub questions: Vec<NarrativeQuestion>,
     pub entropy_curve: Vec<EntropyPoint>,

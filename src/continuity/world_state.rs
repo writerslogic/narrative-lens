@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 
 /// A fact about the story world at a specific point in narrative time.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
 pub enum WorldFact {
     /// Character is at a location.
     CharacterAt { character: String, location: String },
@@ -53,6 +54,7 @@ pub enum WorldFact {
 
 /// A continuity violation: something the author got wrong.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ContinuityViolation {
     pub scene: usize,
     pub violation_type: ViolationType,
@@ -82,6 +84,7 @@ pub enum ViolationType {
 
 /// Snapshot of the world state at a scene boundary.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WorldStateSnapshot {
     pub after_scene: usize,
     pub facts: HashSet<WorldFact>,
@@ -91,6 +94,7 @@ pub struct WorldStateSnapshot {
 
 /// Knowledge state for a single character.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CharacterKnowledgeState {
     pub character: String,
     /// Information they possess.
@@ -106,6 +110,7 @@ pub struct CharacterKnowledgeState {
 
 /// Full world state analysis result.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WorldStateResult {
     pub snapshots: Vec<WorldStateSnapshot>,
     pub violations: Vec<ContinuityViolation>,

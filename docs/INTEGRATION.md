@@ -47,16 +47,32 @@ npm install narrative-lens
 ```
 
 ```js
-import { computeReadability, checkGrammar, listStructureTemplates } from 'narrative-lens';
+import { computeReadability, trackWorldState, buildTimeline } from 'narrative-lens';
 ```
 
-The current bindings (`src/napi_bindings.rs`) expose a small, deliberately incomplete
-slice of the full analyzer set: `computeReadability`, `checkGrammar`, and
-`listStructureTemplates`. It's a thin conversion layer over the pure-Rust analyzers,
-not a 1:1 mirror of every function in `craft`/`structure`/`continuity`/`substrate` --
-add a new `#[napi]` function there, following the existing pattern (a small `*Js`
-struct + a `From<CoreType>` impl), whenever a JS consumer needs one that isn't
-exposed yet.
+The bindings (`src/napi_bindings/`, one file per analyzer category) expose most of the
+`craft`/`structure`/`continuity`/`substrate` analyzer surface -- 59 functions as of this
+writing. Two return conventions coexist:
+
+- The original 3 bindings (`computeReadability`, `checkGrammar`, `listStructureTemplates`,
+  in `napi_bindings/mod.rs`) hand-write a `*Js` DTO struct + `From<CoreType>` impl per
+  function, giving precise generated TypeScript types.
+- Everything else goes through a JSON bridge (`serde_json::to_value(result)`, return type
+  `napi::Result<serde_json::Value>`) -- this scales to the many-field, deeply-nested
+  return types the rest of the crate has, at the cost of `index.d.ts` typing those
+  returns as `any` rather than a precise interface. Every struct/enum that crosses this
+  bridge derives `Serialize` and `#[serde(rename_all = "camelCase")]`, so JS callers see
+  the same field-naming convention either way.
+
+Not exposed: `substrate::{text,utils,nlp,wordfreq,common_types,nli,sbert}` (implementation
+substrate other analyzers call internally, not consumer-facing on their own), `continuity::ner`
+and the onnx-only paths inside `structure::{theme,narrative_entropy,genre}` (model-backed,
+see the `onnx` feature section above -- separate concern from this binding layer), a few
+functions that mutate a caller-owned buffer in place (`pacing::enrich_with_info_density`,
+`timeline::apply_overrides` -- no good JS shape for that), and `voice::{build_voice_profile_py,compare_voices_py}`
+(redundant `_py`-suffixed duplicates). Add a new `#[napi]` function in the relevant
+`napi_bindings/<category>.rs`, following the JSON-bridge pattern above, whenever a JS
+consumer needs one of these.
 
 To build locally: `npm run build:debug` (or `npm run build` for a release build) runs
 `napi build --platform --features node-api`, which compiles the native addon and

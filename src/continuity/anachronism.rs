@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
+use serde::Serialize;
+
 /// An anachronistic word found in the text.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AnachronismItem {
     pub word: String,
     pub introduced_year: i32,

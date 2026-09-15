@@ -5,9 +5,11 @@ use std::sync::OnceLock;
 use crate::craft::lexicon::WordMatcher;
 
 use log::debug;
+use serde::Serialize;
 
 /// A prose quality issue found in a scene.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ProseExample {
     pub scene_id: usize,
     pub issue_type: String,

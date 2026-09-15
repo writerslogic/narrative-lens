@@ -1,4 +1,5 @@
 #[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ExplainedFinding {
     pub finding_type: String,
     pub severity: String,

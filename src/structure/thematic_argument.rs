@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ThematicThesis {
     pub id: usize,
     pub statement: String,
@@ -38,6 +39,7 @@ pub enum EvidenceDelivery {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ThematicEvidence {
     pub scene: usize,
     pub thesis_id: usize,
@@ -49,6 +51,7 @@ pub struct ThematicEvidence {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CharacterThematicRole {
     pub character: String,
     pub thesis_id: usize,
@@ -68,6 +71,7 @@ pub enum ThemeInteractionType {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ThemeInteraction {
     pub theme_a: usize,
     pub theme_b: usize,
@@ -76,6 +80,7 @@ pub struct ThemeInteraction {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ThematicNote {
     pub note_type: String,
     pub description: String,
@@ -83,6 +88,7 @@ pub struct ThematicNote {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ThematicArgumentResult {
     pub theses: Vec<ThematicThesis>,
     pub evidence: Vec<ThematicEvidence>,

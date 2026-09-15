@@ -1,4 +1,7 @@
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SceneConfidence {
     pub scene_id: usize,
     pub data_quality: f64,
@@ -6,7 +9,8 @@ pub struct SceneConfidence {
     pub overall: f64,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ReadabilityConfidence {
     pub fkgl_confidence: f64,
     pub overall: f64,

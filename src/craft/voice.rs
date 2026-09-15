@@ -85,6 +85,7 @@ fn stopwords() -> &'static HashSet<&'static str> {
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CharacterVoiceProfile {
     pub character: String,
     pub avg_sentence_length: f64,
@@ -99,6 +100,7 @@ pub struct CharacterVoiceProfile {
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VoiceSimilarity {
     pub char_a: String,
     pub char_b: String,
@@ -108,6 +110,7 @@ pub struct VoiceSimilarity {
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VoiceAnalysisResult {
     pub profiles: Vec<CharacterVoiceProfile>,
     pub similarities: Vec<VoiceSimilarity>,
@@ -433,6 +436,7 @@ fn drift_feature_vector(p: &CharacterVoiceProfile) -> [f64; 7] {
 /// normalized [-1,1] space (current minus baseline); `baseline`/`current` are
 /// the raw feature values for human-readable reporting.
 #[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeatureDrift {
     pub feature: String,
     pub delta: f64,
@@ -450,6 +454,7 @@ pub struct FeatureDrift {
 /// plain language. `drifted` is a convenience flag: overall exceeds the
 /// notable-drift threshold.
 #[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VoiceDrift {
     pub overall: f64,
     pub per_feature: Vec<FeatureDrift>,

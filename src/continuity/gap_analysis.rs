@@ -12,6 +12,7 @@ pub enum GapType {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NarrativeGap {
     pub gap_type: GapType,
     pub description: String,
@@ -20,6 +21,7 @@ pub struct NarrativeGap {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GapLocation {
     pub after_scene: usize,
     pub before_scene: Option<usize>,
@@ -27,6 +29,7 @@ pub struct GapLocation {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GapAnalysisResult {
     pub gaps: Vec<NarrativeGap>,
     pub total_gap_count: usize,

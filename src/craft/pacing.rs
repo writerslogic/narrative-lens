@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::sync::OnceLock;
 
 use log::debug;
+use serde::Serialize;
 
 use crate::substrate::utils::{round2, round3, round4};
 
@@ -108,7 +109,8 @@ fn action_verbs() -> &'static HashSet<&'static str> {
 // PacingMetrics
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PacingMetrics {
     pub scene_id: usize,
     pub dialogue_ratio: f64,
@@ -125,7 +127,8 @@ pub struct PacingMetrics {
 // AggregatedPacing
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AggregatedPacing {
     pub average_dialogue_ratio: f64,
     pub average_velocity: f64,
@@ -184,7 +187,8 @@ pub fn analyze_scene(
 }
 
 /// Information density result for a single scene.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SceneInfoDensity {
     pub entity_density: f64,
     pub action_density: f64,

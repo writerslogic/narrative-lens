@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use log::debug;
+use serde::Serialize;
 
 use crate::substrate::sbert;
 use crate::substrate::utils::{cosine_similarity, mean, std_dev};
@@ -60,7 +61,8 @@ const CYCLICAL_PRESENT: f64 = 0.2;
 const CLIMACTIC_MIN: f64 = 0.3;
 
 /// Resolution status for a single theme across the manuscript.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ThematicResolution {
     pub theme_name: String,
     pub act1_presence: f64,

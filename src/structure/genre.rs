@@ -1,7 +1,9 @@
+use serde::Serialize;
+
 use crate::craft::lexicon::WordMatcher;
 use crate::substrate::utils::cosine_similarity;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 pub enum Genre {
     Literary,
     Thriller,
@@ -16,7 +18,8 @@ pub enum Genre {
     General,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GenreProfile {
     pub genre: Genre,
     pub name: String,
@@ -370,6 +373,7 @@ pub fn get_genre_profile(genre: Genre) -> GenreProfile {
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GenreFinding {
     pub metric: String,
     pub value: f64,

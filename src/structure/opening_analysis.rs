@@ -11,6 +11,7 @@ pub enum HookType {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OpeningAnalysisResult {
     pub hook_type: Option<HookType>,
     pub hook_score: f64,

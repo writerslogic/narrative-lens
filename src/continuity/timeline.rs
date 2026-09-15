@@ -34,6 +34,7 @@ use std::sync::OnceLock;
 /// the core does no date math at this layer, so the host owns any
 /// interpretation.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TimelineEntry {
     /// The document's stable id (as supplied by the caller).
     pub document_id: String,
@@ -354,7 +355,7 @@ mod tests {
         assert_eq!(serde_json::from_slice::<TimelineEntry>(&bytes).unwrap(), e);
         // time_hint defaults to None when absent from the wire.
         let bare: TimelineEntry =
-            serde_json::from_str(r#"{"document_id":"d1","order":3}"#).unwrap();
+            serde_json::from_str(r#"{"documentId":"d1","order":3}"#).unwrap();
         assert_eq!(bare.time_hint, None);
         assert_eq!(bare.order, 3);
     }

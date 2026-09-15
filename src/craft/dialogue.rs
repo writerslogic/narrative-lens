@@ -123,6 +123,7 @@ fn indirect_speech_re() -> &'static Regex {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DialogueLine {
     pub scene_id: usize,
     pub quote: String,
@@ -136,6 +137,7 @@ pub struct DialogueLine {
 }
 
 #[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct DialogueCharacterStats {
     pub line_count: usize,
     pub word_count: usize,
@@ -147,6 +149,7 @@ pub struct DialogueCharacterStats {
 
 /// Voice profile for measuring how distinctive a character's speech patterns are.
 #[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct VoiceProfile {
     pub avg_word_length: f64,
     pub vocabulary_richness: f64,
@@ -159,6 +162,7 @@ pub struct VoiceProfile {
 
 /// A pair of characters whose voice profiles are too similar.
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SameSoundingPair {
     pub character_a: String,
     pub character_b: String,
@@ -167,6 +171,7 @@ pub struct SameSoundingPair {
 
 /// Directed edge in the conversation flow graph.
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ConversationEdge {
     pub from: String,
     pub to: String,
@@ -175,6 +180,7 @@ pub struct ConversationEdge {
 
 /// A detected monologue (5+ consecutive lines from one speaker).
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Monologue {
     pub speaker: String,
     pub line_count: usize,
@@ -183,6 +189,7 @@ pub struct Monologue {
 
 /// Conversation flow analysis results.
 #[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct ConversationFlow {
     pub edges: Vec<ConversationEdge>,
     pub dominators: Vec<String>,
@@ -191,6 +198,7 @@ pub struct ConversationFlow {
 }
 
 #[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct DialogueAnalysis {
     pub total_lines: usize,
     pub attributed_lines: usize,

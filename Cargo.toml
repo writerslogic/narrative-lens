@@ -25,6 +25,9 @@ petgraph = "0.6"
 nalgebra = "0.32"
 napi = { version = "3.9", features = ["async", "serde-json"], optional = true }
 napi-derive = { version = "3.5", optional = true }
+# Only pulled in by the `node-api` feature, as the JSON bridge napi_bindings/
+# uses to cross the FFI boundary without a hand-written DTO per analyzer type.
+serde_json = { version = "1.0", optional = true }
 ts-rs = { version = "12", features = ["serde-compat"], optional = true }
 schemars = { version = "1.2", features = ["derive"], optional = true }
 
@@ -35,7 +38,7 @@ napi-build = { version = "2.2", optional = true }
 default = []
 # Node.js bindings via napi. Off by default so a pure-Rust consumer pulls in
 # nothing but serde.
-node-api = ["napi", "napi-derive", "dep:napi-build"]
+node-api = ["napi", "napi-derive", "dep:napi-build", "dep:serde_json"]
 # ts-rs/schemars type-binding generation. Only needed when regenerating the
 # TypeScript definitions in bindings/, not at runtime.
 bindings = ["ts-rs", "schemars"]

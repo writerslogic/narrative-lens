@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 use std::sync::OnceLock;
 
+use serde::Serialize;
+
 use crate::substrate::utils::{round1, round2, round3};
 
 static SUSPENSE_WORDS: OnceLock<HashSet<&'static str>> = OnceLock::new();
@@ -42,7 +44,8 @@ fn suspense_words() -> &'static HashSet<&'static str> {
 }
 
 /// Result of analyzing syntax tension in a single scene.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SceneTensionResult {
     pub score: f64,
     pub length_variation: f64,
@@ -57,7 +60,8 @@ pub struct SceneTensionResult {
 }
 
 /// Aggregate tension metrics across multiple scenes.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TensionSummary {
     pub max_suspense_score: f64,
     pub average_suspense_score: f64,

@@ -21,6 +21,7 @@ pub enum SubtextType {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubtextInstance {
     pub scene: usize,
     pub paragraph: usize,
@@ -36,6 +37,7 @@ pub struct SubtextInstance {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SceneSubtext {
     pub scene: usize,
     pub average_density: f64,
@@ -45,6 +47,7 @@ pub struct SceneSubtext {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubtextAdvice {
     pub scene: usize,
     pub issue_type: String,
@@ -54,6 +57,7 @@ pub struct SubtextAdvice {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubtextResult {
     pub instances: Vec<SubtextInstance>,
     pub scene_summaries: Vec<SceneSubtext>,

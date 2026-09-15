@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CharacterVoice {
     pub character: String,
     pub avg_turn_length: f64,
@@ -18,6 +19,7 @@ pub struct CharacterVoice {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VoicePair {
     pub character_a: String,
     pub character_b: String,
@@ -25,6 +27,7 @@ pub struct VoicePair {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DialogueIssue {
     pub scene: usize,
     pub issue_type: String,
@@ -34,6 +37,7 @@ pub struct DialogueIssue {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PowerDynamic {
     pub character_a: String,
     pub character_b: String,
@@ -42,6 +46,7 @@ pub struct PowerDynamic {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DialogueRealismResult {
     pub character_voices: Vec<CharacterVoice>,
     pub voice_pairs: Vec<VoicePair>,

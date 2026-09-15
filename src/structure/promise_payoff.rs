@@ -11,6 +11,7 @@ use crate::craft::lexicon::WordMatcher;
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NarrativePromise {
     pub id: usize,
     pub description: String,
@@ -55,6 +56,7 @@ pub enum PayoffStatus {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UnearnedPayoff {
     pub description: String,
     pub scene: usize,
@@ -63,6 +65,7 @@ pub struct UnearnedPayoff {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CascadePayoff {
     pub scene: usize,
     pub promises_resolved: Vec<usize>,
@@ -70,6 +73,7 @@ pub struct CascadePayoff {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GratificationDelay {
     pub promise_id: usize,
     pub delay_scenes: usize,
@@ -79,6 +83,7 @@ pub struct GratificationDelay {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ActLedger {
     pub act: u32,
     pub promises_made: usize,
@@ -88,6 +93,7 @@ pub struct ActLedger {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ContractNote {
     pub promise_id: usize,
     pub note_type: String,
@@ -97,6 +103,7 @@ pub struct ContractNote {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PromisePayoffResult {
     pub promises: Vec<NarrativePromise>,
     pub unearned_payoffs: Vec<UnearnedPayoff>,

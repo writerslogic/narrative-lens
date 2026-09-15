@@ -20,6 +20,7 @@ pub enum BeliefCategory {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ReaderBelief {
     pub id: usize,
     pub subject: String,
@@ -35,6 +36,7 @@ pub struct ReaderBelief {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DramaticIrony {
     pub knowledge: String,
     pub ignorant_character: String,
@@ -44,6 +46,7 @@ pub struct DramaticIrony {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BeliefState {
     pub after_scene: usize,
     pub beliefs: Vec<ReaderBelief>,
@@ -56,6 +59,7 @@ pub struct BeliefState {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InferenceChain {
     pub conclusion_id: usize,
     pub premise_ids: Vec<usize>,
@@ -64,6 +68,7 @@ pub struct InferenceChain {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NarratorReliability {
     pub overall_score: f64,
     pub unreliability_evidence: Vec<(usize, String)>,
@@ -81,6 +86,7 @@ pub enum EventType {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NarrativeEvent {
     pub scene: usize,
     pub magnitude: f64,
@@ -90,6 +96,7 @@ pub struct NarrativeEvent {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ReaderExperienceNote {
     pub scene: usize,
     pub note_type: String,
@@ -98,6 +105,7 @@ pub struct ReaderExperienceNote {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MentalModelResult {
     pub trajectory: Vec<BeliefState>,
     pub revelations: Vec<NarrativeEvent>,
