@@ -45,6 +45,7 @@ pub enum PromiseType {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum PayoffStatus {
     Outstanding,
     Fulfilled { quality: f64 },

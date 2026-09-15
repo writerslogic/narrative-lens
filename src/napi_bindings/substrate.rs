@@ -12,7 +12,10 @@ use crate::substrate::{confidence, embedding, explain, word_stats};
 
 /// Explain a readability score against a genre's target grade-level range, if
 /// it falls outside that range.
-#[napi(js_name = "explainReadability")]
+#[napi(
+    js_name = "explainReadability",
+    ts_return_type = "{ findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number } | null"
+)]
 pub fn explain_readability(
     fkgl: f64,
     target_min: f64,
@@ -24,7 +27,10 @@ pub fn explain_readability(
 }
 
 /// Explain a pacing issue (long sentences, or a talking-head scene) for one scene.
-#[napi(js_name = "explainPacing")]
+#[napi(
+    js_name = "explainPacing",
+    ts_return_type = "{ findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number } | null"
+)]
 pub fn explain_pacing(
     velocity: f64,
     scene_id: u32,
@@ -42,7 +48,10 @@ pub fn explain_pacing(
 
 /// Explain a tension issue: a flat run, a sharp drop, or a manuscript with no
 /// significant tension peak.
-#[napi(js_name = "explainTension")]
+#[napi(
+    js_name = "explainTension",
+    ts_return_type = "{ findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number } | null"
+)]
 pub fn explain_tension(
     tension: f64,
     prev_tension: f64,
@@ -65,7 +74,10 @@ pub fn explain_tension(
 }
 
 /// Explain a tonal shift between two scenes, if `from_tone` and `to_tone` differ.
-#[napi(js_name = "explainToneShift")]
+#[napi(
+    js_name = "explainToneShift",
+    ts_return_type = "{ findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number } | null"
+)]
 pub fn explain_tone_shift(
     from_tone: String,
     to_tone: String,
@@ -78,7 +90,10 @@ pub fn explain_tone_shift(
 
 /// Explain a "white room" issue: a scene with too little sensory grounding
 /// for its length.
-#[napi(js_name = "explainWhiteRoom")]
+#[napi(
+    js_name = "explainWhiteRoom",
+    ts_return_type = "{ findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number } | null"
+)]
 pub fn explain_white_room(
     scene_id: u32,
     sensory_count: u32,
@@ -91,7 +106,10 @@ pub fn explain_white_room(
 
 /// Explain a show-don't-tell issue (`narrative_distance`, `filter_word`,
 /// `diluted_action`, or any other issue type) found in `snippet`.
-#[napi(js_name = "explainShowDontTell")]
+#[napi(
+    js_name = "explainShowDontTell",
+    ts_return_type = "{ findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number }"
+)]
 pub fn explain_show_dont_tell(
     issue_type: String,
     snippet: String,
@@ -101,7 +119,10 @@ pub fn explain_show_dont_tell(
 }
 
 /// Compute confidence for analysis of a scene based on its text content.
-#[napi(js_name = "computeSceneConfidence")]
+#[napi(
+    js_name = "computeSceneConfidence",
+    ts_return_type = "{ sceneId: number; dataQuality: number; wordCountFactor: number; overall: number }"
+)]
 pub fn compute_scene_confidence(
     scene_text: String,
     scene_id: u32,
@@ -126,7 +147,10 @@ pub fn compute_finding_confidence(
 }
 
 /// Compute confidence for readability metrics based on sample size.
-#[napi(js_name = "computeReadabilityConfidence")]
+#[napi(
+    js_name = "computeReadabilityConfidence",
+    ts_return_type = "{ fkglConfidence: number; overall: number; sampleAdequacy: number }"
+)]
 pub fn compute_readability_confidence(
     word_count: u32,
     sentence_count: u32,
@@ -138,7 +162,10 @@ pub fn compute_readability_confidence(
 
 /// Rank the most-frequent content words in `text`, most-frequent first,
 /// keeping at most `limit`, using the crate's built-in stopword set.
-#[napi(js_name = "wordFrequencies")]
+#[napi(
+    js_name = "wordFrequencies",
+    ts_return_type = "Array<{ word: string; count: number }>"
+)]
 pub fn word_frequencies(text: String, limit: u32) -> napi::Result<serde_json::Value> {
     let stop = crate::substrate::text::stopwords();
     let result = word_stats::word_frequencies(&text, limit as usize, |w| stop.contains(w));
@@ -148,7 +175,10 @@ pub fn word_frequencies(text: String, limit: u32) -> napi::Result<serde_json::Va
 /// Count and rank already-tokenized `words`, applying the same content-word
 /// filter, ordering, and `limit` as `wordFrequencies`, using the crate's
 /// built-in stopword set.
-#[napi(js_name = "wordFrequenciesFromWords")]
+#[napi(
+    js_name = "wordFrequenciesFromWords",
+    ts_return_type = "Array<{ word: string; count: number }>"
+)]
 pub fn word_frequencies_from_words(
     words: Vec<String>,
     limit: u32,
@@ -166,7 +196,10 @@ pub fn word_frequencies_from_words(
 /// cannot cheaply hold a live Rust struct across separate calls without
 /// `#[napi]` on the struct itself (a bigger design decision than this binding
 /// pass), so training and querying are fused into one call instead.
-#[napi(js_name = "trainAndFindNearest")]
+#[napi(
+    js_name = "trainAndFindNearest",
+    ts_return_type = "Array<[string, number]>"
+)]
 pub fn train_and_find_nearest(
     texts: Vec<String>,
     word: String,

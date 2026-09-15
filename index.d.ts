@@ -13,28 +13,28 @@ export declare const __napiBindingTarget: 'native' | 'wasm32-wasi' | 'wasm32-was
  * Aggregate pacing metrics across all scenes. Returns `null` when
  * `scene_metrics` is empty.
  */
-export declare function aggregatePacing(sceneMetrics: Array<PacingMetricsInput>): any
+export declare function aggregatePacing(sceneMetrics: Array<PacingMetricsInput>): { averageDialogueRatio: number; averageVelocity: number; perSceneVelocity: Array<number>; perSceneDialogueRatio: Array<number>; perSceneLabel: Array<string>; perSceneAssessment: Array<string>; talkingHeadScenes: Array<number>; thsCount: number; pacingTrend: string; velocityVariance: number; slowScenes: Array<number>; fastScenes: Array<number>; perSceneEntityDensity: Array<number>; perSceneActionDensity: Array<number>; perSceneNovelty: Array<number>; avgEntityDensity: number; avgActionDensity: number } | null
 
 /**
  * Build a causal graph over scenes and analyze plot coherence, counterfactuals,
  * and plot holes.
  */
-export declare function analyzeCausality(scenes: Array<string>, characters: Array<string>): any
+export declare function analyzeCausality(scenes: Array<string>, characters: Array<string>): { events: Array<{ id: number; scene: number; description: string; agent: string | null; eventType: 'Action' | 'Reaction' | 'Consequence' | 'Discovery' | 'Decision' | 'External' }>; links: Array<{ cause: number; effect: number; strength: number; linkType: 'Necessary' | 'Enabling' | 'Triggering' | 'Coincidental' }>; counterfactuals: Array<{ removedEvent: number; question: string; consequences: Array<string>; plotNecessity: number }>; plotHoles: Array<{ scene: number; description: string; problem: string; causalGap: string; suggestion: string }>; causalDensity: number; longestChain: number; plotCoherence: number; structuralInsights: Array<string> }
 
 /** Build voice profiles for every character and flag same-sounding pairs. */
-export declare function analyzeCharacterVoices(characterNames: Array<string>, characterDialogueLines: Array<Array<string>>): any
+export declare function analyzeCharacterVoices(characterNames: Array<string>, characterDialogueLines: Array<Array<string>>): { profiles: Array<{ character: string; avgSentenceLength: number; vocabularyRichness: number; questionRate: number; exclamationRate: number; contractionRate: number; formalityScore: number; avgWordLength: number; uniquePhrases: Array<string>; topWords: Array<string> }>; similarities: Array<{ charA: string; charB: string; similarity: number; mostSimilarDimension: string; suggestion: string }>; distinctVoices: boolean }
 
 /** Analyze dialogue patterns across all extracted dialogue lines. */
-export declare function analyzeDialoguePatterns(allDialogue: Array<DialogueLineInput>, knownCharacters: Array<string>): any
+export declare function analyzeDialoguePatterns(allDialogue: Array<DialogueLineInput>, knownCharacters: Array<string>): { totalLines: number; attributedLines: number; attributionRate: number; perCharacter: Record<string, { lineCount: number; wordCount: number; avgLineLength: number; vocabularyRichness: number; questionRate: number; exclamationRate: number }>; dialogueDistribution: Record<string, number>; mostTalkative: string; mostVerbose: string; voiceProfiles: Record<string, { avgWordLength: number; vocabularyRichness: number; questionFrequency: number; avgLineLength: number; formalityScore: number; tagVarietyScore: number; speechVerbsUsed: Array<string> }>; sameSoundingPairs: Array<{ characterA: string; characterB: string; similarity: number }>; conversationFlow: { edges: Array<{ from: string; to: string; count: number }>; dominators: Array<string>; neverInitiators: Array<string>; monologues: Array<{ speaker: string; lineCount: number; sceneId: number }> } }
 
 /**
  * Analyze dialogue realism: voice fingerprints, info dumps, formality
  * issues, identical-voice pairs, and power dynamics between characters.
  */
-export declare function analyzeDialogueRealism(turnScenes: Array<number>, turnSpeakers: Array<string>, turnTexts: Array<string>, characters: Array<string>): any
+export declare function analyzeDialogueRealism(turnScenes: Array<number>, turnSpeakers: Array<string>, turnTexts: Array<string>, characters: Array<string>): { characterVoices: Array<{ character: string; avgTurnLength: number; vocabularyRichness: number; formalityLevel: number; contractionRate: number; questionRate: number; exclamationRate: number; frequentWords: Array<string> }>; voicePairs: Array<{ characterA: string; characterB: string; similarity: number }>; issues: Array<{ scene: number; issueType: string; description: string; severity: number; characters: Array<string> }>; powerDynamics: Array<{ characterA: string; characterB: string; dominant: string; indicators: Array<string> }>; overallRealism: number; voiceDistinctiveness: number; infoDumpCount: number }
 
 /** Analyze foreshadowing setup-payoff arcs across scenes. */
-export declare function analyzeForeshadowing(scenesTokens: Array<Array<string>>, totalScenes: number): any
+export declare function analyzeForeshadowing(scenesTokens: Array<Array<string>>, totalScenes: number): Array<{ setupTerm: string; setupScene: number; payoffScene: number | null; setupCount: number; payoffCount: number; payoffQuality: number; status: string; suggestion: string }>
 
 /**
  * Analyze narrative gaps based on signals from other analysis modules: broken
@@ -42,22 +42,22 @@ export declare function analyzeForeshadowing(scenesTokens: Array<Array<string>>,
  * `(character, scene)`, pacing stall zones `(startScene, endScene)`, and
  * unresolved ironies `(description, scene)`.
  */
-export declare function analyzeGaps(brokenPromises: Array<[string, number]>, consequencelessDecisions: Array<[string, number]>, stallZones: Array<[number, number]>, unresolvedIronies: Array<[string, number]>, totalScenes: number, climaxScene: number): any
+export declare function analyzeGaps(brokenPromises: Array<[string, number]>, consequencelessDecisions: Array<[string, number]>, stallZones: Array<[number, number]>, unresolvedIronies: Array<[string, number]>, totalScenes: number, climaxScene: number): { gaps: Array<{ gapType: 'MissingScene' | 'MissingBeat' | 'MissingEmotionalTransition' | 'MissingInformationReveal' | 'UnderdevelopedRelationship' | 'UnresolvedSubplot' | 'UnmotivatedAction'; description: string; location: { afterScene: number; beforeScene: number | null; affectedCharacters: Array<string> }; suggestion: string }>; totalGapCount: number }
 
 /** Analyze the opening pages of a manuscript for hook strength and agent appeal. */
-export declare function analyzeOpening(text: string, genre: string, fullManuscriptVoiceFingerprint?: Array<number> | undefined | null): any
+export declare function analyzeOpening(text: string, genre: string, fullManuscriptVoiceFingerprint?: Array<number> | undefined | null): { hookType: 'Action' | 'Question' | 'Voice' | 'Situation' | 'Character' | 'Image' | null; hookScore: number; firstLineQuality: number; firstParagraphQuality: number; backstoryRatio: number; voiceEstablishment: number; engagementTrajectory: Array<number>; promisesMade: Array<string>; charactersIntroduced: number; worldEstablished: boolean; genreAlignment: number; readOnPrediction: number; firstLineWordCount: number; paragraphWordCounts: Array<number>; dialogueOnsetParagraph: number | null; issues: Array<string>; strengths: Array<string>; agentPerspective: string; firstLineFeedback: string; revisionSuggestion: string }
 
 /** Analyze a single scene and return its pacing metrics. */
-export declare function analyzePacing(sceneId: number, dialogueTokens: number, totalTokens: number, sentencesCount: number): any
+export declare function analyzePacing(sceneId: number, dialogueTokens: number, totalTokens: number, sentencesCount: number): { sceneId: number; dialogueRatio: number; isTalkingHead: boolean; velocity: number; wordCount: number; entityDensity: number; nounDensity: number; informationNovelty: number; actionDensity: number }
 
 /** Analyze how detected themes evolve and resolve across the manuscript. */
-export declare function analyzeResolution(sceneThemes: Array<Record<string, number>>): any
+export declare function analyzeResolution(sceneThemes: Array<Record<string, number>>): Array<{ themeName: string; act1Presence: number; act2Presence: number; act3Presence: number; isResolved: boolean; status: string; quartilePresence: Array<number>; chapterCurve: Array<number>; peakChapter: number; consistency: number; momentum: number; momentumLabel: string }>
 
 /**
  * Analyze a scene's tokens for anachronistic words given a target historical year.
  * Returns empty if target_year is 0 (no target set).
  */
-export declare function analyzeScene(tokens: Array<string>, targetYear: number, sceneId: number): any
+export declare function analyzeScene(tokens: Array<string>, targetYear: number, sceneId: number): Array<{ word: string; introducedYear: number; targetYear: number; sceneId: number }>
 
 /**
  * Analyze information density of a scene's text. `seen_nouns` carries nouns
@@ -65,40 +65,40 @@ export declare function analyzeScene(tokens: Array<string>, targetYear: number, 
  * the updated set is returned alongside the density result instead of
  * mutated in place).
  */
-export declare function analyzeSceneInfoDensity(sceneText: string, seenNouns: Array<string>): any
+export declare function analyzeSceneInfoDensity(sceneText: string, seenNouns: Array<string>): { entityDensity: number; actionDensity: number; nounDensity: number; newNounCount: number; totalNounCount: number; seenNouns: Array<string> }
 
 /**
  * Analyze subtext across scenes (currently a reserved-for-reasoner stub:
  * always returns empty instances with zero density).
  */
-export declare function analyzeSubtext(scenes: Array<string>, dialogueSegmentScenes: Array<number>, dialogueSegmentSpeakers: Array<string>, dialogueSegmentQuotes: Array<string>, dialogueSegmentContexts: Array<string>, emotionalStateCharacters: Array<string>, emotionalStateScenes: Array<number>, emotionalStateEmotions: Array<string>, genre: string): any
+export declare function analyzeSubtext(scenes: Array<string>, dialogueSegmentScenes: Array<number>, dialogueSegmentSpeakers: Array<string>, dialogueSegmentQuotes: Array<string>, dialogueSegmentContexts: Array<string>, emotionalStateCharacters: Array<string>, emotionalStateScenes: Array<number>, emotionalStateEmotions: Array<string>, genre: string): { instances: Array<{ scene: number; paragraph: number; surface: string; implied: string; subtextType: 'EmotionalDenial' | 'PowerPlay' | 'SelfDeception' | 'CodedCommunication' | 'DramaticIronySubtext' | 'Deflection' | 'VerbalIrony' | 'ActionContradiction'; density: number; evidence: Array<string>; characters: Array<string>; resolved: boolean; resolutionScene: number | null }>; sceneSummaries: Array<{ scene: number; averageDensity: number; instanceCount: number; dominantType: 'EmotionalDenial' | 'PowerPlay' | 'SelfDeception' | 'CodedCommunication' | 'DramaticIronySubtext' | 'Deflection' | 'VerbalIrony' | 'ActionContradiction' | null; appropriateness: number }>; globalDensity: number; genreCalibratedScore: number; onTheNose: Array<[number, string]>; unresolvedSubtext: Array<{ scene: number; paragraph: number; surface: string; implied: string; subtextType: 'EmotionalDenial' | 'PowerPlay' | 'SelfDeception' | 'CodedCommunication' | 'DramaticIronySubtext' | 'Deflection' | 'VerbalIrony' | 'ActionContradiction'; density: number; evidence: Array<string>; characters: Array<string>; resolved: boolean; resolutionScene: number | null }>; typeDistribution: Record<string, number>; characterPatterns: Record<string, [number, string]>; advice: Array<{ scene: number; issueType: string; quotedText: string; explanation: string; suggestion: string | null }>; craftNotes: Array<string> }
 
 /** Analyze syntax tension in scene text using the fallback (regex-only) path. */
-export declare function analyzeSyntaxTension(sceneText: string): any
+export declare function analyzeSyntaxTension(sceneText: string): { score: number; lengthVariation: number; burstCount: number; sentenceCount: number; avgSentenceLength: number; questionDensity: number; dialogueShiftScore: number; paragraphBurstScore: number; exclamationDensity: number; suspenseKeywordScore: number }
 
 /**
  * Scan multiple scenes to infer a gender ("male"/"female"/"unknown") for each
  * named character, from pronoun proximity.
  */
-export declare function buildCharacterGenderMap(scenes: Array<string>, characters: Array<string>): any
+export declare function buildCharacterGenderMap(scenes: Array<string>, characters: Array<string>): Record<string, string>
 
 /**
  * Build the reader's evolving mental model (belief trajectory, dramatic
  * ironies, revelations/twists) across scenes.
  */
-export declare function buildMentalModel(scenes: Array<string>, characters: Array<string>, povCharacters: Array<string>, themeKeywords: Array<string>): any
+export declare function buildMentalModel(scenes: Array<string>, characters: Array<string>, povCharacters: Array<string>, themeKeywords: Array<string>): { trajectory: Array<{ afterScene: number; beliefs: Array<{ id: number; subject: string; proposition: string; confidence: number; establishedAt: number; lastReinforced: number; matchesTruth: boolean | null; category: 'Identity' | 'Motivation' | 'Allegiance' | 'EventCause' | 'Prediction' | 'WorldRule' | 'EmotionalState' | 'Capability'; salience: number; sourceReliability: number; inferenceChain: Array<number> }>; invalidated: Array<{ id: number; subject: string; proposition: string; confidence: number; establishedAt: number; lastReinforced: number; matchesTruth: boolean | null; category: 'Identity' | 'Motivation' | 'Allegiance' | 'EventCause' | 'Prediction' | 'WorldRule' | 'EmotionalState' | 'Capability'; salience: number; sourceReliability: number; inferenceChain: Array<number> }>; introduced: Array<{ id: number; subject: string; proposition: string; confidence: number; establishedAt: number; lastReinforced: number; matchesTruth: boolean | null; category: 'Identity' | 'Motivation' | 'Allegiance' | 'EventCause' | 'Prediction' | 'WorldRule' | 'EmotionalState' | 'Capability'; salience: number; sourceReliability: number; inferenceChain: Array<number> }>; beliefGap: number; gapDelta: number; activeIronies: Array<{ knowledge: string; ignorantCharacter: string; establishedAt: number; resolvedAt: number | null; tension: number }>; archetypeDivergence: number }>; revelations: Array<{ scene: number; magnitude: number; affectedBeliefs: Array<string>; eventType: 'Revelation' | 'Twist' | 'Confirmation' | 'Complication' | 'DramaticIronyEstablished' | 'DramaticIronyResolved'; preparationScore: number }>; twists: Array<{ scene: number; magnitude: number; affectedBeliefs: Array<string>; eventType: 'Revelation' | 'Twist' | 'Confirmation' | 'Complication' | 'DramaticIronyEstablished' | 'DramaticIronyResolved'; preparationScore: number }>; stasisZones: Array<[number, number]>; gapCurve: Array<number>; managementScore: number; dramaticIronies: Array<{ knowledge: string; ignorantCharacter: string; establishedAt: number; resolvedAt: number | null; tension: number }>; archetypeDivergencePeaks: Array<[number, number, string]>; narratorReliability: { overallScore: number; unreliabilityEvidence: Array<[number, string]>; intentional: boolean }; inferenceChains: Array<{ conclusionId: number; premiseIds: Array<number>; strength: number; description: string }>; readerExperience: Array<{ scene: number; noteType: string; description: string; craftImplication: string }>; engagementDiagnosis: string }
 
 /** Build the promise-payoff ledger from analysis data. */
-export declare function buildPromisePayoffLedger(scenes: Array<string>, sceneWordCounts: Array<number>, genre: string, foreshadowingItems: Array<[string, number, boolean]>, characterFirstAppearances: Array<[string, number]>, structureTemplate: string, totalScenes: number): any
+export declare function buildPromisePayoffLedger(scenes: Array<string>, sceneWordCounts: Array<number>, genre: string, foreshadowingItems: Array<[string, number, boolean]>, characterFirstAppearances: Array<[string, number]>, structureTemplate: string, totalScenes: number): { promises: Array<{ id: number; description: string; scene: number; promiseType: 'OpeningHook' | { GenreContract: string } | { CharacterIntroduction: string } | { ChekhovsGun: string } | { Foreshadowing: string } | { RelationshipSetup: [string, string] } | { ThematicQuestion: string } | { StructuralBeat: string } | { ExplicitQuestion: string } | { TimedThreat: string } | { RecurringMotif: string } | { CharacterGoal: [string, string] }; explicitness: number; status: 'Outstanding' | { Fulfilled: { quality: number } } | { PartiallyFulfilled: { completeness: number } } | 'Broken' | { Subverted: { satisfaction: number } } | { Overpaid: { excess: number } } | { Deferred: { newDeadline: number | null } }; payoffScene: number | null; payoffQuality: number | null; investment: number; urgency: number; parent: number | null; children: Array<number>; weight: number }>; unearnedPayoffs: Array<{ description: string; scene: number; magnitude: number; reason: string }>; cascadePayoffs: Array<{ scene: number; promisesResolved: Array<number>; elegance: number }>; fulfillmentRatio: number; brokenCount: number; unearnedCount: number; weightedHealth: number; actBreakdown: Array<{ act: number; promisesMade: number; promisesFulfilled: number; netBalance: number; outstandingWeight: number }>; investmentCurve: Array<number>; maxNestingDepth: number; gratificationDelays: Array<{ promiseId: number; delayScenes: number; delayWords: number; withinGenreNorm: boolean; tensionMaintained: number }>; overpaidMoments: Array<[number, number]>; contractNotes: Array<{ promiseId: number; noteType: string; description: string; urgency: number; suggestion: string | null }>; readerTrustAssessment: string }
 
 /**
  * Build the timeline projection: the given `(documentId, text)` documents, in
  * the order supplied, each tagged with its first detected time hint.
  */
-export declare function buildTimeline(documents: Array<[string, string]>): any
+export declare function buildTimeline(documents: Array<[string, string]>): Array<{ documentId: string; order: number; timeHint: string | null; chronologyKey: string | null; lane: string | null; label: string | null; notes: string | null }>
 
 /** Build a character's voice profile from their dialogue lines. */
-export declare function buildVoiceProfile(characterName: string, dialogueLines: Array<string>): any
+export declare function buildVoiceProfile(characterName: string, dialogueLines: Array<string>): { character: string; avgSentenceLength: number; vocabularyRichness: number; questionRate: number; exclamationRate: number; contractionRate: number; formalityScore: number; avgWordLength: number; uniquePhrases: Array<string>; topWords: Array<string> }
 
 export interface CharacterVoiceProfileInput {
   character: string
@@ -114,7 +114,7 @@ export interface CharacterVoiceProfileInput {
 }
 
 /** Check a manuscript's compliance with genre conventions. */
-export declare function checkGenreCompliance(genre: string, hasHea: boolean, hasSolution: boolean, hasTickingClock: boolean, protagonistSurvives: boolean, characterGrowth: boolean, worldbuildingPresent: boolean, wordCount: number, structureHealth: number, tensionArcShape: string): any
+export declare function checkGenreCompliance(genre: string, hasHea: boolean, hasSolution: boolean, hasTickingClock: boolean, protagonistSurvives: boolean, characterGrowth: boolean, worldbuildingPresent: boolean, wordCount: number, structureHealth: number, tensionArcShape: string): { genre: string; conventions: Array<{ name: string; description: string; status: 'Met' | 'PartiallyMet' | 'NotMet' | 'Subverted'; evidence: string }>; presentCount: number; absentCount: number; isGenreBlend: boolean; secondaryGenres: Array<string>; deviations: Array<string>; strengths: Array<string> }
 
 /**
  * Run the built-in grammar checks (duplicated words, stray whitespace,
@@ -127,13 +127,13 @@ export declare function checkGrammar(text: string): Array<GrammarFindingJs>
  * voice, adverb clusters, repetitive openers, cliches, floating-head
  * dialogue, filter words, monotonous rhythm, and purple prose.
  */
-export declare function collectProseExamples(scenes: Array<string>): any
+export declare function collectProseExamples(scenes: Array<string>): Array<{ sceneId: number; issueType: string; snippet: string; suggestion: string }>
 
 /**
  * Pairwise-compare voice profiles and flag characters whose voices are too
  * similar.
  */
-export declare function compareVoices(profiles: Array<CharacterVoiceProfileInput>): any
+export declare function compareVoices(profiles: Array<CharacterVoiceProfileInput>): Array<{ charA: string; charB: string; similarity: number; mostSimilarDimension: string; suggestion: string }>
 
 /**
  * Compute confidence for a specific finding based on signal agreement and
@@ -142,7 +142,7 @@ export declare function compareVoices(profiles: Array<CharacterVoiceProfileInput
 export declare function computeFindingConfidence(signalCount: number, totalSignals: number, sceneConfidence: number): number
 
 /** Compute narrative entropy (information-pacing) across the manuscript. */
-export declare function computeNarrativeEntropy(scenes: Array<string>, themes: Array<[string, number]>, structureTemplate: string, genre: string, characterArcs: Array<[string, string]>): any
+export declare function computeNarrativeEntropy(scenes: Array<string>, themes: Array<[string, number]>, structureTemplate: string, genre: string, characterArcs: Array<[string, string]>): { questions: Array<{ id: number; question: string; isCdq: boolean; thread: 'MainPlot' | { Subplot: string } | { CharacterArc: string } | { Relationship: [string, string] } | { Mystery: string }; introducedAt: number; resolvedAt: number | null; outcomes: Array<{ description: string; probability: number; realized: boolean }> }>; entropyCurve: Array<{ scene: number; perQuestionEntropy: Array<[number, number]>; compositeEntropy: number; entropyRate: number; entropyAcceleration: number; informationGain: number; conditionalEntropies: Array<[number, number, number]> }>; cdqEntropyCurve: Array<number>; entropyRateCurve: Array<number>; redundantScenes: Array<[number, string]>; subplotIntegration: number; pacingScore: number; pacingDiagnosis: 'WellPaced' | { Predictable: { plateauScene: number } } | { Chaotic: { spikeScenes: Array<number> } } | { Rushed: { dropScene: number; dropMagnitude: number } } | { Unresolved: { finalEntropy: number; unresolvedQuestions: Array<string> } } | { Mixed: Array<unknown> }; complexityCurve: Array<number>; pacingFeedback: Array<{ sceneRange: [number, number]; issue: string; readerExperience: string; fix: string }>; overallPacingAssessment: string }
 
 /**
  * Compute readability metrics (FKGL, Gunning Fog, SMOG, ARI, Coleman-Liau,
@@ -151,25 +151,25 @@ export declare function computeNarrativeEntropy(scenes: Array<string>, themes: A
 export declare function computeReadability(text: string): ReadabilityResultJs
 
 /** Compute confidence for readability metrics based on sample size. */
-export declare function computeReadabilityConfidence(wordCount: number, sentenceCount: number): any
+export declare function computeReadabilityConfidence(wordCount: number, sentenceCount: number): { fkglConfidence: number; overall: number; sampleAdequacy: number }
 
 /** Compute confidence for analysis of a scene based on its text content. */
-export declare function computeSceneConfidence(sceneText: string, sceneId: number): any
+export declare function computeSceneConfidence(sceneText: string, sceneId: number): { sceneId: number; dataQuality: number; wordCountFactor: number; overall: number }
 
 /**
  * Detect genre using SBERT cosine similarity against genre descriptions when the
  * model is available, degrading to the keyword/prose-stats heuristic otherwise.
  */
-export declare function detectGenre(themes: Array<string>, tensionPattern: Array<number>, dialogueRatio: number, fkgl: number): any
+export declare function detectGenre(themes: Array<string>, tensionPattern: Array<number>, dialogueRatio: number, fkgl: number): 'Literary' | 'Thriller' | 'Mystery' | 'Romance' | 'Fantasy' | 'SciFi' | 'Horror' | 'HistoricalFiction' | 'YoungAdult' | 'ChildrensBook' | 'General'
 
 /**
  * Detect genre from a raw manuscript sample using SBERT cosine similarity when
  * available, falling back to the label/theme-driven `detectGenre` otherwise.
  */
-export declare function detectGenreSmart(sampleText: string, themes: Array<string>, tensionPattern: Array<number>, dialogueRatio: number, fkgl: number): any
+export declare function detectGenreSmart(sampleText: string, themes: Array<string>, tensionPattern: Array<number>, dialogueRatio: number, fkgl: number): 'Literary' | 'Thriller' | 'Mystery' | 'Romance' | 'Fantasy' | 'SciFi' | 'Horror' | 'HistoricalFiction' | 'YoungAdult' | 'ChildrensBook' | 'General'
 
 /** Detect themes using SBERT if available, falling back to keyword detection. */
-export declare function detectThemesSmart(scenes: Array<string>, scenesTokens: Array<Array<string>>): any
+export declare function detectThemesSmart(scenes: Array<string>, scenesTokens: Array<Array<string>>): Array<Record<string, number>>
 
 export interface DialogueLineInput {
   sceneId: number
@@ -181,52 +181,52 @@ export interface DialogueLineInput {
 }
 
 /** Evaluate manuscript metrics against a genre's expected quantitative profile. */
-export declare function evaluateAgainstGenre(genreLabel: string, fkgl: number, velocity: number, dialogueRatio: number, tensionVariance: number, tonalWhiplashCount: number, wordCount: number): any
+export declare function evaluateAgainstGenre(genreLabel: string, fkgl: number, velocity: number, dialogueRatio: number, tensionVariance: number, tonalWhiplashCount: number, wordCount: number): Array<{ metric: string; value: number; expectedMin: number; expectedMax: number; severity: string; message: string }>
 
 /** Explain a pacing issue (long sentences, or a talking-head scene) for one scene. */
-export declare function explainPacing(velocity: number, sceneId: number, isTalkingHead: boolean, dialogueRatio: number): any
+export declare function explainPacing(velocity: number, sceneId: number, isTalkingHead: boolean, dialogueRatio: number): { findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number } | null
 
 /**
  * Explain a readability score against a genre's target grade-level range, if
  * it falls outside that range.
  */
-export declare function explainReadability(fkgl: number, targetMin: number, targetMax: number, genre: string): any
+export declare function explainReadability(fkgl: number, targetMin: number, targetMax: number, genre: string): { findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number } | null
 
 /**
  * Explain a show-don't-tell issue (`narrative_distance`, `filter_word`,
  * `diluted_action`, or any other issue type) found in `snippet`.
  */
-export declare function explainShowDontTell(issueType: string, snippet: string): any
+export declare function explainShowDontTell(issueType: string, snippet: string): { findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number }
 
 /**
  * Explain a tension issue: a flat run, a sharp drop, or a manuscript with no
  * significant tension peak.
  */
-export declare function explainTension(tension: number, prevTension: number, sceneId: number, flatCount: number, flatStart: number, totalScenes: number, maxTension: number): any
+export declare function explainTension(tension: number, prevTension: number, sceneId: number, flatCount: number, flatStart: number, totalScenes: number, maxTension: number): { findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number } | null
 
 /** Explain a tonal shift between two scenes, if `from_tone` and `to_tone` differ. */
-export declare function explainToneShift(fromTone: string, toTone: string, sceneId: number, genre: string): any
+export declare function explainToneShift(fromTone: string, toTone: string, sceneId: number, genre: string): { findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number } | null
 
 /**
  * Explain a "white room" issue: a scene with too little sensory grounding
  * for its length.
  */
-export declare function explainWhiteRoom(sceneId: number, sensoryCount: number, wordCount: number): any
+export declare function explainWhiteRoom(sceneId: number, sensoryCount: number, wordCount: number): { findingType: string; severity: string; title: string; explanation: string; evidence: string; suggestion: string; confidence: number } | null
 
 /** Extract dialogue from a scene and attribute each quote to a speaker. */
-export declare function extractDialogue(sceneText: string, sceneId: number, knownCharacters: Array<string>): any
+export declare function extractDialogue(sceneText: string, sceneId: number, knownCharacters: Array<string>): Array<{ sceneId: number; quote: string; speaker: string; confidence: number; method: string; tagVerb?: string }>
 
 /** Map a writer-declared genre label to a canonical genre, if recognized. */
-export declare function genreFromLabel(label: string): any
+export declare function genreFromLabel(label: string): 'Literary' | 'Thriller' | 'Mystery' | 'Romance' | 'Fantasy' | 'SciFi' | 'Horror' | 'HistoricalFiction' | 'YoungAdult' | 'ChildrensBook' | 'General' | null
 
 /** Get the expected quantitative profile for a genre, by label. */
-export declare function getGenreProfile(genreLabel: string): any
+export declare function getGenreProfile(genreLabel: string): { genre: 'Literary' | 'Thriller' | 'Mystery' | 'Romance' | 'Fantasy' | 'SciFi' | 'Horror' | 'HistoricalFiction' | 'YoungAdult' | 'ChildrensBook' | 'General'; name: string; targetFkglMin: number; targetFkglMax: number; targetVelocityMin: number; targetVelocityMax: number; dialogueRatioMin: number; dialogueRatioMax: number; tensionVarianceMin: number; tonalWhiplashTolerance: number; acceptsNonlinear: boolean; requiresResolution: boolean; wordCountMin: number; wordCountMax: number; expectedScenesPer80k: [number, number]; expectedAvgSceneLength: [number, number]; maxAcceptableAdverbDensity: number; expectedCharacterCount: [number, number]; expectedAttributionRate: [number, number]; minProtagonistAgencyGrowth: number; tensionWeight: number; expectedTensionArc: string; climaxPositionRange: [number, number]; expectedVocabSophistication: [number, number]; expositionTolerance: number }
 
 /** Look up a built-in narrative structure template by name. */
-export declare function getStructureTemplate(name: string): any
+export declare function getStructureTemplate(name: string): { name: string; description: string; beats: Array<{ name: string; targetPct: number; tolerance: number; required: boolean; description: string }>; flexibility: number }
 
 /** Compute aggregate tension metrics from per-scene suspense scores. */
-export declare function getTensionMetrics(sceneScores: Array<number>): any
+export declare function getTensionMetrics(sceneScores: Array<number>): { maxSuspenseScore: number; averageSuspenseScore: number; pacingStyle: string }
 
 export interface GradeLevelsJs {
   fkgl: string
@@ -255,13 +255,13 @@ export declare function listStructureTemplates(): Array<string>
  * Measure how far a `current` (revised) voice profile has drifted from a
  * `baseline` (established) profile across the features both expose.
  */
-export declare function measureVoiceDrift(baseline: CharacterVoiceProfileInput, current: CharacterVoiceProfileInput): any
+export declare function measureVoiceDrift(baseline: CharacterVoiceProfileInput, current: CharacterVoiceProfileInput): { overall: number; perFeature: Array<{ feature: string; delta: number; baseline: number; current: number }>; notes: Array<string>; drifted: boolean }
 
 /**
  * Convenience: build both profiles from baseline-text and current-text
  * lines (same speaker/narrator label) and measure drift between them.
  */
-export declare function measureVoiceDriftFromText(label: string, baselineLines: Array<string>, currentLines: Array<string>): any
+export declare function measureVoiceDriftFromText(label: string, baselineLines: Array<string>, currentLines: Array<string>): { overall: number; perFeature: Array<{ feature: string; delta: number; baseline: number; current: number }>; notes: Array<string>; drifted: boolean }
 
 export interface PacingMetricsInput {
   sceneId: number
@@ -297,20 +297,20 @@ export interface ReadabilityResultJs {
  * the fused ranking, strongest first, truncated to `limit`, as
  * `[id, score]` pairs.
  */
-export declare function reciprocalRankFusion(rankings: Array<Array<string>>, k: number, limit: number): any
+export declare function reciprocalRankFusion(rankings: Array<Array<string>>, k: number, limit: number): Array<[string, number]>
 
 /**
  * Resolve pronoun references to character names within a scene. `gender_map`
  * (character name -> "male"/"female"/"unknown") is inferred from `scene_text`
  * alone when omitted.
  */
-export declare function resolveCoreferences(sceneText: string, knownCharacters: Array<string>, genderMap?: Record<string, string> | undefined | null): any
+export declare function resolveCoreferences(sceneText: string, knownCharacters: Array<string>, genderMap?: Record<string, string> | undefined | null): { mentions: Array<{ text: string; resolvedTo: string | null; start: number; isPronoun: boolean; confidence: number }>; characterMentions: Record<string, number>; pronounResolutionRate: number }
 
 /**
  * Resolve name mentions (surface, context-embedding pairs) into canonical
  * entities of the given `kind` ("character", "setting", "symbol", or "other").
  */
-export declare function resolveEntities(mentions: Array<[string, Array<number>]>, kind: string): any
+export declare function resolveEntities(mentions: Array<[string, Array<number>]>, kind: string): Array<{ id: string; canonical: string; kind: 'character' | 'setting' | 'symbol' | 'other'; aliases: Array<string>; mentionCount: number; confidence: number; provenance: 'ai_derived' | 'user_edited' }>
 
 /**
  * Resolve mentions, then apply the writer's persisted corrections (each a JSON
@@ -318,25 +318,25 @@ export declare function resolveEntities(mentions: Array<[string, Array<number>]>
  * {"kind": "assign", "canonical": "..."}}` or `{"kind": "reject"}`) over the
  * automatic result.
  */
-export declare function resolveEntitiesWithCorrections(mentions: Array<[string, Array<number>]>, kind: string, corrections: Array<any>): any
+export declare function resolveEntitiesWithCorrections(mentions: Array<[string, Array<number>]>, kind: string, corrections: Array<any>): Array<{ id: string; canonical: string; kind: 'character' | 'setting' | 'symbol' | 'other'; aliases: Array<string>; mentionCount: number; confidence: number; provenance: 'ai_derived' | 'user_edited' }>
 
 /** Suggest the best-fitting structure template for a set of scene tensions/purposes. */
-export declare function suggestBestTemplate(sceneTensions: Array<number>, scenePurposes: Array<string>): any
+export declare function suggestBestTemplate(sceneTensions: Array<number>, scenePurposes: Array<string>): string
 
 /**
  * Track per-character and reader epistemic states across scenes, computing
  * asymmetries, revelations, and the suspense curve.
  */
-export declare function trackEpistemics(scenes: Array<string>, characters: Array<string>, povCharacters: Array<string>): any
+export declare function trackEpistemics(scenes: Array<string>, characters: Array<string>, povCharacters: Array<string>): { facts: Array<{ id: number; content: string; establishedScene: number; importance: number }>; characterStates: Record<string, { character: string; knows: Array<number>; believesFalse: Array<number>; uncertainAbout: Array<number> }>; asymmetries: Array<{ scene: number; readerAdvantage: number; characterAdvantage: number; totalHiddenBits: number; dramaticIronyIntensity: number }>; revelations: Array<{ scene: number; factId: number; revealedTo: string; bitsRevealed: number; dramaticEffect: string }>; suspenseCurve: Array<{ scene: number; suspenseLevel: number; source: string }>; peakSuspenseScene: number; informationDensity: number; manipulationScore: number; epistemicInsights: Array<string> }
 
 /** Track the thematic argument across the manuscript. */
-export declare function trackThematicArgument(scenes: Array<string>, themes: Array<[string, number]>, characters: Array<string>, characterDecisions: Array<[string, number, string]>, genre: string): any
+export declare function trackThematicArgument(scenes: Array<string>, themes: Array<[string, number]>, characters: Array<string>, characterDecisions: Array<[string, number, string]>, genre: string): { theses: Array<{ id: number; statement: string; confidence: number; isPrimary: boolean; antithesis: string | null; synthesis: string | null }>; evidence: Array<{ scene: number; thesisId: number; valence: 'Supporting' | 'Contradicting' | 'Complicating' | 'Transcending'; delivery: { CharacterAction: { character: string; decision: string } } | { PlotConsequence: { cause: string } } | { Dialogue: { speaker: string } } | 'Narration' | { Symbolism: { symbol: string } } | { StructuralParallel: { parallel_scene: number } }; content: string; weight: number; character: string | null }>; characterRoles: Array<{ character: string; thesisId: number; position: 'Supporting' | 'Contradicting' | 'Complicating' | 'Transcending'; articulacy: number; fairHearing: number; thematicArc: [string, string] | null }>; themeInteractions: Array<{ themeA: number; themeB: number; interactionType: 'Reinforcing' | 'Tensioning' | 'Independent' | 'Subsumes'; keyScenes: Array<number> }>; dialecticalScore: number; deliveryDistribution: Record<string, number>; embodiedRatio: number; conclusionEarned: number; evidenceBalance: number; argumentStrength: number; actEvolution: Array<[number, string]>; propagandaRisk: number; thematicNotes: Array<{ noteType: string; description: string; suggestion: string | null }> }
 
 /**
  * Analyze scenes and characters to produce a full world state analysis
  * (facts, continuity violations, character knowledge, information flow).
  */
-export declare function trackWorldState(scenes: Array<string>, characters: Array<string>): any
+export declare function trackWorldState(scenes: Array<string>, characters: Array<string>): { snapshots: Array<{ afterScene: number; facts: Array<{ CharacterAt: { character: string; location: string } } | { CharacterPossesses: { character: string; object: string } } | { CharacterKnows: { character: string; information: string } } | { CharacterWitnessed: { character: string; event: string } } | { CoLocated: { characterA: string; characterB: string } } | { CommunicationVector: { from: string; to: string; content: string } } | { ObjectAt: { object: string; location: string } } | { PhysicalConstraint: { character: string; constraint: string } } | { TemporalOrdering: { before: string; after: string } }>; newFacts: Array<{ CharacterAt: { character: string; location: string } } | { CharacterPossesses: { character: string; object: string } } | { CharacterKnows: { character: string; information: string } } | { CharacterWitnessed: { character: string; event: string } } | { CoLocated: { characterA: string; characterB: string } } | { CommunicationVector: { from: string; to: string; content: string } } | { ObjectAt: { object: string; location: string } } | { PhysicalConstraint: { character: string; constraint: string } } | { TemporalOrdering: { before: string; after: string } }>; invalidatedFacts: Array<{ CharacterAt: { character: string; location: string } } | { CharacterPossesses: { character: string; object: string } } | { CharacterKnows: { character: string; information: string } } | { CharacterWitnessed: { character: string; event: string } } | { CoLocated: { characterA: string; characterB: string } } | { CommunicationVector: { from: string; to: string; content: string } } | { ObjectAt: { object: string; location: string } } | { PhysicalConstraint: { character: string; constraint: string } } | { TemporalOrdering: { before: string; after: string } }> }>; violations: Array<{ scene: number; violationType: 'ImpossibleKnowledge' | 'ImpossibleLocation' | 'ObjectContinuity' | 'TemporalParadox' | 'UnestablishedRelationship' | 'PhysicalImpossibility'; description: string; proof: string; severity: number; fixSuggestion: string }>; characterKnowledge: Array<{ character: string; knows: Array<string>; witnessed: Array<string>; toldBy: Array<[string, string]>; locationsVisited: Array<[number, string]>; currentLocation: string | null }>; locationTimeline: Array<[number, string, Array<string>]>; informationFlow: Array<[number, string, string, string]>; continuityScore: number; worldComplexity: number }
 
 /**
  * Train a corpus embedding from `texts` (default build options) and return
@@ -347,7 +347,7 @@ export declare function trackWorldState(scenes: Array<string>, characters: Array
  * `#[napi]` on the struct itself (a bigger design decision than this binding
  * pass), so training and querying are fused into one call instead.
  */
-export declare function trainAndFindNearest(texts: Array<string>, word: string, k: number): any
+export declare function trainAndFindNearest(texts: Array<string>, word: string, k: number): Array<[string, number]>
 
 /**
  * Train a corpus embedding from `texts` (default build options) and return
@@ -359,17 +359,17 @@ export declare function trainAndFindNearest(texts: Array<string>, word: string, 
 export declare function trainAndSimilarity(texts: Array<string>, wordA: string, wordB: string): number
 
 /** Score how well a set of scene tensions/purposes matches a structure template. */
-export declare function validateStructure(templateName: string, sceneTensions: Array<number>, scenePurposes: Array<string>): any
+export declare function validateStructure(templateName: string, sceneTensions: Array<number>, scenePurposes: Array<string>): { template: string; healthPct: number; matchedBeats: Array<string>; missingBeats: Array<string>; beatDetails: Array<{ beatName: string; expectedPct: number; actualPct: number; matched: boolean; confidence: number }>; suggestedTemplate: string }
 
 /**
  * Rank the most-frequent content words in `text`, most-frequent first,
  * keeping at most `limit`, using the crate's built-in stopword set.
  */
-export declare function wordFrequencies(text: string, limit: number): any
+export declare function wordFrequencies(text: string, limit: number): Array<{ word: string; count: number }>
 
 /**
  * Count and rank already-tokenized `words`, applying the same content-word
  * filter, ordering, and `limit` as `wordFrequencies`, using the crate's
  * built-in stopword set.
  */
-export declare function wordFrequenciesFromWords(words: Array<string>, limit: number): any
+export declare function wordFrequenciesFromWords(words: Array<string>, limit: number): Array<{ word: string; count: number }>

@@ -42,6 +42,7 @@ pub struct EntropyPoint {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum EntropyDiagnosis {
     WellPaced,
     Predictable {
