@@ -9,6 +9,9 @@
     "url": "https://github.com/writerslogic/narrative-lens"
   },
   "homepage": "https://writerslogic.com/narrative-lens",
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "nlp",
     "text-analysis",
