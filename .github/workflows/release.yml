@@ -88,16 +88,19 @@ jobs:
       - name: Move downloaded artifacts into place
         run: npx napi artifacts --output-dir artifacts
 
-      # `napi prepublish` updates each per-platform package.json (version,
-      # optionalDependencies on the root package) and runs `npm publish` for
-      # every platform package plus the root -- always under whatever dist-tag
-      # npm defaults to (`latest`) for the version in package.json. The napi
-      # CLI has no dist-tag override; publishing under `next`/a pre-release
-      # tag means bumping to a pre-release version first (`npm version
-      # prerelease`) rather than a flag here.
+      # `npm publish` on the root package triggers the `prepublishOnly`
+      # lifecycle script (`napi prepublish -t npm`), which updates each
+      # per-platform package.json (version, optionalDependencies on the
+      # root) and publishes every platform package -- npm then proceeds to
+      # publish the root package itself. Calling `napi prepublish` directly
+      # (as this step used to) only does the platform-package half and never
+      # publishes the root package. Always under whatever dist-tag npm
+      # defaults to (`latest`) for the version in package.json; publishing
+      # under `next`/a pre-release tag means bumping to a pre-release
+      # version first (`npm version prerelease`) rather than a flag here.
       - name: npm publish (all platform packages + main package)
         run: |
           npm config set provenance true
-          npx napi prepublish -t npm
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
