@@ -5,6 +5,10 @@ engine into a standalone, dependency-light crate -- keep that scope in mind: ana
 are stateless (text in, a structured result out), with no project model, storage, or
 versioning. That belongs in a consuming application, not here.
 
+## Reporting bugs and suggesting enhancements
+
+Use the [GitHub issue tracker](https://github.com/writerslogic/narrative-lens/issues). For a bug, include the passage you analyzed, the result you got, the result you expected, and the crate or package version. For an enhancement, say which category it belongs to (craft, structure, continuity) and what a realistic test passage would look like. For security issues, follow [SECURITY.md](./SECURITY.md) instead of opening a public issue.
+
 ## Development setup
 
 ```bash
