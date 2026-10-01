@@ -1,6 +1,6 @@
 <img src="https://raw.githubusercontent.com/writerslogic/narrative-lens/main/assets/logo-black.svg" alt="narrative-lens logo" width="120" align="left">
 
-<h1>narrative-lens</h1>
+<h3>narrative-lens</h3>
 
 <p><strong>Local, deterministic prose and narrative-craft analysis — readability, pacing, voice, foreshadowing, continuity — with no LLM and no network call. Extracted from Emathy's meaning engine, for Rust and Node.</strong></p>
 
