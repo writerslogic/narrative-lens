@@ -1,27 +1,12 @@
-<img src="https://raw.githubusercontent.com/writerslogic/narrative-lens/main/assets/logo-black.svg" alt="narrative-lens logo" width="120" align="left">
+### narrative-lens
 
-<h3>narrative-lens</h3>
+<img align="left" width="96" src="assets/logo-black.svg" alt="narrative-lens logo">
 
-<p><strong>Local, deterministic prose and narrative-craft analysis — readability, pacing, voice, foreshadowing, continuity — with no LLM and no network call. Extracted from Emathy's meaning engine, for Rust and Node.</strong></p>
+Local, deterministic prose and narrative-craft analysis (readability, pacing, voice, foreshadowing, continuity) with no LLM and no network call. Extracted from Emathy's meaning engine, for Rust and Node.
 
 <br clear="left">
 
-[![CI](https://img.shields.io/github/actions/workflow/status/writerslogic/narrative-lens/ci.yml?style=flat-square&labelColor=20232a&branch=main&label=CI)](https://github.com/writerslogic/narrative-lens/actions/workflows/ci.yml) [![CodeQL](https://img.shields.io/github/actions/workflow/status/writerslogic/narrative-lens/codeql.yml?style=flat-square&labelColor=20232a&branch=main&label=CodeQL)](https://github.com/writerslogic/narrative-lens/actions/workflows/codeql.yml) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/writerslogic/narrative-lens?style=flat-square&labelColor=20232a&label=OpenSSF)](https://securityscorecards.dev/viewer/?uri=github.com/writerslogic/narrative-lens) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15147/badge)](https://www.bestpractices.dev/projects/15147) [![License](https://img.shields.io/github/license/writerslogic/narrative-lens?style=flat-square&labelColor=20232a&color=007ec6&label=license)](https://github.com/writerslogic/narrative-lens/blob/main/LICENSE) [![Code of Conduct](https://img.shields.io/badge/code%20of%20conduct-Contributor%20Covenant%202.1-6a4c93?style=flat-square&labelColor=20232a)](https://github.com/writerslogic/narrative-lens/blob/main/CODE_OF_CONDUCT.md)
-
-<a href="https://www.npmjs.com/package/narrative-lens">
-    <img src="https://img.shields.io/npm/v/narrative-lens.svg?style=flat-square&labelColor=20232a&color=007ec6" alt="npm version"/>
-  </a>
-  <img src="https://img.shields.io/npm/dm/narrative-lens.svg?style=flat-square&labelColor=20232a&color=007ec6" alt="npm downloads"/>
-  <a href="https://crates.io/crates/narrative-lens">
-    <img src="https://img.shields.io/crates/v/narrative-lens.svg?style=flat-square&labelColor=20232a&color=007ec6" alt="crates.io version"/>
-  </a>
-  <a href="https://docs.rs/narrative-lens">
-    <img src="https://img.shields.io/docsrs/narrative-lens?style=flat-square&labelColor=20232a&color=007ec6" alt="docs.rs"/>
-  </a>
-  <a href="https://github.com/writerslogic/narrative-lens">
-    <img src="https://img.shields.io/github/stars/writerslogic/narrative-lens?style=flat-square&labelColor=20232a&color=6a4c93" alt="stars"/>
-  </a>
-</p>
+[![CI](https://img.shields.io/github/actions/workflow/status/writerslogic/narrative-lens/ci.yml?branch=main&label=CI)](https://github.com/writerslogic/narrative-lens/actions/workflows/ci.yml) [![CodeQL](https://github.com/writerslogic/narrative-lens/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/writerslogic/narrative-lens/actions/workflows/codeql.yml) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/writerslogic/narrative-lens)](https://securityscorecards.dev/viewer/?uri=github.com/writerslogic/narrative-lens) [![npm](https://img.shields.io/npm/v/narrative-lens.svg)](https://www.npmjs.com/package/narrative-lens) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](https://github.com/writerslogic/narrative-lens/blob/main/LICENSE)
 
 <p align="center">
   <a href="#install">Install</a> &middot;
