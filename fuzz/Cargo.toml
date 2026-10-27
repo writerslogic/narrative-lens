@@ -1,0 +1,22 @@
+[package]
+name = "narrative-lens-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+narrative-lens = { path = ".." }
+
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "text_analysis"
+path = "fuzz_targets/text_analysis.rs"
+test = false
+doc = false
+bench = false

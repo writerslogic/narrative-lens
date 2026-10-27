@@ -49,7 +49,8 @@ bindings = ["ts-rs", "schemars"]
 onnx = ["dep:tokenizers", "dep:ort", "dep:tract-onnx"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-ort = { version = "2.0.0-rc.12", optional = true }
+# Later prereleases can change the session API without a semver-major bump.
+ort = { version = "=2.0.0-rc.13", optional = true }
 tokenizers = { version = "0.23", default-features = false, features = ["onig"], optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
