@@ -1907,7 +1907,7 @@ pub fn utf16_len(s: &str) -> u32 {
 /// char start, or `s.len()`); callers pass match boundaries from `&str` search,
 /// which are always on boundaries. Returns `None` otherwise.
 pub fn byte_to_utf16_offset(s: &str, byte_offset: usize) -> Option<u32> {
-    if byte_offset > s.len() {
+    if !s.is_char_boundary(byte_offset) {
         return None;
     }
     let mut u16_count: u32 = 0;
@@ -1930,6 +1930,32 @@ pub fn byte_to_utf16_offset(s: &str, byte_offset: usize) -> Option<u32> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn utf16_offsets_require_utf8_boundaries() {
+        let cases: &[(&str, &[Option<u32>])] = &[
+            ("", &[Some(0)]),
+            ("a", &[Some(0), Some(1)]),
+            ("ي", &[Some(0), None, Some(1)]),
+            ("雪", &[Some(0), None, None, Some(1)]),
+            ("🖋", &[Some(0), None, None, None, Some(2)]),
+            (
+                "a🖋é",
+                &[Some(0), Some(1), None, None, None, Some(3), None, Some(4)],
+            ),
+        ];
+        for &(text, offsets) in cases {
+            for (offset, &expected) in offsets.iter().enumerate() {
+                assert_eq!(
+                    byte_to_utf16_offset(text, offset),
+                    expected,
+                    "{text:?} at {offset}"
+                );
+            }
+            assert_eq!(byte_to_utf16_offset(text, text.len() + 1), None);
+            assert_eq!(byte_to_utf16_offset(text, usize::MAX), None);
+        }
+    }
 
     #[test]
     fn split_paragraphs_handles_blank_line_variants() {

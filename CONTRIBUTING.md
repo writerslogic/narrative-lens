@@ -35,6 +35,21 @@ npm test
 - Public API changes update `bindings/` (regenerate via `cargo test --features bindings`,
   do not hand-edit) and `docs/ARCHITECTURE.md` if the analyzer categories change.
 
+## Fuzzing
+
+Install nightly Rust and `cargo-fuzz`, then run the text-analysis target:
+
+```bash
+rustup toolchain install nightly
+cargo install cargo-fuzz --version 0.13.2 --locked
+cargo +nightly fuzz run text_analysis -- -max_total_time=120 -max_len=4096 -timeout=10
+```
+
+The target checks Unicode offset conversion, finite readability scores, and
+dialogue confidence bounds while exercising grammar checking. GitHub Actions
+runs it on pushes, pull requests, and daily; failing inputs are uploaded as
+artifacts. Turn a minimized failing input into a regression test before fixing it.
+
 ## Adding an analyzer
 
 Pick the category it belongs to (`craft`, `structure`, `continuity`) based on what it
