@@ -1,10 +1,6 @@
 ### narrative-lens
 
-<img align="left" width="96" src="assets/logo-black.svg" alt="narrative-lens logo">
-
 Local, deterministic prose and narrative-craft analysis (readability, pacing, voice, foreshadowing, continuity) with no LLM and no network call. Extracted from Emathy's meaning engine, for Rust and Node.
-
-<br clear="left">
 
 [![CI](https://img.shields.io/github/actions/workflow/status/writerslogic/narrative-lens/ci.yml?branch=main&label=CI)](https://github.com/writerslogic/narrative-lens/actions/workflows/ci.yml) [![CodeQL](https://github.com/writerslogic/narrative-lens/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/writerslogic/narrative-lens/actions/workflows/codeql.yml) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/writerslogic/narrative-lens)](https://securityscorecards.dev/viewer/?uri=github.com/writerslogic/narrative-lens) [![npm](https://img.shields.io/npm/v/narrative-lens.svg)](https://www.npmjs.com/package/narrative-lens) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](https://github.com/writerslogic/narrative-lens/blob/main/LICENSE)
 
@@ -18,14 +14,21 @@ Local, deterministic prose and narrative-craft analysis (readability, pacing, vo
 
 ---
 
-narrative-lens reads a passage or a whole manuscript and returns structured, explainable judgments about it — a readability grade, a pacing score for a scene, whether a promise made in Chapter 2 pays off by Chapter 20, whether a character's established backstory contradicts what a later chapter states. No API key, no network call. Every result carries a confidence score and, where the analysis supports it, an explanation of what evidence produced it.
+narrative-lens analyzes passages and manuscripts with local heuristics and optional local models. Standalone analyzers return their own metrics and suggestions. The manuscript facade adds typed findings with original-text evidence, author controls, coverage, and revision comparison. Confidence is explicitly uncalibrated unless identified otherwise: these are review aids, not editorial validation.
 
-It's the analysis layer originally built inside Emathy, a native macOS authoring app, factored out into its own crate so any tool working with manuscript text — not just Emathy — can use the same local analyzers instead of reaching for an LLM call for judgments a deterministic model can make faster, cheaper, and more consistently.
+```mermaid
+flowchart LR
+    T[Scene text or manuscript] --> A[Standalone analyzers<br/>craft · structure · continuity]
+    A --> R[Metrics and suggestions]
+    T --> F[Manuscript facade]
+    F --> P[Report: findings, evidence,<br/>coverage, comparison]
+    P --> N[Node bindings]
+    P --> C[CLI: terminal · JSON · SARIF]
+    M[(Optional local<br/>ONNX models)] -.-> A
+    M -.-> F
+```
 
-> **You give it:** a scene from Chapter 12.
-> **It gives you back:** Flesch-Kincaid grade 8.2, a pacing flag on four consecutive paragraphs of interior monologue with no dialogue or action, and a note that the scene's foreshadowing payoff rate is lower than the manuscript's average.
-
-Works with Rust 1.75+ and Node.js 18+, on macOS, Linux, and Windows.
+Run [the Rust example](examples/manuscript.rs) or [the async Node example](examples/manuscript.mjs) to analyze a manuscript and compare revisions.
 
 ## Install
 
@@ -35,25 +38,25 @@ npm install narrative-lens
 
 ```toml
 [dependencies]
-narrative-lens = "0.1"
+narrative-lens = "0.2"
 ```
 
 <details>
 <summary><strong>Optional: local ONNX models for embeddings, NER, NLI, and emotion</strong></summary>
 
-The default analyzers are pure Rust with no model to load. Enable the `onnx` feature for SBERT sentence embeddings (semantic theme/genre detection), BERT NER (entity resolution), NLI (contradiction detection), and Ekman-7 emotion classification instead of the built-in heuristics — "bring your own model, no download": point each analyzer at a local `model.onnx` + `tokenizer.json`, same contract as `holographic-memory`'s local embedder. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/INTEGRATION.md](docs/INTEGRATION.md).
+The default analyzers are pure Rust with no model to load. Enable the `onnx` feature for local SBERT embeddings, BERT NER, NLI, and Ekman-7 emotion classification. Verified loaders pin model and tokenizer bytes and validate declared preprocessing and label order; Node exposes `loadVerifiedModel`, and the CLI accepts `--model-root`/`--model-profile`. No model is downloaded. See [Integration](docs/INTEGRATION.md).
 
 </details>
 
 ## What It Analyzes
 
-**Prose craft** — readability, pacing, prose quality, dialogue realism, voice consistency, subtext, sentence-level syntax tension, lexical variety, grammar.
+| Category | Shipped | Reserved or partial |
+|----------|---------|---------------------|
+| **Prose craft** | Readability (FKGL, SMOG, Dale-Chall), pacing, prose quality, dialogue extraction and realism, voice consistency and drift, syntax tension, lexical variety, grammar, emotion (model-backed) | Subtext reports `unavailable` |
+| **Narrative structure** | Foreshadowing, inferred promise/payoff ledger, author-confirmed setup/resolution events, theme presence, semantic novelty, opening-page analysis, structure templates, genre detection and convention checks | Unobserved payoffs stay `unknown`; thematic argument reports `unavailable` |
+| **Continuity and world state** | Timeline consistency, explicit physical-state tracking, author truth/belief/knowledge annotations, coreference, entity and named-entity resolution, causal and epistemic heuristics, anachronism detection, gap signals | Unannotated knowledge stays unassessed; reader mental model reports `unavailable` |
 
-**Narrative structure** — foreshadowing and promise/payoff tracking across the whole manuscript, thematic argument and theme presence, narrative-entropy (how predictable the next beat is), opening-page analysis, genre-convention compliance.
-
-**Continuity and world state** — timeline consistency, world-state tracking (what a character knows/has/believes at a given point), coreference and named-entity resolution, causal-chain and epistemic-state checking (does a character act on knowledge they shouldn't have yet), anachronism detection, gap analysis (a setup with no payoff, or a payoff with no setup).
-
-Every analyzer in these three groups is a pure function: manuscript text in, a structured, confidence-scored, explainable result out. None of them persist anything or require a project structure — that's the caller's job.
+Analyzers accept caller-supplied text and return structured results. Persistence and project storage belong to the caller.
 
 ## API
 
@@ -62,59 +65,76 @@ Every analyzer in these three groups is a pure function: manuscript text in, a s
 
 | Module | What it does |
 |--------|-------------|
-| `craft::*` | Readability, pacing, prose quality, dialogue, voice, subtext, syntax tension, lexical, grammar |
-| `structure::*` | Foreshadowing, promise/payoff, theme, thematic argument, narrative entropy, opening analysis, genre compliance |
-| `continuity::*` | Timeline, world state, coreference, entity/NER, causal chains, epistemic state, mental models, gap analysis, anachronism |
-| `substrate::*` | Shared primitives: text segmentation, embeddings, the meaning graph, confidence scoring, explanation generation |
+| `manuscript` | Coordinated findings, controls, coverage, chronology, incremental `AnalysisContext`, revision comparison |
+| `craft::*` | Readability, pacing, prose quality, dialogue, voice, emotion, syntax tension, lexical, lexicon, grammar |
+| `structure::*` | Foreshadowing, promise/payoff, author events, theme, narrative entropy, opening analysis, templates, genre |
+| `continuity::*` | Timeline, world state, coreference, entity/NER, author knowledge, causal, epistemic, gap analysis, anachronism |
+| `substrate::*` | Text segmentation, offsets, word statistics, embeddings, confidence scoring, explanations |
 
-Each analyzer module exposes an `analyze(text: &str, options: &Options) -> Result<AnalysisResult>` entry point returning a confidence-scored, explainable result specific to that analyzer.
+| Feature | Adds |
+|---------|------|
+| `onnx` | Local model runtimes: `ort` natively, `tract` on wasm32 |
+| `cli` | The `narrative-lens` binary |
+| `node-api` | napi bindings (built through npm, not needed by Rust consumers) |
+| `bindings` | TypeScript declaration and JSON schema generation |
+
+Each standalone analyzer keeps its own signature, such as `readability::compute_readability(text)`. `manuscript::analyze_manuscript(&Manuscript)` coordinates supported passes into a `Report`.
 
 </details>
 
 <details>
 <summary><strong>Node.js</strong> -- the same analyzers, generated bindings</summary>
 
-Every Rust analyzer is exposed through the napi binding under the matching category (`craft`, `structure`, `continuity`). TypeScript definitions in `bindings/` are generated from the Rust types via `ts-rs` — treat them as the source of truth over this table.
+Most standalone analyzers are exposed through napi with TypeScript declarations in `index.d.ts`; the manuscript API is typed in `manuscript.d.ts`. Use `analyzeManuscriptAsync`, `ManuscriptContext.analyzeAsync`, and `compareManuscriptReports` for responsive manuscript workflows. See [Integration](docs/INTEGRATION.md) for coverage.
 
 </details>
 
 ## Guides
 
-- **[Architecture](./docs/ARCHITECTURE.md)** -- the analyzer categories, the shared substrate, and what's reserved vs. shipped
-- **[Integration](./docs/INTEGRATION.md)** -- using narrative-lens from Rust, Node, and as a local analysis backend for an MCP server
-- **[Contributing](./CONTRIBUTING.md)** -- development setup and conventions
+- **[Architecture](./docs/ARCHITECTURE.md)** -- layers, analyzer categories, and what is reserved vs. shipped
+- **[Integration](./docs/INTEGRATION.md)** -- Rust, Node, world-state APIs, and verified local models
+- **[Manuscript API](./docs/MANUSCRIPT.md)** -- findings, author controls, coverage, chronology, caching, comparisons
+- **[CLI](./docs/CLI.md)** -- text/Markdown adapter, JSON, SARIF, baselines, exit codes
+- **[Evaluation](./docs/EVALUATION.md)** -- synthetic accuracy fixtures, LitBank development-split benchmark, performance
+- **[Contributing](./CONTRIBUTING.md)** -- development setup, checks, and the release process
 
 ## Requirements
 
-- **Rust 1.75+** or **Node.js 18+**
-- No API key, no network access, no external service of any kind
+| Build | Minimum |
+|-------|---------|
+| Rust core, `cli`, `bindings` | Rust 1.89 |
+| Native ONNX (`onnx`) | Rust 1.92 |
+| wasm32 ONNX (`tract`) | Rust 1.91 |
+| Node package | Node.js 18, 20, 22, 24, or 26 on macOS, Linux (glibc 2.28+), or Windows |
+
+No API key, no network access, no external service of any kind.
 
 ## Development
 
 ```bash
 git clone https://github.com/writerslogic/narrative-lens.git
 cd narrative-lens
-cargo test                          # all analyzer categories, Rust side
-npm install && npm test             # node --test tests/node
-npm run test:types                  # strict TS check against generated bindings
+cargo test                                  # Rust analyzers and facade
+npm ci && npm run build:debug && npm test   # native addon; tests fail if it is missing
+npm run test:types                          # strict TS check against generated bindings
 ```
 
 ## Why narrative-lens
 
-Most manuscript-analysis tooling reaches for an LLM call for judgments that don't need one — a Flesch-Kincaid grade, a pacing heuristic, whether a named entity in Chapter 20 was ever introduced. Those are deterministic questions with deterministic answers, and answering them with an API call adds cost, latency, and a dependency on a third party actually seeing your unpublished manuscript. narrative-lens exists so a consuming tool — an MCP server, an editor, a CI check on a manuscript repo — can get those answers locally, instantly, and for free, and reserve the LLM for judgments that actually need one: does this scene's prose sound like this author, would a human editor find this paragraph moving.
+Readability formulas, mechanical checks, and explicit state tracking can run locally on the caller's text. narrative-lens gives editors, MCP servers, and manuscript CI tools deterministic results with inspectable evidence. Craft and continuity heuristics still need author judgment; supported patterns, evaluation limits, and measured performance are documented.
 
 ## Contributing
 
-We welcome contributions of all sizes. Check the [issue tracker](https://github.com/writerslogic/narrative-lens/issues) for `good first issue` labels, or see [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup.
+Contributions of all sizes are welcome. Check the [issue tracker](https://github.com/writerslogic/narrative-lens/issues) or see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-**Areas where help is especially welcome:**
-- Additional language support for the craft and structure analyzers (currently English-tuned)
+Help is especially welcome on:
+- Language support beyond English for the craft and structure analyzers
 - Evaluation fixtures for the continuity analyzers against real manuscript excerpts
-- Integration examples for MCP servers and other manuscript tooling beyond Emathy and scrivener-mcp
+- Integration examples for MCP servers and manuscript tooling beyond Emathy and scrivener-mcp
 
 ## Security
 
-Found a vulnerability? Please report it privately — see [SECURITY.md](./SECURITY.md).
+Found a vulnerability? Report it privately: see [SECURITY.md](./SECURITY.md).
 
 ## License
 
