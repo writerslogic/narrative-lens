@@ -4,6 +4,7 @@ use std::sync::OnceLock;
 use super::author_knowledge::AuthorSource;
 use crate::{
     Error, Result,
+    craft::lexicon::is_word_char,
     manuscript::{
         Evidence, Manuscript, TextRange, author_source::validate_sources, config::validate_id,
     },
@@ -553,10 +554,25 @@ pub struct HistoricalAnalysisResult {
     pub diagnostics: Vec<String>,
 }
 
-fn historical_tokens() -> &'static regex::Regex {
-    static TOKENS: OnceLock<regex::Regex> = OnceLock::new();
-    TOKENS
-        .get_or_init(|| regex::Regex::new(r"\w+|[^\w\s]").expect("historical lexical token regex"))
+/// Lexical tokens with byte offsets: each maximal run of word characters, and
+/// each other non-whitespace character on its own, so "O.K." is `O . K .`
+/// whether or not spaces separate the marks.
+fn historical_tokens(text: &str) -> impl Iterator<Item = (usize, &str)> {
+    let mut chars = text.char_indices().peekable();
+    std::iter::from_fn(move || {
+        let (start, c) = chars.by_ref().find(|&(_, c)| !c.is_whitespace())?;
+        let mut end = start + c.len_utf8();
+        if is_word_char(c) {
+            while let Some(&(i, c)) = chars.peek() {
+                if !is_word_char(c) {
+                    break;
+                }
+                end = i + c.len_utf8();
+                chars.next();
+            }
+        }
+        Some((start, &text[start..end]))
+    })
 }
 
 fn term_key(term: &str, max_bytes: usize) -> Result<Vec<(bool, String)>> {
@@ -573,12 +589,12 @@ fn term_key(term: &str, max_bytes: usize) -> Result<Vec<(bool, String)>> {
     }
     let mut end = 0;
     let mut tokens = Vec::new();
-    for token in historical_tokens().find_iter(term) {
+    for (start, token) in historical_tokens(term) {
         tokens.push((
-            !tokens.is_empty() && !term[end..token.start()].is_empty(),
-            token.as_str().to_lowercase(),
+            !tokens.is_empty() && !term[end..start].is_empty(),
+            token.to_lowercase(),
         ));
-        end = token.end();
+        end = start + token.len();
         if tokens.len() > MAX_HISTORICAL_TERM_TOKENS {
             return Err(Error::InvalidInput(
                 "historical term token count exceeds limit".into(),
@@ -716,7 +732,7 @@ pub fn analyze_historical_catalogue(
         let mut active: Vec<(usize, usize, u32)> = Vec::new();
         let mut previous_end = 0;
         let mut previous_utf16 = 0u32;
-        for token in historical_tokens().find_iter(text) {
+        for (token_start, token) in historical_tokens(text) {
             total_tokens += 1;
             if total_tokens > MAX_HISTORICAL_TOKENS {
                 return Err(Error::InvalidInput(
@@ -724,16 +740,17 @@ pub fn analyze_historical_catalogue(
                 ));
             }
             let utf16_start =
-                previous_utf16 + text[previous_end..token.start()].encode_utf16().count() as u32;
-            let utf16_end = utf16_start + token.as_str().encode_utf16().count() as u32;
-            let spaced = !text[previous_end..token.start()].is_empty();
-            previous_end = token.end();
+                previous_utf16 + text[previous_end..token_start].encode_utf16().count() as u32;
+            let utf16_end = utf16_start + token.encode_utf16().count() as u32;
+            let spaced = !text[previous_end..token_start].is_empty();
+            let token_end = token_start + token.len();
+            previous_end = token_end;
             previous_utf16 = utf16_end;
             if token.len() > MAX_HISTORICAL_TERM_BYTES {
                 active.clear();
                 continue;
             }
-            let word = token.as_str().to_lowercase();
+            let word = token.to_lowercase();
             let mut next: Vec<_> = active
                 .iter()
                 .filter_map(|(node, start, utf16)| {
@@ -744,12 +761,12 @@ pub fn analyze_historical_catalogue(
                 })
                 .collect();
             if let Some(node) = nodes[0].children.get(&(false, word)) {
-                next.push((*node, token.start(), utf16_start));
+                next.push((*node, token_start, utf16_start));
             }
             for (node, start, utf16) in &next {
                 for &index in &nodes[*node].entries {
                     if candidates.len() >= MAX_HISTORICAL_CANDIDATES
-                        || token.end() - start > MAX_HISTORICAL_MATCH_BYTES
+                        || token_end - start > MAX_HISTORICAL_MATCH_BYTES
                     {
                         return Err(Error::InvalidInput(
                             "historical candidate count or span exceeds limit".into(),
@@ -757,7 +774,7 @@ pub fn analyze_historical_catalogue(
                     }
                     let entry = &catalogue[index];
                     let author_usage_id = confirmed
-                        .remove(&(entry.id.as_str(), scene.id.clone(), *start, token.end()))
+                        .remove(&(entry.id.as_str(), scene.id.clone(), *start, token_end))
                         .map(str::to_string);
                     let date_conflict =
                         (!entry.sense_ambiguous || author_usage_id.is_some()).then(|| {
@@ -769,11 +786,11 @@ pub fn analyze_historical_catalogue(
                         scene_id: scene.id.clone(),
                         range: TextRange {
                             byte_start: *start,
-                            byte_end: token.end(),
+                            byte_end: token_end,
                             utf16_start: *utf16,
                             utf16_end,
                         },
-                        quote: text[*start..token.end()].into(),
+                        quote: text[*start..token_end].into(),
                         date_conflict,
                         author_usage_id,
                     });

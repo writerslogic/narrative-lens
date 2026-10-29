@@ -29,9 +29,30 @@ fn pronoun_matcher() -> &'static WordMatcher {
     static M: OnceLock<WordMatcher> = OnceLock::new();
     M.get_or_init(|| WordMatcher::new(&[MALE_PRONOUNS, FEMALE_PRONOUNS, NEUTRAL_PRONOUNS].concat()))
 }
-fn paragraph_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"\n\s*\n").expect("constant paragraph regex"))
+/// Byte offset of the first newline in every whitespace run that holds at
+/// least two newlines: where a blank line breaks paragraphs.
+fn paragraph_breaks(text: &str) -> impl Iterator<Item = usize> {
+    let mut chars = text.char_indices().peekable();
+    std::iter::from_fn(move || {
+        loop {
+            let (start, c) = chars.by_ref().find(|&(_, c)| c.is_whitespace())?;
+            let mut first_newline = (c == '\n').then_some(start);
+            let mut newlines = usize::from(c == '\n');
+            while let Some(&(i, c)) = chars.peek() {
+                if !c.is_whitespace() {
+                    break;
+                }
+                chars.next();
+                if c == '\n' {
+                    newlines += 1;
+                    first_newline.get_or_insert(i);
+                }
+            }
+            if newlines >= 2 {
+                return first_newline;
+            }
+        }
+    })
 }
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Gender {
@@ -271,11 +292,7 @@ fn gender_counts(
     let sentences = crate::substrate::utils::sentence_spans(text);
     let mut start = 0;
     let mut name_cursor = 0;
-    for end in paragraph_regex()
-        .find_iter(text)
-        .map(|m| m.start())
-        .chain(std::iter::once(text.len()))
-    {
+    for end in paragraph_breaks(text).chain(std::iter::once(text.len())) {
         let first_name = name_cursor;
         while name_cursor < names.len() && names[name_cursor].start < end {
             name_cursor += 1;
@@ -641,10 +658,7 @@ impl CoreferenceResolver {
             };
         }
         let group_gender = |name: &str| group_genders[groups[name]].unwrap_or(Gender::Unknown);
-        let breaks: Vec<_> = paragraph_regex()
-            .find_iter(text)
-            .map(|m| m.start())
-            .collect();
+        let breaks: Vec<_> = paragraph_breaks(text).collect();
         let same_paragraph = |a: usize, b: usize| {
             let lo = a.min(b);
             let hi = a.max(b);

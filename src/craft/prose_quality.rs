@@ -1,9 +1,8 @@
 use aho_corasick::AhoCorasick;
-use regex::Regex;
 use std::sync::OnceLock;
 
 use crate::craft::lexicon::WordMatcher;
-use crate::substrate::text::truncate_snippet;
+use crate::substrate::text::{truncate_snippet, unicode_words};
 
 use log::debug;
 use serde::Serialize;
@@ -20,11 +19,6 @@ pub struct ProseExample {
 }
 
 const MAX_PROSE_EXAMPLES: usize = 25;
-
-fn adverb_re() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"\b\w+ly\b").unwrap())
-}
 
 const NON_ADVERBS: &[&str] = &[
     "only", "early", "likely", "family", "holy", "ugly", "lonely",
@@ -205,7 +199,6 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
     );
     let mut examples = Vec::new();
     let passive = crate::substrate::text::passive_regex();
-    let adverb = adverb_re();
     let cliche = cliche_matcher();
     let filter_matcher = filter_word_matcher();
 
@@ -252,14 +245,14 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
                 });
             }
 
-            // Adverb clusters
-            let adverbs: Vec<String> = adverb
-                .find_iter(sent)
-                .map(|m| m.as_str().to_string())
+            // Adverb clusters: whole words ending in "ly" (case-sensitive).
+            let adverbs: Vec<&str> = unicode_words(sent)
+                .map(|(_, word)| word)
+                .filter(|word| word.ends_with("ly"))
                 .filter(|a| !NON_ADVERBS.contains(&a.to_lowercase().as_str()))
                 .collect();
             if adverbs.len() >= 3 {
-                let shown: Vec<&str> = adverbs.iter().take(3).map(|s| s.as_str()).collect();
+                let shown: Vec<&str> = adverbs.iter().take(3).copied().collect();
                 examples.push(ProseExample {
                     scene_id: i,
                     issue_type: "adverb_cluster".into(),
