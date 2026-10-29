@@ -27,16 +27,33 @@ jobs:
 
     # A tag that disagrees with the manifest would publish the wrong crate version.
     - name: Require the release tag to match Cargo.toml
+      id: version
       env:
         TAG: ${{ github.event.release.tag_name }}
       run: |
         version=$(cargo metadata --locked --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "narrative-lens") | .version')
         test -n "$version" && test "$TAG" = "v$version" || { echo "release tag $TAG does not match Cargo.toml version $version" >&2; exit 1; }
+        echo "version=$version" >> "$GITHUB_OUTPUT"
 
     - name: Verify package
       run: cargo publish --locked --dry-run
 
+    # A version already on crates.io (for example published from a maintainer's
+    # machine) is immutable, so re-running the release must not fail on it.
+    - name: Check whether this version is already on crates.io
+      id: registry
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+      run: |
+        status=$(curl -sS -o /dev/null -w '%{http_code}' -A "narrative-lens release workflow (github.com/${GITHUB_REPOSITORY})" "https://crates.io/api/v1/crates/narrative-lens/${VERSION}")
+        case "$status" in
+          200) echo "published=true" >> "$GITHUB_OUTPUT"; echo "narrative-lens ${VERSION} is already on crates.io; skipping upload" ;;
+          404) echo "published=false" >> "$GITHUB_OUTPUT" ;;
+          *) echo "unexpected crates.io status ${status}" >&2; exit 1 ;;
+        esac
+
     - name: Publish to crates.io
+      if: steps.registry.outputs.published != 'true'
       run: cargo publish --locked
       env:
         CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

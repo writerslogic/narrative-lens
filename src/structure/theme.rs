@@ -151,22 +151,6 @@ pub struct ThematicResolution {
     pub momentum_label: String,
 }
 
-/// Truncate text to approximately the first `n` words.
-fn first_n_words(text: &str, n: usize) -> String {
-    let mut count = 0;
-    let mut end = text.len();
-    for (i, c) in text.char_indices() {
-        if c.is_whitespace() {
-            count += 1;
-            if count >= n {
-                end = i;
-                break;
-            }
-        }
-    }
-    text[..end].to_string()
-}
-
 /// Detect themes using SBERT embeddings. Encodes the first 500 words of each scene
 /// and compares against theme description embeddings via cosine similarity.
 /// Returns empty Vec if SBERT model is unavailable.
@@ -181,12 +165,11 @@ pub fn detect_themes_sbert(scenes: &[String]) -> Vec<HashMap<String, f64>> {
         return Vec::new();
     }
 
-    let truncated: Vec<String> = scenes
+    let truncated: Vec<&str> = scenes
         .iter()
-        .map(|scene| first_n_words(scene, 500))
+        .map(|scene| crate::substrate::text::first_words(scene, 500))
         .collect();
-    let truncated_refs: Vec<&str> = truncated.iter().map(|s| s.as_str()).collect();
-    let scene_embeddings = sbert::encode_batch(&truncated_refs);
+    let scene_embeddings = sbert::encode_batch(&truncated);
 
     scene_embeddings
         .into_iter()
