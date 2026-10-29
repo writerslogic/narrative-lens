@@ -229,7 +229,7 @@ Weights stay in an ignored cache (`--download` fetches them) and Python dependen
 are pinned in PEP 723 metadata run with `uv run --python 3.11`.
 
 - The original tokenizer declares fixed padding and truncation, so both strict loaders reject it with `model_profile_tokenizer_settings`. Successful runs use a separately pinned derived tokenizer with those settings set to null; the manifest keeps the upstream 128-token limit.
-- Native ONNX Runtime 1.31.0 and WASI tract 0.23.5 each produced 16 pooled 384-dimensional vectors across eight batches with maximum absolute errors of 2.3842×10⁻⁶ and 2.3544×10⁻⁶ against Python ONNX Runtime 1.27.0. Token IDs, masks, and type IDs matched exactly; 127- and 128-token inputs succeeded and 129 tokens failed without truncation.
+- Native ONNX Runtime 1.31.0 and WASI tract 0.23.5 each produced 16 pooled 384-dimensional vectors across eight batches with maximum absolute errors of 2.3842×10⁻⁶ and 2.3544×10⁻⁶ against Python ONNX Runtime 1.27.0. Token IDs, masks, and type IDs matched exactly; 127- and 128-token inputs succeeded and 129 tokens failed without truncation. The WASI side runs the `component_real_model` example built for `wasm32-wasip1` through `tests/component_real_model_wasi.cjs` (a manual Node WASI launcher that preopens the model cache; the CI runner cannot drive it because it needs the downloaded weights).
 - `scripts/prepare_ner_reference.py` and `scripts/ner_reference_parity.py` apply the same check to a pinned NER export ([ner-reference.json](benchmarks/ner-reference.json)), comparing verified native BIO spans with independent Python execution.
 
 These checks verify preprocessing and runtime fidelity for these exports only, not the

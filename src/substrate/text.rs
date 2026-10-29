@@ -333,12 +333,19 @@ pub fn passive_regex() -> &'static Regex {
 /// High-accuracy syllable counter. Uses a static override map for common
 /// English words and handles silent-e patterns and multi-vowel exceptions.
 pub fn count_syllables(word: &str) -> usize {
-    let lower = word.trim().to_lowercase();
-    if lower.is_empty() {
-        return 0;
+    // Only ASCII letters take part; everything else (digits, punctuation,
+    // non-Latin letters) is dropped after Unicode lowercasing, which is how
+    // characters such as U+212A KELVIN SIGN still contribute their ASCII form.
+    let mut alpha = String::with_capacity(word.len());
+    for c in word.chars() {
+        if c.is_ascii() {
+            if c.is_ascii_alphabetic() {
+                alpha.push(c.to_ascii_lowercase());
+            }
+        } else {
+            alpha.extend(c.to_lowercase().filter(char::is_ascii_alphabetic));
+        }
     }
-
-    let alpha: String = lower.chars().filter(|c| c.is_ascii_alphabetic()).collect();
     if alpha.is_empty() {
         return 0;
     }
@@ -347,41 +354,32 @@ pub fn count_syllables(word: &str) -> usize {
         return count;
     }
 
-    let chars: Vec<char> = alpha.chars().collect();
-    let len = chars.len();
+    // Multi-letter sequence adjustments: vowel pairs the group counter sees as
+    // one group but English pronounces as two syllables ("official", "hideous",
+    // "curious"), minus the "-tia"/"-ial"/"-tious" spellings where it does not.
     let mut adjustment: i32 = 0;
-
-    // Multi-letter sequence adjustments.
-    // These correct for vowel pairs that the counter treats as one group
-    // but are actually pronounced as separate syllables, or vice versa.
-    // "ia" in words like "official" = 2 syllables, but counted as 1 group -> add 1
     if alpha.contains("ia") && !alpha.contains("tia") && !alpha.contains("ial") {
         adjustment += 1;
     }
-    // "eous" = 2 syllables (e-ous), often counted as 1 -> add 1
     if alpha.contains("eous") {
         adjustment += 1;
     }
-    // "ious" = 2 syllables (i-ous), often counted as 1 -> add 1
     if alpha.contains("ious") && !alpha.contains("tious") {
         adjustment += 1;
     }
 
-    // Prepare working copy: strip trailing "e" if len > 2 and not ending "le"
-    let mut working = chars.clone();
-    if len > 2 && working.last() == Some(&'e') && !alpha.ends_with("le") {
-        working.pop();
+    // A trailing "e" is silent unless the word ends in "-le".
+    let bytes = alpha.as_bytes();
+    let mut len = bytes.len();
+    if len > 2 && bytes[len - 1] == b'e' && !alpha.ends_with("le") {
+        len -= 1;
     }
 
-    // Count vowel groups
+    // Count vowel groups; "y" is a vowel except in first position.
     let mut count: i32 = 0;
     let mut in_vowel = false;
-    for (i, &ch) in working.iter().enumerate() {
-        let is_vowel = match ch {
-            'a' | 'e' | 'i' | 'o' | 'u' => true,
-            'y' if i > 0 => true,
-            _ => false,
-        };
+    for (i, &b) in bytes[..len].iter().enumerate() {
+        let is_vowel = matches!(b, b'a' | b'e' | b'i' | b'o' | b'u') || (b == b'y' && i > 0);
         if is_vowel {
             if !in_vowel {
                 count += 1;
@@ -392,8 +390,7 @@ pub fn count_syllables(word: &str) -> usize {
         }
     }
 
-    count += adjustment;
-    std::cmp::max(count, 1) as usize
+    (count + adjustment).max(1) as usize
 }
 
 // ---------------------------------------------------------------------------
@@ -438,11 +435,31 @@ pub fn tokenize_words(text: &str) -> Vec<String> {
     word_slices(text).map(normalize_word).collect()
 }
 
+/// Word boundaries in the `\w` sense (letters, digits, underscore, internal
+/// apostrophes). `craft::readability::word_slices` deliberately differs: it keeps
+/// only alphabetic runs because syllable counting has no use for digits.
 pub(crate) fn word_slices(text: &str) -> impl Iterator<Item = &str> {
     word_split_regex()
         .split(text)
         .map(|word| word.trim_matches(['\'', '‘', '’']))
         .filter(|word| !word.is_empty())
+}
+
+/// The prefix of `text` holding approximately its first `n` whitespace-delimited
+/// words (the cut lands on the `n`th whitespace character).
+pub(crate) fn first_words(text: &str, n: usize) -> &str {
+    let mut count = 0;
+    let mut end = text.len();
+    for (i, c) in text.char_indices() {
+        if c.is_whitespace() {
+            count += 1;
+            if count >= n {
+                end = i;
+                break;
+            }
+        }
+    }
+    &text[..end]
 }
 
 pub(crate) fn normalize_word(word: &str) -> String {
@@ -1044,6 +1061,9 @@ fn echo_stopwords() -> &'static std::collections::HashSet<&'static str> {
     })
 }
 
+/// Echo detection runs on lowercased text and compares ASCII letter runs only,
+/// so "well-known" contributes "well" and "known"; this is intentionally
+/// narrower than [`word_slices`].
 fn word_tokenize_re() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| Regex::new(r"[a-z]+").expect("word tokenize regex"))

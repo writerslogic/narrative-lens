@@ -292,21 +292,25 @@ fn phase1_collect(scenes: &[String], model_entities: &[onnx::NerSpans]) -> crate
         }
     }
     non_person.retain(|surface| !per_hits.contains(surface));
-    for (name, count) in crate::substrate::nlp::extract_character_names_regex(scenes)? {
+    // Segment each scene once: the attribution/capitalization regex pass and
+    // the capitalized-name pass below both skip sentence-initial tokens.
+    let sentence_starts: Vec<HashSet<usize>> = scenes
+        .iter()
+        .map(|scene| crate::substrate::nlp::sentence_starts(scene))
+        .collect();
+    let evidence = crate::substrate::nlp::regex_name_evidence(scenes, &sentence_starts);
+    for (name, count) in evidence.names {
         add_signal(&mut candidates, &name, 1, count)?;
     }
-    for scene in scenes {
-        let starts: HashSet<_> = crate::substrate::utils::sentence_spans(scene)
-            .into_iter()
-            .map(|(s, _)| s)
-            .collect();
+    for (scene, starts) in scenes.iter().zip(&sentence_starts) {
         for matched in capitalized_name_re().find_iter(scene) {
             if !starts.contains(&matched.start()) {
                 add_signal(&mut candidates, matched.as_str(), 2, 1)?;
             }
         }
     }
-    let protected = crate::substrate::nlp::dialogue_attributed_names(scenes)
+    let protected = evidence
+        .attributed
         .into_iter()
         .map(|surface| candidate_name(&surface))
         .collect::<crate::Result<HashSet<_>>>()?;

@@ -365,11 +365,35 @@ fn count_attributions(
     }
 }
 
-/// Regex-based character name extraction for when the NER model is unavailable.
-/// Returns (name, count) pairs sorted by count descending.
-pub fn extract_character_names_regex<S: AsRef<str>>(
+/// Byte offsets at which the shared abbreviation-aware segmenter starts a
+/// sentence in `scene`; capitalized tokens at these offsets are not name evidence.
+pub(crate) fn sentence_starts(scene: &str) -> HashSet<usize> {
+    crate::substrate::utils::sentence_spans(scene)
+        .into_iter()
+        .map(|(start, _)| start)
+        .collect()
+}
+
+/// Everything one pass of the attribution and capitalization regexes yields
+/// for a call: the aggregated survivors of [`extract_character_names_regex`]
+/// and the raw dialogue-attributed surfaces (the same set
+/// [`dialogue_attributed_names`] returns), so a caller needing both scans the
+/// text once.
+pub(crate) struct RegexNameEvidence {
+    /// (name, count) pairs sorted by count descending.
+    pub(crate) names: Vec<(String, usize)>,
+    /// Surfaces in an attribution frame, before the plausibility filter.
+    pub(crate) attributed: HashSet<String>,
+}
+
+/// Shared core of [`extract_character_names_regex`]. `sentence_starts[i]` must
+/// be [`sentence_starts`] of `scenes[i]`; it is taken rather than recomputed so
+/// a caller that also needs the offsets segments each scene once.
+pub(crate) fn regex_name_evidence<S: AsRef<str>>(
     scenes: &[S],
-) -> Result<Vec<(String, usize)>, crate::error::Error> {
+    sentence_starts: &[HashSet<usize>],
+) -> RegexNameEvidence {
+    debug_assert_eq!(scenes.len(), sentence_starts.len());
     let fp = false_positives();
     let attr_re = dialogue_attr_regex();
     let attr_rev_re = dialogue_attr_reverse_regex();
@@ -380,23 +404,15 @@ pub fn extract_character_names_regex<S: AsRef<str>>(
     // high-precision signal, so these are kept even with few total mentions.
     let mut strong: HashSet<String> = HashSet::new();
 
-    for scene in scenes {
+    for (scene, sentence_starts) in scenes.iter().zip(sentence_starts) {
         let scene = scene.as_ref();
         // Dialogue attribution ("X said" and "said X"): a strong person signal.
         count_attributions(attr_re, scene, fp, &mut counts, &mut strong);
         count_attributions(attr_rev_re, scene, fp, &mut counts, &mut strong);
 
-        // Capitalized words NOT at sentence starts. Sentence-start offsets come
-        // from the shared abbreviation-aware segmenter, not a fragile regex.
-        let sentence_starts: HashSet<usize> = crate::substrate::utils::sentence_spans(scene)
-            .into_iter()
-            .map(|(s, _)| s)
-            .collect();
-
-        // Single capitalized words not at sentence starts
+        // Single capitalized words not at sentence starts.
         for m in cap_re.find_iter(scene) {
-            let start = m.start();
-            if sentence_starts.contains(&start) {
+            if sentence_starts.contains(&m.start()) {
                 continue;
             }
             let name = m.as_str().to_string();
@@ -405,16 +421,15 @@ pub fn extract_character_names_regex<S: AsRef<str>>(
             }
         }
 
-        // Two-word capitalized names (e.g. "Mary Smith")
-        let pair_re = capitalized_pair_regex();
-        for m in pair_re.find_iter(scene) {
-            let start = m.start();
-            if sentence_starts.contains(&start) {
+        // Two-word capitalized names (e.g. "Mary Smith").
+        for m in capitalized_pair_regex().find_iter(scene) {
+            if sentence_starts.contains(&m.start()) {
                 continue;
             }
             let name = m.as_str().to_string();
-            let words: Vec<&str> = name.split_whitespace().collect();
-            let all_fp = words.iter().all(|w| fp.contains(&w.to_lowercase()));
+            let all_fp = name
+                .split_whitespace()
+                .all(|w| fp.contains(&w.to_lowercase()));
             if !all_fp {
                 *counts.entry(name).or_insert(0) += 1;
             }
@@ -425,13 +440,28 @@ pub fn extract_character_names_regex<S: AsRef<str>>(
     // count, or any name reaching the weak-signal threshold of 3; sort by count.
     // A surface must also look like a name (`is_plausible_name`) — single-letter
     // and all-caps tokens are never characters and are dropped even if frequent.
-    let mut result: Vec<(String, usize)> = counts
+    let mut names: Vec<(String, usize)> = counts
         .into_iter()
         .filter(|(name, c)| is_plausible_name(name) && (strong.contains(name) || *c >= 3))
         .collect();
-    result.sort_by_key(|x| std::cmp::Reverse(x.1));
+    names.sort_by_key(|x| std::cmp::Reverse(x.1));
 
-    Ok(result)
+    RegexNameEvidence {
+        names,
+        attributed: strong,
+    }
+}
+
+/// Regex-based character name extraction for when the NER model is unavailable.
+/// Returns (name, count) pairs sorted by count descending.
+pub fn extract_character_names_regex<S: AsRef<str>>(
+    scenes: &[S],
+) -> Result<Vec<(String, usize)>, crate::error::Error> {
+    let starts: Vec<HashSet<usize>> = scenes
+        .iter()
+        .map(|scene| sentence_starts(scene.as_ref()))
+        .collect();
+    Ok(regex_name_evidence(scenes, &starts).names)
 }
 
 // ---------------------------------------------------------------------------
@@ -481,10 +511,7 @@ pub fn extract_character_mentions<S: AsRef<str>>(
     let mut mentions: Vec<NameMention> = Vec::new();
     for (scene_index, scene) in scenes.iter().enumerate() {
         let scene = scene.as_ref();
-        let sentence_starts: HashSet<usize> = crate::substrate::utils::sentence_spans(scene)
-            .into_iter()
-            .map(|(s, _)| s)
-            .collect();
+        let sentence_starts = sentence_starts(scene);
 
         let keep = |surface: &str, offset: usize, out: &mut Vec<NameMention>| {
             if survivors.contains(surface) {

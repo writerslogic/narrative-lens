@@ -601,21 +601,6 @@ pub fn genre_from_label(label: &str) -> Option<Genre> {
     }
 }
 
-fn first_words(text: &str, n: usize) -> String {
-    let mut count = 0;
-    let mut end = text.len();
-    for (i, c) in text.char_indices() {
-        if c.is_whitespace() {
-            count += 1;
-            if count >= n {
-                end = i;
-                break;
-            }
-        }
-    }
-    text[..end].to_string()
-}
-
 /// Detect genre from a raw manuscript sample using SBERT cosine similarity
 /// (via [`detect_genre_sbert`]) when a model is available, falling back to
 /// the label/theme-driven [`detect_genre`] otherwise.
@@ -626,8 +611,8 @@ pub fn detect_genre_smart(
     dialogue_ratio: f64,
     fkgl: f64,
 ) -> Genre {
-    let sample = first_words(sample_text, 500);
-    if let Some(genre) = detect_genre_sbert(&sample) {
+    let sample = crate::substrate::text::first_words(sample_text, 500);
+    if let Some(genre) = detect_genre_sbert(sample) {
         return genre;
     }
     detect_genre(themes, tension_pattern, dialogue_ratio, fkgl)
