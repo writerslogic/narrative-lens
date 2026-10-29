@@ -131,6 +131,32 @@ higher recall needs a neural coreference model. The LitBank text has one sentenc
 line and no blank-line paragraphs, so paragraph-scoped heuristics see one paragraph per
 excerpt.
 
+### Literary fine-tune of the NER model (candidate v7)
+
+The pinned export is `dslim/distilbert-NER`, trained on news. `scripts/ner_finetune.py`
+fine-tunes it on the development split's proper-person spans and exports a drop-in
+replacement (same tokenizer, same nine-label manifest profile, int8 dynamic
+quantization, 65.6 MB). `cv` trains five author-disjoint folds so every number below
+is measured on authors the model never saw; `export` trains on all 76 works.
+
+```sh
+uv run --no-project --with torch --with transformers --with onnx --with onnxruntime scripts/ner_finetune.py cv
+uv run --no-project --with torch --with transformers --with onnx --with onnxruntime scripts/ner_finetune.py export
+```
+
+| Exact proper-person spans, held-out authors (pooled over 5 folds) | P | R | F1 |
+| --- | ---: | ---: | ---: |
+| Pinned news-trained export | 0.643 | 0.677 | 0.660 |
+| Fine-tuned on LitBank development works | 0.843 | 0.886 | 0.864 |
+
+Record: [benchmarks/evidence/ner-litbank-cv-v1.json](benchmarks/evidence/ner-litbank-cv-v1.json)
+(4 epochs, learning rate 5e-5, seed 1). The full pipeline run on the development split
+with the exported model is not a clean measurement, because those works are its training
+data; for the record it moved model spans F1 0.816 to 0.934, proper person names 0.598 to
+0.642, and the named inventory 0.636 to 0.663, with supplied-cast coreference unchanged.
+The pinned model stays the default until the candidate is hosted and scored once on the
+holdout split; the holdout labels were not used anywhere in training.
+
 ## Pronunciation reference
 
 `scripts/pronunciation_benchmark.py` pins a [CMUdict](https://github.com/cmusphinx/cmudict)

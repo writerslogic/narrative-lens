@@ -9,6 +9,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) +
 - The LitBank holdout split was scored once at 548a033 (heuristic and local-NER modes);
   the records are `docs/benchmarks/evidence/literary-holdout-{heuristic,ner}-v1.json` and
   `docs/EVALUATION.md` shows them beside the development figures.
+- `scripts/ner_finetune.py` fine-tunes the pinned DistilBERT NER export on LitBank
+  development works and exports a drop-in int8 model; on held-out authors exact person
+  span F1 rises from 0.660 to 0.864 (`docs/benchmarks/evidence/ner-litbank-cv-v1.json`).
 
 ### Changed
 - `count_syllables` no longer allocates per call; results are unchanged.
