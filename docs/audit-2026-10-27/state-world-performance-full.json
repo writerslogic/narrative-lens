@@ -1,0 +1,51 @@
+{
+  "deltaFactEntries": 0,
+  "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+  "facts": 2048,
+  "finalSemanticFingerprint": "19e0573ca754c128",
+  "medianMs": 31.662250000000004,
+  "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+  "mode": "full",
+  "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+  "repetitions": 5,
+  "retainedFactEntries": 1049600,
+  "samples": [
+    {
+      "allocationCalls": 2138495,
+      "ms": 35.222541,
+      "peakAdditionalRequestedBytes": 151999806,
+      "retainedAdditionalRequestedBytes": 151523802,
+      "totalRequestedBytes": 153913063
+    },
+    {
+      "allocationCalls": 2138466,
+      "ms": 31.662250000000004,
+      "peakAdditionalRequestedBytes": 151997414,
+      "retainedAdditionalRequestedBytes": 151521410,
+      "totalRequestedBytes": 153909351
+    },
+    {
+      "allocationCalls": 2138466,
+      "ms": 34.708292,
+      "peakAdditionalRequestedBytes": 151997414,
+      "retainedAdditionalRequestedBytes": 151521410,
+      "totalRequestedBytes": 153909351
+    },
+    {
+      "allocationCalls": 2138466,
+      "ms": 28.642916,
+      "peakAdditionalRequestedBytes": 151997414,
+      "retainedAdditionalRequestedBytes": 151521410,
+      "totalRequestedBytes": 153909351
+    },
+    {
+      "allocationCalls": 2138466,
+      "ms": 28.410958,
+      "peakAdditionalRequestedBytes": 151997414,
+      "retainedAdditionalRequestedBytes": 151521410,
+      "totalRequestedBytes": 153909351
+    }
+  ],
+  "scenes": 1024,
+  "workload": "growth"
+}

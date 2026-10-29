@@ -22,7 +22,16 @@
 //! manuscript order.
 
 use serde::{Deserialize, Serialize};
-use std::sync::OnceLock;
+use std::{collections::BTreeMap, sync::OnceLock};
+
+use crate::{Error, Result, manuscript::config::validate_id};
+
+pub const MAX_TIMELINE_DOCUMENTS: usize = 10_000;
+pub const MAX_TIMELINE_TEXT_BYTES: usize = 16 * 1024 * 1024;
+pub const MAX_TIMELINE_TOTAL_BYTES: usize = 64 * 1024 * 1024;
+pub const MAX_TIMELINE_OVERRIDES: usize = 10_000;
+pub const MAX_TIMELINE_FIELD_BYTES: usize = 4096;
+pub const MAX_TIMELINE_METADATA_BYTES: usize = 4 * 1024 * 1024;
 
 /// One manuscript document's place in the timeline view: its id, its zero-based
 /// position in manuscript order, and the first explicit time expression found in
@@ -33,6 +42,7 @@ use std::sync::OnceLock;
 /// recognized time. It carries no parsed/normalized calendar value on purpose —
 /// the core does no date math at this layer, so the host owns any
 /// interpretation.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TimelineEntry {
@@ -57,6 +67,7 @@ pub struct TimelineEntry {
 
 /// Writer-authored chronology metadata. It overlays conservative detection and
 /// remains separate from prose, so changing a date or lane never rewrites text.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TimelineOverride {
     pub document_id: String,
@@ -88,7 +99,7 @@ pub struct TimelineOverride {
 /// The day/year tail of a month is written longest-alternative-first
 /// (day+year, then year, then day). This matters because the `regex` crate has no
 /// lookaround and uses leftmost-first (not leftmost-longest) alternation: a naive
-/// optional `\s+\d{1,2}` would greedily eat "18" out of "March 1847" and stop,
+/// optional `\s+[0-9]{1,2}` would greedily eat "18" out of "March 1847" and stop,
 /// leaving "47". Trying the day-and-year and year-only shapes before the
 /// day-only shape makes "March 1847" match whole as a year.
 fn temporal_re() -> &'static regex::Regex {
@@ -103,24 +114,24 @@ fn temporal_re() -> &'static regex::Regex {
             # Date tail tried longest-first: day+year, year-only, day-only.
             \b(?:january|february|march|april|june|july|august
                  |september|october|november|december)\b
-              (?:\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}
-                |\s+\d{4}
-                |\s+\d{1,2}(?:st|nd|rd|th)?)?
+              (?:\s+[0-9]{1,2}(?:st|nd|rd|th)?,?\s+[0-9]{4}
+                |\s+[0-9]{4}
+                |\s+[0-9]{1,2}(?:st|nd|rd|th)?)?
             |
             # 'May' only when an explicit day or year follows (avoids the verb).
             \bmay\b
-              (?:\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}
-                |\s+\d{4}
-                |\s+\d{1,2}(?:st|nd|rd|th)?)
+              (?:\s+[0-9]{1,2}(?:st|nd|rd|th)?,?\s+[0-9]{4}
+                |\s+[0-9]{4}
+                |\s+[0-9]{1,2}(?:st|nd|rd|th)?)
             |
             # Clock time, 12- or 24-hour, e.g. 9:30 / 14:05.
-            \b\d{1,2}:\d{2}\b
+            \b(?:[01]?[0-9]|2[0-3]):[0-5][0-9]\b
             |
             # Weekday markers.
             \b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b
             |
             # A bare four-digit year, e.g. 1847.
-            \b\d{4}\b",
+            \b[0-9]{4}\b",
         )
         .expect("temporal-hint regex")
     })
@@ -131,23 +142,70 @@ fn temporal_re() -> &'static regex::Regex {
 /// out. The match is normalized via `split_whitespace().join(" ")` so a hint that
 /// straddles a line break ("March\n1847") returns as a clean "March 1847".
 fn first_time_hint(text: &str) -> Option<String> {
-    let m = temporal_re().find(text)?;
-    let normalized = m.as_str().split_whitespace().collect::<Vec<_>>().join(" ");
-    if normalized.is_empty() {
-        None
-    } else {
-        Some(normalized)
-    }
+    temporal_re().find_iter(text).find_map(|m| {
+        let normalized = m.as_str().split_whitespace().collect::<Vec<_>>().join(" ");
+        valid_calendar_hint(&normalized).then_some(normalized)
+    })
 }
 
-/// Build the timeline projection: the given documents, **in the order supplied**,
-/// each tagged with its first detected time hint.
-///
-/// `order` is simply the input index — manuscript order is preserved exactly and
-/// nothing is re-sorted (see the module docs for why v1 refuses to infer a
-/// chronology). Pure and deterministic; empty input yields an empty Vec.
+fn valid_calendar_hint(hint: &str) -> bool {
+    let mut parts = hint.split_whitespace();
+    let month = parts.next().unwrap_or_default().to_ascii_lowercase();
+    let max_day = match month.as_str() {
+        "april" | "june" | "september" | "november" => 30,
+        "february" => 29,
+        "january" | "march" | "may" | "july" | "august" | "october" | "december" => 31,
+        _ => return true,
+    };
+    let Some(day) = parts.next() else { return true };
+    if day.len() == 4 && day.bytes().all(|byte| byte.is_ascii_digit()) {
+        return true;
+    }
+    let digits: String = day.chars().take_while(char::is_ascii_digit).collect();
+    let Ok(day) = digits.parse::<u32>() else {
+        return false;
+    };
+    if day == 0 || day > max_day {
+        return false;
+    }
+    if month == "february"
+        && day == 29
+        && let Some(year) = parts.next().and_then(|year| year.parse::<u32>().ok())
+    {
+        return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    }
+    true
+}
+
 pub fn build_timeline(documents: &[(String, String)]) -> Vec<TimelineEntry> {
-    documents
+    build_timeline_checked(documents).unwrap_or_default()
+}
+
+/// Projects bounded documents in the supplied order; a valid lexical hint is
+/// neither a scene date nor an inferred chronology.
+pub fn build_timeline_checked(documents: &[(String, String)]) -> Result<Vec<TimelineEntry>> {
+    if documents.len() > MAX_TIMELINE_DOCUMENTS {
+        return Err(Error::InvalidInput(
+            "timeline document count exceeds limit".into(),
+        ));
+    }
+    let mut ids = std::collections::BTreeSet::new();
+    let mut total = 0usize;
+    for (id, text) in documents {
+        validate_id(id)?;
+        if !ids.insert(id) || text.len() > MAX_TIMELINE_TEXT_BYTES {
+            return Err(Error::InvalidInput(
+                "timeline duplicate id or document byte limit".into(),
+            ));
+        }
+        total += text.len();
+        if total > MAX_TIMELINE_TOTAL_BYTES {
+            return Err(Error::InvalidInput(
+                "timeline total text exceeds byte limit".into(),
+            ));
+        }
+    }
+    Ok(documents
         .iter()
         .enumerate()
         .map(|(order, (document_id, text))| TimelineEntry {
@@ -159,39 +217,106 @@ pub fn build_timeline(documents: &[(String, String)]) -> Vec<TimelineEntry> {
             label: None,
             notes: None,
         })
-        .collect()
+        .collect())
 }
 
 pub fn apply_overrides(entries: &mut [TimelineEntry], overrides: &[TimelineOverride]) {
-    for entry in entries {
-        if let Some(value) = overrides
-            .iter()
-            .find(|value| value.document_id == entry.document_id)
+    let _ = apply_overrides_checked(entries, overrides);
+}
+
+/// Applies validated patches atomically in supplied order. For each field the
+/// last Some wins; None preserves prior metadata and blank time hints are ignored.
+pub fn apply_overrides_checked(
+    entries: &mut [TimelineEntry],
+    overrides: &[TimelineOverride],
+) -> Result<()> {
+    if entries.len() > MAX_TIMELINE_DOCUMENTS || overrides.len() > MAX_TIMELINE_OVERRIDES {
+        return Err(Error::InvalidInput(
+            "timeline entry/override count exceeds limit".into(),
+        ));
+    }
+    let mut index = BTreeMap::new();
+    let mut metadata = 0usize;
+    for (position, entry) in entries.iter().enumerate() {
+        validate_id(&entry.document_id)?;
+        if entry.order != position || index.insert(entry.document_id.as_str(), position).is_some() {
+            return Err(Error::InvalidInput(
+                "timeline entries require unique ids and manuscript order".into(),
+            ));
+        }
+        metadata += entry.document_id.len();
+        validate_fields(
+            [
+                &entry.chronology_key,
+                &entry.lane,
+                &entry.label,
+                &entry.time_hint,
+                &entry.notes,
+            ],
+            &mut metadata,
+        )?;
+    }
+    for patch in overrides {
+        validate_id(&patch.document_id)?;
+        if !index.contains_key(patch.document_id.as_str()) {
+            return Err(Error::InvalidInput(
+                "timeline override references an unknown document".into(),
+            ));
+        }
+        metadata += patch.document_id.len();
+        validate_fields(
+            [
+                &patch.chronology_key,
+                &patch.lane,
+                &patch.label,
+                &patch.time_hint,
+                &patch.notes,
+            ],
+            &mut metadata,
+        )?;
+    }
+    let positions: Vec<_> = overrides
+        .iter()
+        .map(|patch| index[patch.document_id.as_str()])
+        .collect();
+    for (patch, position) in overrides.iter().zip(positions) {
+        let entry = &mut entries[position];
+        if let Some(value) = &patch.chronology_key {
+            entry.chronology_key = Some(value.clone());
+        }
+        if let Some(value) = &patch.lane {
+            entry.lane = Some(value.clone());
+        }
+        if let Some(value) = &patch.label {
+            entry.label = Some(value.clone());
+        }
+        if let Some(value) = &patch.notes {
+            entry.notes = Some(value.clone());
+        }
+        if let Some(value) = &patch.time_hint
+            && !value.trim().is_empty()
         {
-            // Overlay semantics (see `TimelineOverride`'s doc comment): a field left
-            // `None` in a partial override must leave the existing value alone, not
-            // clear it.
-            if value.chronology_key.is_some() {
-                entry.chronology_key = value.chronology_key.clone();
-            }
-            if value.lane.is_some() {
-                entry.lane = value.lane.clone();
-            }
-            if value.label.is_some() {
-                entry.label = value.label.clone();
-            }
-            if value.notes.is_some() {
-                entry.notes = value.notes.clone();
-            }
-            if value
-                .time_hint
-                .as_ref()
-                .is_some_and(|hint| !hint.trim().is_empty())
-            {
-                entry.time_hint = value.time_hint.clone();
-            }
+            entry.time_hint = Some(value.clone());
         }
     }
+    Ok(())
+}
+
+fn validate_fields(fields: [&Option<String>; 5], total: &mut usize) -> Result<()> {
+    for field in fields.into_iter().flatten() {
+        if field.len() > MAX_TIMELINE_FIELD_BYTES || field.contains('\0') {
+            return Err(Error::InvalidInput(
+                "timeline metadata field exceeds byte limit or contains NUL".into(),
+            ));
+        }
+        *total += field.len();
+    }
+    if *total > MAX_TIMELINE_METADATA_BYTES {
+        return Err(Error::InvalidInput(
+            "timeline metadata exceeds byte limit".into(),
+        ));
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -354,8 +479,7 @@ mod tests {
         let bytes = serde_json::to_vec(&e).unwrap();
         assert_eq!(serde_json::from_slice::<TimelineEntry>(&bytes).unwrap(), e);
         // time_hint defaults to None when absent from the wire.
-        let bare: TimelineEntry =
-            serde_json::from_str(r#"{"documentId":"d1","order":3}"#).unwrap();
+        let bare: TimelineEntry = serde_json::from_str(r#"{"documentId":"d1","order":3}"#).unwrap();
         assert_eq!(bare.time_hint, None);
         assert_eq!(bare.order, 3);
     }

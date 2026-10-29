@@ -8,8 +8,8 @@
 
 use crate::onnx;
 
-/// Set a custom directory to search for SBERT model files.
-/// Must be called before the first call to `encode_text`.
+/// Set the explicit model root containing `sbert-onnx/`.
+/// Replaces or retries the native model; a no-op on wasm.
 pub fn set_model_directory(path: &str) {
     onnx::set_sbert_model_directory(path);
 }

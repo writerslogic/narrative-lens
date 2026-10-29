@@ -1,5 +1,11 @@
+//! Caller-supplied genre convention checklists; descriptive structure inputs
+//! never establish prose quality, thematic truth, social intent or genre blends.
+use crate::substrate::utils::AnalysisAvailability;
+use crate::{Error, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GenreConvention {
@@ -9,17 +15,40 @@ pub struct GenreConvention {
     pub evidence: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ConventionStatus {
+    Unknown,
     Met,
     PartiallyMet,
     NotMet,
     Subverted,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GenreComplianceResult {
+    #[serde(default)]
+    pub availability: crate::substrate::utils::AnalysisAvailability,
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
+
+    #[serde(default)]
+    pub quality_assessed: bool,
+    #[serde(default)]
+    pub judgment_provenance: String,
+    #[serde(default)]
+    pub blend_assessed: bool,
+    #[serde(default)]
+    pub structural_signals: GenreStructuralSignals,
+    #[serde(default)]
+    pub assessed_count: usize,
+    #[serde(default)]
+    pub unknown_count: usize,
+    /// Fraction of checklist entries with supplied judgments, not a quality score.
+    #[serde(default)]
+    pub evidence_coverage: f64,
     pub genre: String,
     pub conventions: Vec<GenreConvention>,
     /// Number of conventions observed as present (Met or Subverted).
@@ -421,22 +450,207 @@ fn middle_grade_conventions() -> Vec<ConventionDef> {
     ]
 }
 
+fn canonical_genre(genre: &str) -> Result<&'static str> {
+    if genre.len() > 128 {
+        return Err(Error::InvalidInput("unsupported genre label".into()));
+    }
+    Ok(match genre.trim().to_lowercase().as_str() {
+        "romance" => "romance",
+        "mystery" => "mystery",
+        "thriller" => "thriller",
+        "literary" | "literary fiction" => "literary",
+        "fantasy" => "fantasy",
+        "sci-fi" | "science fiction" => "sci-fi",
+        "horror" => "horror",
+        "historical" | "historical fiction" => "historical",
+        "ya" | "young adult" => "ya",
+        "women's fiction" | "womens fiction" => "women's fiction",
+        "upmarket" | "upmarket fiction" => "upmarket",
+        "middle-grade" | "middle grade" => "middle-grade",
+        _ => return Err(Error::InvalidInput("unsupported genre label".into())),
+    })
+}
+
 fn get_conventions(genre: &str) -> Vec<ConventionDef> {
-    match genre.to_lowercase().as_str() {
+    match genre {
         "romance" => romance_conventions(),
         "mystery" => mystery_conventions(),
         "thriller" => thriller_conventions(),
-        "literary" | "literary fiction" => literary_conventions(),
+        "literary" => literary_conventions(),
         "fantasy" => fantasy_conventions(),
-        "sci-fi" | "science fiction" => scifi_conventions(),
+        "sci-fi" => scifi_conventions(),
         "horror" => horror_conventions(),
-        "historical" | "historical fiction" => historical_conventions(),
-        "ya" | "young adult" => ya_conventions(),
-        "women's fiction" | "womens fiction" => womens_fiction_conventions(),
-        "upmarket" | "upmarket fiction" => upmarket_conventions(),
-        "middle-grade" | "middle grade" => middle_grade_conventions(),
-        _ => literary_conventions(),
+        "historical" => historical_conventions(),
+        "ya" => ya_conventions(),
+        "women's fiction" => womens_fiction_conventions(),
+        "upmarket" => upmarket_conventions(),
+        "middle-grade" => middle_grade_conventions(),
+        _ => Vec::new(),
     }
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GenreEvidence {
+    #[serde(default)]
+    pub has_hea: Option<bool>,
+    #[serde(default)]
+    pub has_solution: Option<bool>,
+    #[serde(default)]
+    pub has_ticking_clock: Option<bool>,
+    #[serde(default)]
+    pub protagonist_survives: Option<bool>,
+    #[serde(default)]
+    pub character_growth: Option<bool>,
+    #[serde(default)]
+    pub worldbuilding_present: Option<bool>,
+    #[serde(default)]
+    pub word_count: Option<usize>,
+    #[serde(default)]
+    pub structure_health: Option<f64>,
+    #[serde(default)]
+    pub tension_arc_shape: Option<String>,
+    /// Exact names from the selected checklist. These are supplied judgments.
+    #[serde(default)]
+    pub convention_judgments: BTreeMap<String, ConventionStatus>,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GenreStructuralSignals {
+    pub word_count: Option<usize>,
+    pub structure_health: Option<f64>,
+    pub tension_arc_shape: Option<String>,
+}
+
+fn direct_judgment(genre: &str, name: &str, evidence: &GenreEvidence) -> Option<ConventionStatus> {
+    let value = match (genre, name) {
+        ("romance", "HEA/HFN") => evidence.has_hea,
+        ("mystery", "Solution Revealed") => evidence.has_solution,
+        ("thriller", "Ticking Clock") => evidence.has_ticking_clock,
+        ("thriller", "Protagonist Survives") => evidence.protagonist_survives,
+        ("fantasy" | "sci-fi", "Worldbuilding") => evidence.worldbuilding_present,
+        (_, "Character Growth" | "Personal Transformation") => evidence.character_growth,
+        _ => None,
+    };
+    value.map(|present| {
+        if present {
+            ConventionStatus::Met
+        } else {
+            ConventionStatus::NotMet
+        }
+    })
+}
+
+/// Project supplied judgments onto a known, non-normative convention checklist.
+/// Absent evidence remains Unknown. Explicit PartiallyMet/Subverted judgments are
+/// accepted as caller labels; the engine never infers author intent from absence.
+pub fn check_genre_compliance_checked(
+    genre: &str,
+    evidence: &GenreEvidence,
+) -> Result<GenreComplianceResult> {
+    let genre = canonical_genre(genre)?;
+    let definitions = get_conventions(genre);
+    if evidence.convention_judgments.len() > definitions.len()
+        || evidence
+            .convention_judgments
+            .keys()
+            .any(|name| !definitions.iter().any(|def| def.name == name))
+    {
+        return Err(Error::InvalidInput(
+            "judgment does not name a convention in the selected genre".into(),
+        ));
+    }
+    if evidence
+        .word_count
+        .is_some_and(|count| count > 64 * 1024 * 1024)
+    {
+        return Err(Error::InvalidInput(
+            "word count exceeds manuscript byte-derived bound".into(),
+        ));
+    }
+    if evidence
+        .structure_health
+        .is_some_and(|value| !value.is_finite() || !(0.0..=1.0).contains(&value))
+    {
+        return Err(Error::InvalidInput(
+            "structure health must be finite within 0..=1".into(),
+        ));
+    }
+    if evidence.tension_arc_shape.as_deref().is_some_and(|shape| {
+        !matches!(
+            shape,
+            "rising" | "falling" | "flat" | "chaotic" | "varied" | "unknown"
+        )
+    }) {
+        return Err(Error::InvalidInput("unsupported tension arc shape".into()));
+    }
+    let mut conventions = Vec::new();
+    for def in definitions {
+        let direct = direct_judgment(genre, def.name, evidence);
+        let explicit = evidence.convention_judgments.get(def.name);
+        if let (Some(direct), Some(explicit)) = (&direct, explicit)
+            && direct != explicit
+        {
+            return Err(Error::InvalidInput(
+                "conflicting supplied convention judgments".into(),
+            ));
+        }
+        let status = explicit
+            .cloned()
+            .or(direct)
+            .unwrap_or(ConventionStatus::Unknown);
+        let source = if status == ConventionStatus::Unknown {
+            "Unassessed: no supplied judgment"
+        } else {
+            "Caller-supplied judgment; not independently detected"
+        };
+        conventions.push(GenreConvention {
+            name: def.name.into(),
+            description: def.description.into(),
+            status,
+            evidence: source.into(),
+        });
+    }
+    let present_count = conventions
+        .iter()
+        .filter(|c| {
+            matches!(
+                c.status,
+                ConventionStatus::Met | ConventionStatus::Subverted
+            )
+        })
+        .count();
+    let absent_count = conventions
+        .iter()
+        .filter(|c| c.status == ConventionStatus::NotMet)
+        .count();
+    let unknown_count = conventions
+        .iter()
+        .filter(|c| c.status == ConventionStatus::Unknown)
+        .count();
+    let assessed_count = conventions.len() - unknown_count;
+    let deviations = conventions
+        .iter()
+        .filter(|c| c.status == ConventionStatus::NotMet)
+        .map(|c| format!("Supplied as absent: {}", c.name))
+        .collect();
+    let strengths = conventions
+        .iter()
+        .filter(|c| c.status == ConventionStatus::Met)
+        .map(|c| format!("Supplied as present: {}", c.name))
+        .collect();
+    Ok(GenreComplianceResult {
+        availability: if assessed_count == 0 { AnalysisAvailability::Unavailable } else if unknown_count > 0 { AnalysisAvailability::Partial } else { AnalysisAvailability::Complete },
+        diagnostics: vec!["caller_supplied_checklist;quality_blend_and_intent_not_inferred;conventions_are_not_normative_requirements".into()],
+        quality_assessed: false, judgment_provenance: "caller_supplied".into(), blend_assessed: false,
+        structural_signals: GenreStructuralSignals { word_count: evidence.word_count, structure_health: evidence.structure_health, tension_arc_shape: evidence.tension_arc_shape.clone() },
+        evidence_coverage: assessed_count as f64 / conventions.len() as f64,
+        assessed_count, unknown_count, genre: genre.into(), conventions, present_count, absent_count,
+        is_genre_blend: false, secondary_genres: Vec::new(), deviations, strengths,
+    })
 }
 
 pub fn check_genre_compliance(
@@ -451,255 +665,40 @@ pub fn check_genre_compliance(
     structure_health: f64,
     tension_arc_shape: &str,
 ) -> GenreComplianceResult {
-    let convention_defs = get_conventions(genre);
-    let genre_lower = genre.to_lowercase();
-
-    let mut conventions = Vec::new();
-
-    for def in &convention_defs {
-        let status = evaluate_convention(
-            &genre_lower,
-            def.name,
-            has_hea,
-            has_solution,
-            has_ticking_clock,
-            protagonist_survives,
-            character_growth,
-            worldbuilding_present,
-            word_count,
-            structure_health,
-            tension_arc_shape,
-        );
-
-        let evidence = evidence_for(&genre_lower, def.name, &status);
-
-        conventions.push(GenreConvention {
-            name: def.name.to_string(),
-            description: def.description.to_string(),
-            status,
-            evidence,
-        });
-    }
-
-    let present_count = conventions
-        .iter()
-        .filter(|c| {
-            matches!(
-                c.status,
-                ConventionStatus::Met | ConventionStatus::Subverted
-            )
-        })
-        .count();
-    let absent_count = conventions
-        .iter()
-        .filter(|c| matches!(c.status, ConventionStatus::NotMet))
-        .count();
-
-    // Detect secondary genre signals
-    let mut secondary_genres = Vec::new();
-    if genre_lower != "romance" && has_hea && character_growth {
-        secondary_genres.push("romance".to_string());
-    }
-    if genre_lower != "thriller" && has_ticking_clock && tension_arc_shape == "rising" {
-        secondary_genres.push("thriller".to_string());
-    }
-    if genre_lower != "mystery" && has_solution {
-        secondary_genres.push("mystery".to_string());
-    }
-    if genre_lower != "literary" && structure_health > 0.8 {
-        secondary_genres.push("literary".to_string());
-    }
-
-    // A blend requires at least one strong secondary signal.
-    let is_genre_blend =
-        (genre_lower != "thriller" && has_ticking_clock && tension_arc_shape == "rising")
-            || (genre_lower != "romance" && has_hea && character_growth);
-
-    let deviations: Vec<String> = conventions
-        .iter()
-        .filter(|c| matches!(c.status, ConventionStatus::NotMet))
-        .map(|c| format!("Missing: {}", c.name))
-        .collect();
-
-    let strengths: Vec<String> = conventions
-        .iter()
-        .filter(|c| matches!(c.status, ConventionStatus::Met))
-        .map(|c| format!("Present: {}", c.name))
-        .collect();
-
-    GenreComplianceResult {
-        genre: genre.to_string(),
-        conventions,
-        present_count,
-        absent_count,
-        is_genre_blend,
-        secondary_genres,
-        deviations,
-        strengths,
-    }
-}
-
-fn evaluate_convention(
-    genre: &str,
-    convention_name: &str,
-    has_hea: bool,
-    has_solution: bool,
-    has_ticking_clock: bool,
-    protagonist_survives: bool,
-    character_growth: bool,
-    worldbuilding_present: bool,
-    word_count: usize,
-    structure_health: f64,
-    tension_arc_shape: &str,
-) -> ConventionStatus {
-    match (genre, convention_name) {
-        // Romance
-        ("romance", "HEA/HFN") => {
-            if has_hea {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::NotMet
-            }
-        }
-        ("romance", "Character Growth") => {
-            if character_growth {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::PartiallyMet
-            }
-        }
-
-        // Mystery
-        ("mystery", "Solution Revealed") => {
-            if has_solution {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::NotMet
-            }
-        }
-        ("mystery", "Rising Suspicion") => match tension_arc_shape {
-            "rising" => ConventionStatus::Met,
-            "flat" => ConventionStatus::NotMet,
-            _ => ConventionStatus::PartiallyMet,
+    check_genre_compliance_checked(
+        genre,
+        &GenreEvidence {
+            has_hea: Some(has_hea),
+            has_solution: Some(has_solution),
+            has_ticking_clock: Some(has_ticking_clock),
+            protagonist_survives: Some(protagonist_survives),
+            character_growth: Some(character_growth),
+            worldbuilding_present: Some(worldbuilding_present),
+            word_count: Some(word_count),
+            structure_health: Some(structure_health),
+            tension_arc_shape: Some(tension_arc_shape.into()),
+            convention_judgments: BTreeMap::new(),
         },
-
-        // Thriller
-        ("thriller", "Ticking Clock") => {
-            if has_ticking_clock {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::NotMet
-            }
-        }
-        ("thriller", "Protagonist Survives") => {
-            if protagonist_survives {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::Subverted
-            }
-        }
-        ("thriller", "Fast Pacing") => match tension_arc_shape {
-            "rising" => ConventionStatus::Met,
-            "chaotic" => ConventionStatus::PartiallyMet,
-            _ => ConventionStatus::NotMet,
-        },
-        ("thriller", "High Stakes") => {
-            if structure_health > 0.6 {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::PartiallyMet
-            }
-        }
-
-        // Fantasy / Sci-fi
-        ("fantasy", "Worldbuilding") | ("sci-fi" | "science fiction", "Worldbuilding") => {
-            if worldbuilding_present {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::NotMet
-            }
-        }
-        ("fantasy", "Character Growth") => {
-            if character_growth {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::PartiallyMet
-            }
-        }
-
-        // Literary
-        ("literary" | "literary fiction", "Prose Quality") => {
-            if structure_health > 0.7 {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::PartiallyMet
-            }
-        }
-        ("literary" | "literary fiction", "Character Interiority") => {
-            if structure_health > 0.6 {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::PartiallyMet
-            }
-        }
-
-        // Horror
-        ("horror", "Threat Escalation") => match tension_arc_shape {
-            "rising" => ConventionStatus::Met,
-            "flat" => ConventionStatus::NotMet,
-            _ => ConventionStatus::PartiallyMet,
-        },
-
-        // YA
-        ("ya" | "young adult", "Fast Pacing") => {
-            if word_count < 90_000 && tension_arc_shape == "rising" {
-                ConventionStatus::Met
-            } else if word_count < 100_000 {
-                ConventionStatus::PartiallyMet
-            } else {
-                ConventionStatus::NotMet
-            }
-        }
-
-        // Middle grade
-        ("middle-grade" | "middle grade", "Hopeful Resolution") => {
-            if has_hea || protagonist_survives {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::NotMet
-            }
-        }
-
-        // Generic: character growth applies broadly
-        (_, "Character Growth" | "Personal Transformation") => {
-            if character_growth {
-                ConventionStatus::Met
-            } else {
-                ConventionStatus::PartiallyMet
-            }
-        }
-
-        // Default: use structure health as proxy
-        _ => {
-            if structure_health > 0.7 {
-                ConventionStatus::Met
-            } else if structure_health > 0.4 {
-                ConventionStatus::PartiallyMet
-            } else {
-                ConventionStatus::NotMet
-            }
-        }
-    }
-}
-
-fn evidence_for(_genre: &str, convention: &str, status: &ConventionStatus) -> String {
-    let status_word = match status {
-        ConventionStatus::Met => "Present",
-        ConventionStatus::PartiallyMet => "Partially present",
-        ConventionStatus::NotMet => "Not detected",
-        ConventionStatus::Subverted => "Intentionally subverted",
-    };
-    format!("{}: {}", convention, status_word)
+    )
+    .unwrap_or_else(|_| GenreComplianceResult {
+        availability: AnalysisAvailability::Unavailable,
+        diagnostics: vec!["invalid_genre_evidence;use_checked_api".into()],
+        quality_assessed: false,
+        judgment_provenance: "unavailable".into(),
+        blend_assessed: false,
+        structural_signals: GenreStructuralSignals::default(),
+        assessed_count: 0,
+        unknown_count: 0,
+        evidence_coverage: 0.0,
+        genre: String::new(),
+        conventions: Vec::new(),
+        present_count: 0,
+        absent_count: 0,
+        is_genre_blend: false,
+        secondary_genres: Vec::new(),
+        deviations: Vec::new(),
+        strengths: Vec::new(),
+    })
 }
 
 #[cfg(test)]
@@ -748,11 +747,12 @@ mod tests {
     }
 
     #[test]
-    fn test_genre_blend_detection() {
+    fn test_coarse_evidence_does_not_prove_genre_blend() {
         let result = check_genre_compliance(
             "mystery", true, true, true, true, true, false, 80000, 0.7, "rising",
         );
-        assert!(result.is_genre_blend);
+        assert!(!result.is_genre_blend);
+        assert!(!result.blend_assessed);
     }
 
     #[test]

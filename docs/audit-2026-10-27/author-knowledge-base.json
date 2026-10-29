@@ -1,0 +1,10 @@
+{
+  "source": "/Volumes/A/narrative-lens",
+  "files": {
+    "src/structure/author_events.rs": "d84142f55ddf44afd8a180ceebb9713c49643963be27694b44b17d2303df0d6a",
+    "src/continuity/mod.rs": "79f5f4c3f31dd26e5ae377381cfbc5cf52ea44b79b43a60738920d4aafb7353c",
+    "src/manuscript/mod.rs": "53b2c2c5f4124f8c1057915ad7e693c2f891e5603c3b11c5ac79c3858810d5d1",
+    "src/structure/mod.rs": "58cf4c6e9489119c8bb76216237994b9fa9173d06ce47e37bbc31c6b71d7c056",
+    "tests/component_author_events.rs": "f0db4fc356b4393a2ae0957775900271f645a3c14b75efed51bdd768c077844b"
+  }
+}

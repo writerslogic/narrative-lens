@@ -1,0 +1,369 @@
+{
+  "status": "Frozen; new optional harness/evidence only; no production or dependency changes, commits or pushes",
+  "worktree": "/Volumes/A/.codex-worktrees/narrative-lens-release-crosscutting",
+  "files": [
+    {
+      "path": "examples/component_real_model.rs",
+      "base_sha256": null,
+      "sha256": "383bf1de0e048a1fe09fc497a53d8335cd47248aedde72b754fd4e0d84ad9d75"
+    },
+    {
+      "path": "tests/component_real_model_wasi.cjs",
+      "base_sha256": null,
+      "sha256": "f72451e2c42c09a67a934abe4bcb42d6b8a7336a5e4b306a7fc32c07c9d83b99"
+    },
+    {
+      "path": "scripts/component_real_model_reference.py",
+      "base_sha256": null,
+      "sha256": "8a000eb3fdc9109d589de0b1c09150c3385d436aa270837fd40c205a90e6ba1c"
+    }
+  ],
+  "required_parent_Cargo_toml_addition": "[[example]]\nname = \"component_real_model\"\nrequired-features = [\"onnx\"]\n",
+  "root_owned_prerequisites_excluded_from_delivery": "docs/audit-2026-10-27/component-real-model-base.json",
+  "cargo_lock_sha256": "8629d5f03dcdb5e577209097d0722f3857282e2ce4b7c286bb009cdd3ce32c5a",
+  "model": {
+    "repository": "sentence-transformers/all-MiniLM-L6-v2",
+    "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "license": "Apache-2.0 in pinned upstream model-card metadata",
+    "license_source": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/blob/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/README.md",
+    "model_source": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model.onnx",
+    "tokenizer_source": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer.json",
+    "model_bytes": 90405214,
+    "model_sha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+    "original_tokenizer_sha256": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+    "original_tokenizer_git_blob": "cb202bfe2e3c98645018a6d12f182a434c9d3e02",
+    "adapted_tokenizer_sha256": "e14dac84c427069bfedcf976e4b13abe3adbbdb6a1d15779d4dcd6b7f649c523",
+    "format": "Self-contained ONNX IR7/opset14;101 float32 graph initializers (90,261,504 stored bytes),0 external initializers;float32 last_hidden_state384-dimensional output verified.",
+    "adaptation": "Only set tokenizer JSON padding and truncation to null; reserialize UTF-8 JSON. Unmodified upstream tokenizer remains incompatible with strict v1. Both manifests use maxTokens128, matching upstream tokenizer limit; overflow must error, not truncate.",
+    "original_upstream_outcome": {
+      "native": {
+        "status": "load_failed",
+        "failure": {
+          "code": "model_profile_tokenizer_settings",
+          "kind": "incompatible"
+        },
+        "runtime": "native ONNX Runtime"
+      },
+      "wasi": {
+        "status": "load_failed",
+        "failure": {
+          "code": "model_profile_tokenizer_settings",
+          "kind": "incompatible"
+        },
+        "runtime": "actual wasm32-wasip1 tract under Node WASI"
+      }
+    }
+  },
+  "runtime_identities": {
+    "host": "Apple M4 arm64; macOS27;32GiB RAM",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "node": "v26.8.1",
+    "uv": "uv 0.12.10 (3c979abda 2026-09-04 aarch64-apple-darwin)",
+    "rust_locked_versions": {
+      "ort": [
+        "2.0.0-rc.15"
+      ],
+      "ort-sys": [
+        "2.0.0-rc.15"
+      ],
+      "tract-onnx": [
+        "0.23.5"
+      ],
+      "tokenizers": [
+        "0.21.4",
+        "0.23.2"
+      ]
+    },
+    "native_onnx_runtime_actual_c_api_version": "1.31.0",
+    "native_build_info": "ORT Build Info: git-branch=rel-1.31.0, git-commit-id=402979a, fp8-kv-cache=1, build type=Release",
+    "reference": {
+      "python": "3.11.14",
+      "versions": {
+        "onnxruntime": "1.27.0",
+        "tokenizers": "0.23.3",
+        "numpy": "2.4.6"
+      },
+      "buildInfo": "ORT Build Info: git-branch=HEAD, git-commit-id=8f0278c77b, fp8-kv-cache=1, build type=Release",
+      "providers": [
+        "CPUExecutionProvider"
+      ]
+    },
+    "tokenizer_selection": "Rust native0.23.2;Rust WASI0.21.4;Python0.23.3"
+  },
+  "numeric_results": {
+    "native": {
+      "passed": true,
+      "vectorsCompared": 16,
+      "dimensions": 384,
+      "tokenIdsMasksAndTypesExactlyMatch": true,
+      "allVectorsFinite": true,
+      "maxAbsoluteError": 2.384185791015625e-06,
+      "maxCosineDistance": 1.1752820938681907e-12,
+      "allClose": true,
+      "shortTextAloneVsLongerBatchMaxAbs": 6.956132976299045e-07,
+      "batchPaddingAllClose": true,
+      "overLimitFailure": {
+        "code": "model_profile_token_limit",
+        "kind": "execution"
+      },
+      "tolerance": {
+        "atol": 2e-05,
+        "rtol": 0.0002,
+        "maxCosineDistance": 1e-06
+      },
+      "engineeringSanityOnly": {
+        "relatedCosine": 0.7514785360668861,
+        "unrelatedCosine": 0.03395258284034048,
+        "notEditorialValidation": true
+      }
+    },
+    "wasi": {
+      "passed": true,
+      "vectorsCompared": 16,
+      "dimensions": 384,
+      "tokenIdsMasksAndTypesExactlyMatch": true,
+      "allVectorsFinite": true,
+      "maxAbsoluteError": 2.3543834686279297e-06,
+      "maxCosineDistance": 2.617683847461194e-12,
+      "allClose": true,
+      "shortTextAloneVsLongerBatchMaxAbs": 0.0,
+      "batchPaddingAllClose": true,
+      "overLimitFailure": {
+        "code": "model_profile_token_limit",
+        "kind": "execution"
+      },
+      "tolerance": {
+        "atol": 0.0002,
+        "rtol": 0.002,
+        "maxCosineDistance": 1e-05
+      },
+      "engineeringSanityOnly": {
+        "relatedCosine": 0.7514784806887337,
+        "unrelatedCosine": 0.033952518680289416,
+        "notEditorialValidation": true
+      }
+    }
+  },
+  "preprocessing_evidence": {
+    "allCaseTokenCounts": [
+      11,
+      11,
+      8,
+      15,
+      12,
+      2,
+      4,
+      37,
+      127,
+      128
+    ],
+    "overLimitTokenCount": 129,
+    "maxTokens": 128,
+    "onlyDeclaredTokenizerSettingsChanged": true,
+    "specialTokensIncludedInMaskedMean": true,
+    "poolingAccumulation": "float64 over float32 token embeddings; no L2 normalization",
+    "batchShapes": [
+      {
+        "indices": [
+          0,
+          1,
+          2
+        ],
+        "shape": [
+          3,
+          11
+        ],
+        "nonpaddingTokens": [
+          11,
+          11,
+          8
+        ]
+      },
+      {
+        "indices": [
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shape": [
+          5,
+          37
+        ],
+        "nonpaddingTokens": [
+          15,
+          12,
+          2,
+          4,
+          37
+        ]
+      },
+      {
+        "indices": [
+          0
+        ],
+        "shape": [
+          1,
+          11
+        ],
+        "nonpaddingTokens": [
+          11
+        ]
+      },
+      {
+        "indices": [
+          7
+        ],
+        "shape": [
+          1,
+          37
+        ],
+        "nonpaddingTokens": [
+          37
+        ]
+      },
+      {
+        "indices": [
+          0,
+          7
+        ],
+        "shape": [
+          2,
+          37
+        ],
+        "nonpaddingTokens": [
+          11,
+          37
+        ]
+      },
+      {
+        "indices": [
+          6,
+          7
+        ],
+        "shape": [
+          2,
+          37
+        ],
+        "nonpaddingTokens": [
+          4,
+          37
+        ]
+      },
+      {
+        "indices": [
+          8
+        ],
+        "shape": [
+          1,
+          127
+        ],
+        "nonpaddingTokens": [
+          127
+        ]
+      },
+      {
+        "indices": [
+          9
+        ],
+        "shape": [
+          1,
+          128
+        ],
+        "nonpaddingTokens": [
+          128
+        ]
+      }
+    ]
+  },
+  "original_fixed_padding_vs_adapted_python_max_abs": 6.353313272700056e-07,
+  "evidence": {
+    "comparison_json": {
+      "path": "docs/audit-2026-10-27/component-real-model-comparison.json",
+      "sha256": "906e8debe00f8a08e6d12f5d3628e4c79c52a3f35a777a994cfba7d71c23414d"
+    },
+    "negative_controls": "docs/audit-2026-10-27/component-real-model-negative-controls.json",
+    "logs": [
+      "docs/audit-2026-10-27/component-real-model-prepare.log",
+      "docs/audit-2026-10-27/component-real-model-native-build.log",
+      "docs/audit-2026-10-27/component-real-model-wasi-build.log",
+      "docs/audit-2026-10-27/component-real-model-clippy.log",
+      "docs/audit-2026-10-27/component-real-model-comparison.log",
+      "docs/audit-2026-10-27/component-real-model-negative-vector.log",
+      "docs/audit-2026-10-27/component-real-model-negative-token.log"
+    ]
+  },
+  "cache_outputs": {
+    "directory": "/Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "model_weights": "model.onnx (not for repository integration)",
+    "pinned_tokenizers": [
+      "tokenizer.upstream.json",
+      "tokenizer.adapted.json"
+    ],
+    "manifests": [
+      "manifest.upstream.json",
+      "manifest.adapted.json"
+    ],
+    "cases": "cases.json",
+    "independent_reference": "reference.json",
+    "native_results": [
+      "native.upstream.json",
+      "native.adapted.json"
+    ],
+    "actual_wasi_results": [
+      "wasi.upstream.json",
+      "wasi.adapted.json"
+    ]
+  },
+  "compiled_probe_artifacts": {
+    "native": {
+      "path": "/Volumes/C/rust-target-narrative-lens-release-crosscutting/release/examples/component_real_model",
+      "sha256": "87aa832093f0f759cf218cfe277af0aa52ebafec93f516f85afc01ac1d5da2a8"
+    },
+    "wasi": {
+      "path": "/Volumes/C/rust-target-narrative-lens-release-crosscutting/wasm32-wasip1/release/examples/component_real_model.wasm",
+      "sha256": "220a55839cca5809d8f96e93d02af75fe449e8b95e6c7012921e7c3aad3dff82"
+    }
+  },
+  "download_scope": {
+    "model_downloaded_bytes_this_run": 90405214,
+    "tokenizer_from_verified_existing_cache": {
+      "source": "verified existing Hugging Face cache",
+      "downloadedBytes": 0
+    },
+    "model_artifact_limit_bytes": 90405214,
+    "reference_environment_observed_download": "onnxruntime17.6MiB;other Python artifacts/interpreter reused caches;model+observed reference-wheel transfer about109MB",
+    "weights_location": "Ignored private Cargo target, outside repository;not bundled in source/docs/examples"
+  },
+  "checks": [
+    "Native release example executed original/adapted variants successfully;original rejects exact expected profile settings,adapted strict identity VerifiedManifestV1.",
+    "Wasm32-wasip1 release example executed through actual Node WASI/tract0.23.5;original rejects exact expected profile settings,adapted strict identity VerifiedManifestV1.",
+    "Independent Python ORT1.27.0/tokenizers0.23.3 reference validates full token/mask/type and pooled-vector comparisons at predeclared tolerances.",
+    "127/128-token inputs succeed;129-token input returns model_profile_token_limit without truncation;special tokens included,mean accumulationf64,no normalization.",
+    "Token/vector corruption controls both produce failed comparison and process exit1;cached-reference identity/case binding verified.",
+    "cargo clippy --locked --features onnx --example component_real_model -- -D warnings passed.",
+    "rustfmt --edition2024 --check examples/component_real_model.rs and node --check tests/component_real_model_wasi.cjs passed."
+  ],
+  "limits": [
+    "Unmodified official tokenizer is incompatible with strict v1 because it declares Fixed128 padding and128-token truncation;that failure is preserved,not a loader success.",
+    "Successful runs use an explicitly derived cache-only tokenizer with just those two settings nulled and its own SHA-bound manifest.",
+    "One pinned float32 export,one host,eight batches/sixteen pooled vectors;not all exporters,quantized models,languages,platforms,models or arbitrary protocols.",
+    "Token IDs/masks/types are reconstructed with the same Rust tokenizer in the example;private backend tokenization runs separately,and end-to-end vector comparison validates its observable result.",
+    "Unnormalized masked means are compared against ONNX output,not the complete SentenceTransformer encode pipeline which may normalize/choose different truncation.",
+    "Timing fields are single diagnostic observations including different runtime defaults/verification stages;not a controlled performance comparison.",
+    "No editorial accuracy,causal analysis,narrative judgment or broad semantic-quality validation is claimed."
+  ],
+  "reproducible_commands_in_order": [
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting uv run --python 3.11 scripts/component_real_model_reference.py --download --prepare-only",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo build --locked --release --features onnx --example component_real_model",
+    "/Volumes/C/rust-target-narrative-lens-release-crosscutting/release/examples/component_real_model /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41 upstream > /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/native.upstream.json",
+    "/Volumes/C/rust-target-narrative-lens-release-crosscutting/release/examples/component_real_model /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41 adapted > /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/native.adapted.json",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo build --locked --release --target wasm32-wasip1 --features onnx --example component_real_model",
+    "node tests/component_real_model_wasi.cjs /Volumes/C/rust-target-narrative-lens-release-crosscutting/wasm32-wasip1/release/examples/component_real_model.wasm /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41 upstream > /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/wasi.upstream.json",
+    "node tests/component_real_model_wasi.cjs /Volumes/C/rust-target-narrative-lens-release-crosscutting/wasm32-wasip1/release/examples/component_real_model.wasm /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41 adapted > /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/wasi.adapted.json",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting uv run --python 3.11 scripts/component_real_model_reference.py --native-results /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/native.adapted.json --upstream-native-results /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/native.upstream.json --wasi-results /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/wasi.adapted.json --upstream-wasi-results /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/wasi.upstream.json --output docs/audit-2026-10-27/component-real-model-comparison.json"
+  ],
+  "independent_comparator_rerun_without_inference": "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting uv run --python 3.11 scripts/component_real_model_reference.py --reuse-reference --native-results /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/native.adapted.json --upstream-native-results /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/native.upstream.json --wasi-results /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/wasi.adapted.json --upstream-wasi-results /Volumes/C/rust-target-narrative-lens-release-crosscutting/component-real-model/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/wasi.upstream.json --output docs/audit-2026-10-27/component-real-model-comparison.json",
+  "python_direct_dependency_pins": "PEP723 in script:Python>=3.11,<3.12;numpy==2.4.6;onnxruntime==1.27.0;tokenizers==0.23.3"
+}

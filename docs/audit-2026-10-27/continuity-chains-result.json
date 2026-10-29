@@ -1,0 +1,47 @@
+{
+  "status": "frozen",
+  "base_coreference_sha256": "1bbc5f66775447933e0027739f11748382e10804f24f725c0e7bbb8ca5df6d0f",
+  "files": [
+    {
+      "path": "src/continuity/coreference.rs",
+      "sha256": "13d92b0b27cc8ced3235d4a534f53f8dfdc19b51a94904cb088c0da783944c76"
+    },
+    {
+      "path": "tests/component_continuity_chains.rs",
+      "sha256": "c52b5055520eb8683e000a1a9190336f47a48126113ab45d92c22249f5922946"
+    }
+  ],
+  "checks": [
+    {
+      "command": "cargo test --locked --features bindings --test component_continuity_chains --test component_continuity_resolution",
+      "passed": 12,
+      "log": "continuity-chains-tests.log"
+    },
+    {
+      "command": "cargo test --locked --features bindings --lib continuity::coreference::tests",
+      "passed": 11,
+      "log": "continuity-chains-unit.log"
+    },
+    {
+      "command": "cargo clippy --locked --features bindings --lib --test component_continuity_chains --test component_continuity_resolution -- -D warnings",
+      "exit": 0,
+      "log": "continuity-chains-clippy.log"
+    }
+  ],
+  "fixes": [
+    "Exact antecedent_start byte links make literal/cataphoric/chain hypotheses inspectable",
+    "Quote-local literal third-person references without dialogue speaker inference",
+    "Scope-local same-category pronoun chains extend beyond old literal window, limited16hops and300bytes/link",
+    "Competing names, unresolved prior pronouns, paragraph and quote boundaries stop chains; no inventory/future fallback"
+  ],
+  "basis_variants": [
+    "quote_local_named_candidate",
+    "pronoun_chain"
+  ],
+  "development_diagnosis": "continuity-coreference-development-diagnosis.json",
+  "limits": [
+    "Human-labelled76-work development impact still to be measured independently by parent; no semantic score claimed",
+    "Unrecognized nominal competitors, semantic roles and dialogue speaker attribution remain unsupported",
+    "Coverage/confidence are uncalibrated rule diagnostics, not semantic accuracy; integrity regressions all retained"
+  ]
+}

@@ -1,0 +1,464 @@
+{
+  "identity": {
+    "repository": "sentence-transformers/all-MiniLM-L6-v2",
+    "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "license": "apache-2.0 (pinned upstream model-card metadata; not a separate license audit)",
+    "primaryModelCard": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/blob/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/README.md",
+    "modelSource": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model.onnx",
+    "tokenizerSource": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer.json",
+    "modelBytes": 90405214,
+    "modelSha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+    "upstreamTokenizerSha256": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+    "adaptedTokenizerSha256": "e14dac84c427069bfedcf976e4b13abe3adbbdb6a1d15779d4dcd6b7f649c523",
+    "upstreamTokenizerSettings": {
+      "padding": {
+        "strategy": {
+          "Fixed": 128
+        },
+        "direction": "Right",
+        "pad_to_multiple_of": null,
+        "pad_id": 0,
+        "pad_type_id": 0,
+        "pad_token": "[PAD]"
+      },
+      "truncation": {
+        "max_length": 128,
+        "strategy": "LongestFirst",
+        "stride": 0
+      }
+    },
+    "adaptation": "Only set tokenizer JSON padding and truncation to null; reserialize UTF-8 JSON. Unmodified upstream tokenizer remains incompatible with strict v1. Both manifests use maxTokens128, matching upstream tokenizer limit; overflow must error, not truncate.",
+    "fetches": {
+      "model": {
+        "source": "existing verification cache",
+        "downloadedBytes": 0
+      },
+      "tokenizer": {
+        "source": "existing verification cache",
+        "downloadedBytes": 0
+      }
+    },
+    "onnxMetadata": {
+      "schemaSource": "https://raw.githubusercontent.com/onnx/onnx/v1.17.0/onnx/onnx.proto3",
+      "opsets": [
+        {
+          "domain": "",
+          "version": 14
+        }
+      ],
+      "irVersion": 7,
+      "producer": "pytorch",
+      "producerVersion": "2.5.0",
+      "initializerDtypeCounts": {
+        "float32": 101
+      },
+      "initializerStoredBytesByDtype": {
+        "float32": 90261504
+      },
+      "externalInitializers": 0,
+      "operatorCounts": {
+        ":Add": 88,
+        ":Cast": 15,
+        ":Concat": 25,
+        ":Constant": 218,
+        ":ConstantOfShape": 1,
+        ":Div": 25,
+        ":Equal": 1,
+        ":Erf": 6,
+        ":Expand": 1,
+        ":Gather": 54,
+        ":MatMul": 48,
+        ":Mul": 38,
+        ":Pow": 13,
+        ":ReduceMean": 26,
+        ":Reshape": 25,
+        ":Shape": 58,
+        ":Slice": 7,
+        ":Softmax": 6,
+        ":Sqrt": 31,
+        ":Sub": 14,
+        ":Transpose": 24,
+        ":Unsqueeze": 54,
+        ":Where": 2
+      },
+      "scope": "Graph initializer types/external flags and node op names inspected; full ONNX validity/inference independently checked by Python ORT."
+    },
+    "manifests": {
+      "upstream": {
+        "schemaVersion": 1,
+        "kind": "embedding",
+        "profile": "hugging_face_masked_mean_v1",
+        "modelSha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+        "tokenizerSha256": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+        "maxTokens": 128,
+        "paddingTokenId": 0,
+        "labels": []
+      },
+      "adapted": {
+        "schemaVersion": 1,
+        "kind": "embedding",
+        "profile": "hugging_face_masked_mean_v1",
+        "modelSha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+        "tokenizerSha256": "e14dac84c427069bfedcf976e4b13abe3adbbdb6a1d15779d4dcd6b7f649c523",
+        "maxTokens": 128,
+        "paddingTokenId": 0,
+        "labels": []
+      }
+    }
+  },
+  "preprocessing": {
+    "allCaseTokenCounts": [
+      11,
+      11,
+      8,
+      15,
+      12,
+      2,
+      4,
+      37,
+      127,
+      128
+    ],
+    "overLimitTokenCount": 129,
+    "maxTokens": 128,
+    "onlyDeclaredTokenizerSettingsChanged": true,
+    "specialTokensIncludedInMaskedMean": true,
+    "poolingAccumulation": "float64 over float32 token embeddings; no L2 normalization",
+    "batchShapes": [
+      {
+        "indices": [
+          0,
+          1,
+          2
+        ],
+        "shape": [
+          3,
+          11
+        ],
+        "nonpaddingTokens": [
+          11,
+          11,
+          8
+        ]
+      },
+      {
+        "indices": [
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shape": [
+          5,
+          37
+        ],
+        "nonpaddingTokens": [
+          15,
+          12,
+          2,
+          4,
+          37
+        ]
+      },
+      {
+        "indices": [
+          0
+        ],
+        "shape": [
+          1,
+          11
+        ],
+        "nonpaddingTokens": [
+          11
+        ]
+      },
+      {
+        "indices": [
+          7
+        ],
+        "shape": [
+          1,
+          37
+        ],
+        "nonpaddingTokens": [
+          37
+        ]
+      },
+      {
+        "indices": [
+          0,
+          7
+        ],
+        "shape": [
+          2,
+          37
+        ],
+        "nonpaddingTokens": [
+          11,
+          37
+        ]
+      },
+      {
+        "indices": [
+          6,
+          7
+        ],
+        "shape": [
+          2,
+          37
+        ],
+        "nonpaddingTokens": [
+          4,
+          37
+        ]
+      },
+      {
+        "indices": [
+          8
+        ],
+        "shape": [
+          1,
+          127
+        ],
+        "nonpaddingTokens": [
+          127
+        ]
+      },
+      {
+        "indices": [
+          9
+        ],
+        "shape": [
+          1,
+          128
+        ],
+        "nonpaddingTokens": [
+          128
+        ]
+      }
+    ]
+  },
+  "reference": {
+    "modelSha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+    "adaptedTokenizerSha256": "e14dac84c427069bfedcf976e4b13abe3adbbdb6a1d15779d4dcd6b7f649c523",
+    "casesSha256": "dca98cb201176fe6499795bb8d4de514b0e3cae1f29e3d7aa8458f14b75f56bd",
+    "runtime": "Python ONNX Runtime CPUExecutionProvider",
+    "python": "3.11.14",
+    "versions": {
+      "onnxruntime": "1.27.0",
+      "tokenizers": "0.23.3",
+      "numpy": "2.4.6"
+    },
+    "buildInfo": "ORT Build Info: git-branch=HEAD, git-commit-id=8f0278c77b, fp8-kv-cache=1, build type=Release",
+    "providers": [
+      "CPUExecutionProvider"
+    ],
+    "loadMs": 60.444958973675966,
+    "inputs": [
+      {
+        "name": "input_ids",
+        "shape": [
+          "batch_size",
+          "sequence_length"
+        ],
+        "type": "tensor(int64)"
+      },
+      {
+        "name": "attention_mask",
+        "shape": [
+          "batch_size",
+          "sequence_length"
+        ],
+        "type": "tensor(int64)"
+      },
+      {
+        "name": "token_type_ids",
+        "shape": [
+          "batch_size",
+          "sequence_length"
+        ],
+        "type": "tensor(int64)"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "last_hidden_state",
+        "shape": [
+          "batch_size",
+          "sequence_length",
+          384
+        ],
+        "type": "tensor(float)"
+      }
+    ],
+    "upstreamFixedPaddingVsAdaptedMaxAbs": 6.353313272700056e-07
+  },
+  "predeclaredTolerances": {
+    "native": {
+      "atol": 2e-05,
+      "rtol": 0.0002,
+      "maxCosineDistance": 1e-06
+    },
+    "wasi": {
+      "atol": 0.0002,
+      "rtol": 0.002,
+      "maxCosineDistance": 1e-05
+    }
+  },
+  "comparisons": {
+    "native": {
+      "status": "ok",
+      "runtime": "native ONNX Runtime",
+      "runtimeVersion": "1.31.0",
+      "ortCrateVersions": [
+        "2.0.0-rc.15"
+      ],
+      "tractOnnxVersions": null,
+      "tokenizersLockVersions": [
+        "0.21.4",
+        "0.23.2"
+      ],
+      "inputObservationScope": "IDs/masks/types reconstructed by the same crate tokenizer; production checked embeddings tokenize independently, and pooled-vector parity checks the end-to-end path.",
+      "buildInfo": "ORT Build Info: git-branch=rel-1.31.0, git-commit-id=402979a, fp8-kv-cache=1, build type=Release",
+      "loadMs": 1512.223833,
+      "identity": {
+        "kind": "embedding",
+        "manifest": {
+          "kind": "embedding",
+          "labels": [],
+          "maxTokens": 128,
+          "modelSha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+          "paddingTokenId": 0,
+          "profile": "hugging_face_masked_mean_v1",
+          "schemaVersion": 1,
+          "tokenizerSha256": "e14dac84c427069bfedcf976e4b13abe3adbbdb6a1d15779d4dcd6b7f649c523"
+        },
+        "verification": "verified_manifest_v1"
+      },
+      "failure": null,
+      "diagnostic": null,
+      "tolerance": {
+        "atol": 2e-05,
+        "rtol": 0.0002,
+        "maxCosineDistance": 1e-06
+      },
+      "passed": true,
+      "tokenIdsMasksAndTypesExactlyMatch": true,
+      "allVectorsFinite": true,
+      "vectorsCompared": 16,
+      "dimensions": 384,
+      "maxAbsoluteError": 2.384185791015625e-06,
+      "maxCosineDistance": 1.1752820938681907e-12,
+      "allClose": true,
+      "shortTextAloneVsLongerBatchMaxAbs": 6.956132976299045e-07,
+      "batchPaddingAllClose": true,
+      "runtimeMsByBatch": [
+        74.354125,
+        94.836291,
+        49.206875,
+        27.556583,
+        47.251292,
+        27.460292,
+        118.62100000000001,
+        101.48379100000001
+      ],
+      "overLimitFailure": {
+        "code": "model_profile_token_limit",
+        "kind": "execution"
+      },
+      "engineeringSanityOnly": {
+        "relatedCosine": 0.7514785360668861,
+        "unrelatedCosine": 0.03395258284034048,
+        "notEditorialValidation": true
+      }
+    },
+    "wasi": {
+      "status": "ok",
+      "runtime": "actual wasm32-wasip1 tract under Node WASI",
+      "runtimeVersion": null,
+      "ortCrateVersions": null,
+      "tractOnnxVersions": [
+        "0.23.5"
+      ],
+      "tokenizersLockVersions": [
+        "0.21.4",
+        "0.23.2"
+      ],
+      "inputObservationScope": "IDs/masks/types reconstructed by the same crate tokenizer; production checked embeddings tokenize independently, and pooled-vector parity checks the end-to-end path.",
+      "buildInfo": null,
+      "loadMs": 1537.826333,
+      "identity": {
+        "kind": "embedding",
+        "manifest": {
+          "kind": "embedding",
+          "labels": [],
+          "maxTokens": 128,
+          "modelSha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+          "paddingTokenId": 0,
+          "profile": "hugging_face_masked_mean_v1",
+          "schemaVersion": 1,
+          "tokenizerSha256": "e14dac84c427069bfedcf976e4b13abe3adbbdb6a1d15779d4dcd6b7f649c523"
+        },
+        "verification": "verified_manifest_v1"
+      },
+      "failure": null,
+      "diagnostic": null,
+      "tolerance": {
+        "atol": 0.0002,
+        "rtol": 0.002,
+        "maxCosineDistance": 1e-05
+      },
+      "passed": true,
+      "tokenIdsMasksAndTypesExactlyMatch": true,
+      "allVectorsFinite": true,
+      "vectorsCompared": 16,
+      "dimensions": 384,
+      "maxAbsoluteError": 2.3543834686279297e-06,
+      "maxCosineDistance": 2.617683847461194e-12,
+      "allClose": true,
+      "shortTextAloneVsLongerBatchMaxAbs": 0.0,
+      "batchPaddingAllClose": true,
+      "runtimeMsByBatch": [
+        67.866916,
+        275.883,
+        18.765292,
+        59.229041,
+        111.793458,
+        111.53387500000001,
+        198.96883300000002,
+        198.466875
+      ],
+      "overLimitFailure": {
+        "code": "model_profile_token_limit",
+        "kind": "execution"
+      },
+      "engineeringSanityOnly": {
+        "relatedCosine": 0.7514784806887337,
+        "unrelatedCosine": 0.033952518680289416,
+        "notEditorialValidation": true
+      }
+    }
+  },
+  "upstreamStrictRejections": {
+    "native": {
+      "status": "load_failed",
+      "failure": {
+        "code": "model_profile_tokenizer_settings",
+        "kind": "incompatible"
+      },
+      "runtime": "native ONNX Runtime"
+    },
+    "wasi": {
+      "status": "load_failed",
+      "failure": {
+        "code": "model_profile_tokenizer_settings",
+        "kind": "incompatible"
+      },
+      "runtime": "actual wasm32-wasip1 tract under Node WASI"
+    }
+  },
+  "scope": "One official float32 MiniLM ONNX export; kernel/tokenizer/masking/profile checks only. Adapted tokenizer is separately pinned and never substituted silently. No editorial-accuracy or broad model-compatibility claim.",
+  "kernelComparisonsPassed": true,
+  "expectedUpstreamRejectionsConfirmed": true
+}

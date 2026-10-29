@@ -35,10 +35,10 @@ fn main() {
         let parts: Vec<&str> = line.split('\t').collect();
         if parts.len() == 2 {
             let word = parts[0].to_string();
-            if let Ok(freq) = parts[1].parse::<f32>() {
-                if freq > 0.0 {
-                    entries.push((word, freq));
-                }
+            if let Ok(freq) = parts[1].parse::<f32>()
+                && freq > 0.0
+            {
+                entries.push((word, freq));
             }
         }
     }

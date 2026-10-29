@@ -1,9 +1,27 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::OnceLock;
 
-use serde::Serialize;
+use super::author_knowledge::AuthorSource;
+use crate::{
+    Error, Result,
+    manuscript::{
+        Evidence, Manuscript, TextRange, author_source::validate_sources, config::validate_id,
+    },
+    substrate::utils::AnalysisAvailability,
+};
+use serde::{Deserialize, Serialize};
 
-/// An anachronistic word found in the text.
+pub const MAX_HISTORICAL_ENTRIES: usize = 10_000;
+pub const MAX_HISTORICAL_USAGES: usize = 10_000;
+pub const MAX_HISTORICAL_CANDIDATES: usize = 10_000;
+pub const MAX_HISTORICAL_TOKENS: usize = 250_000;
+pub const MAX_HISTORICAL_TERM_BYTES: usize = 128;
+pub const MAX_HISTORICAL_TERM_TOKENS: usize = 32;
+pub const MAX_HISTORICAL_METADATA_BYTES: usize = 4 * 1024 * 1024;
+pub const MAX_HISTORICAL_MATCH_BYTES: usize = 4096;
+
+/// A legacy lexicon date-review candidate; historical dates/senses are unverified.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AnachronismItem {
@@ -344,91 +362,445 @@ fn slang_milestones() -> &'static Vec<(&'static str, i32)> {
 }
 
 fn is_anachronistic(introduced_year: i32, target_year: i32) -> bool {
-    introduced_year > target_year + GRACE_PERIOD_YEARS
+    i64::from(introduced_year) > i64::from(target_year) + i64::from(GRACE_PERIOD_YEARS)
 }
 
-/// Analyze a scene's tokens for anachronistic words given a target historical year.
-/// Returns empty if target_year is 0 (no target set).
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnachronismAnalysisResult {
+    pub items: Vec<AnachronismItem>,
+    pub availability: AnalysisAvailability,
+    pub diagnostics: Vec<String>,
+    pub abstained_terms: Vec<String>,
+}
+
 pub fn analyze_scene(tokens: &[String], target_year: i32, scene_id: usize) -> Vec<AnachronismItem> {
-    if target_year == 0 {
-        return Vec::new();
+    analyze_scene_checked(tokens, target_year, scene_id)
+        .map(|r| r.items)
+        .unwrap_or_default()
+}
+
+pub fn analyze_scene_checked(
+    tokens: &[String],
+    target_year: i32,
+    scene_id: usize,
+) -> Result<AnachronismAnalysisResult> {
+    if tokens.len() > MAX_HISTORICAL_TOKENS || scene_id >= 10_000 {
+        return Err(Error::InvalidInput(
+            "historical token count or scene index exceeds limit".into(),
+        ));
     }
-
-    let mut results = Vec::new();
-    let ms = milestones();
-
-    // Build lowercase full text for multi-word matching
-    let full_text: String = tokens
-        .iter()
-        .map(|t| t.to_lowercase())
-        .collect::<Vec<_>>()
-        .join(" ");
-
-    // Check multi-word terms first
+    let mut bytes = 0usize;
+    for token in tokens {
+        bytes += token.len();
+        if token.len() > 4096 || bytes > 16 * 1024 * 1024 || token.contains('\0') {
+            return Err(Error::InvalidInput(
+                "historical token data exceeds limits".into(),
+            ));
+        }
+    }
+    let mut result = AnachronismAnalysisResult {
+        items: Vec::new(), availability: AnalysisAvailability::Partial,
+        diagnostics: vec!["builtin_dates_unverified; lexical_review_candidates_not_historical_incompatibility_proof".into(),
+            "polysemous_slang_and_unsourced_period_concepts_abstain; use_referenced_catalogue_and_explicit_sense_annotations".into()],
+        abstained_terms: Vec::new(),
+    };
+    if target_year == 0 {
+        return Ok(result);
+    }
+    let lower: Vec<_> = tokens.iter().map(|t| t.to_lowercase()).collect();
+    let mut ambiguous: BTreeSet<&str> = [
+        "computer",
+        "viral",
+        "streaming",
+        "tweet",
+        "tablet",
+        "cloud",
+        "battery",
+        "coach",
+        "train",
+        "tank",
+        "vacuum",
+        "atom",
+        "camera",
+        "pipeline",
+        "feedback",
+        "revolution",
+        "constitution",
+        "republic",
+        "education",
+        "university",
+        "insurance",
+    ]
+    .into_iter()
+    .collect();
+    ambiguous.extend(slang_milestones().iter().map(|(term, _)| *term));
+    ambiguous.extend(medieval_anachronisms().iter().map(|(term, _)| *term));
+    let mut abstained = BTreeSet::new();
     for &(term, introduced_year) in multi_word_milestones() {
-        if full_text.contains(term) && is_anachronistic(introduced_year, target_year) {
-            results.push(AnachronismItem {
-                word: term.to_string(),
+        let words: Vec<_> = term.split_whitespace().collect();
+        if lower
+            .windows(words.len())
+            .any(|window| window.iter().map(String::as_str).eq(words.iter().copied()))
+            && is_anachronistic(introduced_year, target_year)
+        {
+            result.items.push(AnachronismItem {
+                word: term.into(),
                 introduced_year,
                 target_year,
                 scene_id,
             });
         }
     }
-
-    // Check single-word terms
-    for token in tokens {
-        let lower = token.to_lowercase();
-        if let Some(&introduced_year) = ms.get(lower.as_str())
-            && is_anachronistic(introduced_year, target_year) {
-                results.push(AnachronismItem {
+    for (token, lower) in tokens.iter().zip(&lower) {
+        if let Some(&introduced_year) = milestones().get(lower.as_str())
+            && is_anachronistic(introduced_year, target_year)
+        {
+            if ambiguous.contains(lower.as_str()) {
+                abstained.insert(lower.clone());
+            } else {
+                result.items.push(AnachronismItem {
                     word: token.clone(),
                     introduced_year,
                     target_year,
                     scene_id,
                 });
-            }
-    }
-
-    // Slang terms (context-dependent, only flag if clearly used as slang)
-    for &(term, introduced_year) in slang_milestones() {
-        if is_anachronistic(introduced_year, target_year) {
-            for token in tokens {
-                if token.to_lowercase() == term {
-                    results.push(AnachronismItem {
-                        word: token.clone(),
-                        introduced_year,
-                        target_year,
-                        scene_id,
-                    });
-                    break;
+                if result.items.len() > MAX_HISTORICAL_CANDIDATES {
+                    return Err(Error::InvalidInput(
+                        "historical candidate count exceeds limit".into(),
+                    ));
                 }
             }
         }
     }
-
-    // Medieval period-specific vocabulary warnings
+    for &(term, year) in slang_milestones() {
+        if is_anachronistic(year, target_year) && lower.iter().any(|token| token == term) {
+            abstained.insert(term.into());
+        }
+    }
     if target_year < 1500 {
-        for &(concept, description) in medieval_anachronisms() {
-            // Skip terms already covered in milestones
-            if ms.contains_key(concept) {
+        for &(term, _) in medieval_anachronisms() {
+            if lower.iter().any(|token| token == term) {
+                abstained.insert(term.into());
+            }
+        }
+    }
+    if result.items.len() > MAX_HISTORICAL_CANDIDATES {
+        return Err(Error::InvalidInput(
+            "historical candidate count exceeds limit".into(),
+        ));
+    }
+    result.abstained_terms = abstained.into_iter().collect();
+    Ok(result)
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum HistoricalBasis {
+    FirstAttestation,
+    Availability,
+    AuthorConstraint,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct HistoricalEntry {
+    pub id: String,
+    pub term: String,
+    pub earliest_year: i32,
+    pub basis: HistoricalBasis,
+    pub reference: String,
+    pub context: String,
+    pub sense_ambiguous: bool,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct HistoricalUsage {
+    pub id: String,
+    pub entry_id: String,
+    pub evidence: AuthorSource,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoricalCandidate {
+    pub entry_id: String,
+    pub scene_id: String,
+    pub range: TextRange,
+    pub quote: String,
+    /// Integer-date comparison only, never proof of impossibility. Unassessed
+    /// when the catalogue requires sense confirmation and none was supplied.
+    pub date_conflict: Option<bool>,
+    pub author_usage_id: Option<String>,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoricalAnalysisResult {
+    pub document_id: String,
+    pub target_year: i32,
+    pub tolerance_years: u32,
+    pub catalogue: Vec<HistoricalEntry>,
+    pub candidates: Vec<HistoricalCandidate>,
+    pub availability: AnalysisAvailability,
+    pub diagnostics: Vec<String>,
+}
+
+fn historical_tokens() -> &'static regex::Regex {
+    static TOKENS: OnceLock<regex::Regex> = OnceLock::new();
+    TOKENS
+        .get_or_init(|| regex::Regex::new(r"\w+|[^\w\s]").expect("historical lexical token regex"))
+}
+
+fn term_key(term: &str, max_bytes: usize) -> Result<Vec<(bool, String)>> {
+    if term.trim().is_empty()
+        || term.len() > max_bytes
+        || term
+            .chars()
+            .any(|ch| ch.is_control() && !ch.is_whitespace())
+        || !term.chars().any(char::is_alphanumeric)
+    {
+        return Err(Error::InvalidInput(
+            "historical term requires nonempty bounded lexical text".into(),
+        ));
+    }
+    let mut end = 0;
+    let mut tokens = Vec::new();
+    for token in historical_tokens().find_iter(term) {
+        tokens.push((
+            !tokens.is_empty() && !term[end..token.start()].is_empty(),
+            token.as_str().to_lowercase(),
+        ));
+        end = token.end();
+        if tokens.len() > MAX_HISTORICAL_TERM_TOKENS {
+            return Err(Error::InvalidInput(
+                "historical term token count exceeds limit".into(),
+            ));
+        }
+    }
+    Ok(tokens)
+}
+
+#[derive(Default)]
+struct TermNode {
+    children: BTreeMap<(bool, String), usize>,
+    entries: Vec<usize>,
+}
+
+fn charge(total: &mut usize, bytes: usize) -> Result<()> {
+    *total = total
+        .checked_add(bytes)
+        .ok_or_else(|| Error::InvalidInput("historical metadata size overflow".into()))?;
+    if *total > MAX_HISTORICAL_METADATA_BYTES {
+        return Err(Error::InvalidInput(
+            "historical metadata exceeds byte limit".into(),
+        ));
+    }
+    Ok(())
+}
+
+/// Matches a referenced caller catalogue. Dates are supplied integer constraints;
+/// first attestation does not establish first use. Quotes confirm annotation
+/// location and declared sense, not entailment, existence, or story chronology.
+pub fn analyze_historical_catalogue(
+    manuscript: &Manuscript,
+    catalogue: &[HistoricalEntry],
+    usages: &[HistoricalUsage],
+    target_year: i32,
+    tolerance_years: u32,
+) -> Result<HistoricalAnalysisResult> {
+    if catalogue.len() > MAX_HISTORICAL_ENTRIES || usages.len() > MAX_HISTORICAL_USAGES {
+        return Err(Error::InvalidInput(
+            "historical catalogue/usage count exceeds limit".into(),
+        ));
+    }
+    manuscript.validate()?;
+    let mut ids = BTreeMap::new();
+    let mut keys = Vec::with_capacity(catalogue.len());
+    let mut bytes = 0;
+    let mut nodes = vec![TermNode::default()];
+    for (index, entry) in catalogue.iter().enumerate() {
+        validate_id(&entry.id)?;
+        if ids.insert(entry.id.as_str(), index).is_some()
+            || entry.reference.trim().is_empty()
+            || entry.reference.len() > 4096
+            || entry.context.trim().is_empty()
+            || entry.context.len() > 1024
+            || entry.reference.contains('\0')
+            || entry.context.contains('\0')
+        {
+            return Err(Error::InvalidInput(
+                "historical entry requires unique ID, reference and context within limits".into(),
+            ));
+        }
+        let key = term_key(&entry.term, MAX_HISTORICAL_TERM_BYTES)?;
+        charge(
+            &mut bytes,
+            entry.id.len() + entry.term.len() + entry.reference.len() + entry.context.len(),
+        )?;
+        let mut current = 0;
+        for part in &key {
+            current = match nodes[current].children.get(part) {
+                Some(&next) => next,
+                None => {
+                    let next = nodes.len();
+                    nodes.push(TermNode::default());
+                    nodes[current].children.insert(part.clone(), next);
+                    next
+                }
+            };
+        }
+        nodes[current].entries.push(index);
+        keys.push(key);
+    }
+    let mut usage_ids = BTreeSet::new();
+    for usage in usages {
+        validate_id(&usage.id)?;
+        validate_id(&usage.entry_id)?;
+        let index = ids.get(usage.entry_id.as_str()).ok_or_else(|| {
+            Error::InvalidInput("historical usage references unknown entry".into())
+        })?;
+        if !usage_ids.insert(usage.id.as_str())
+            || usage.evidence.quote.trim() != usage.evidence.quote
+            || term_key(&usage.evidence.quote, MAX_HISTORICAL_MATCH_BYTES)? != keys[*index]
+        {
+            return Err(Error::InvalidInput(
+                "historical usage requires unique ID and exact term quotation".into(),
+            ));
+        }
+        charge(
+            &mut bytes,
+            usage.id.len()
+                + usage.entry_id.len()
+                + usage.evidence.scene_id.len()
+                + usage.evidence.quote.len(),
+        )?;
+    }
+    let sources = validate_sources(
+        manuscript,
+        &usages.iter().map(|u| &u.evidence).collect::<Vec<_>>(),
+    )?;
+    let mut confirmed = BTreeMap::new();
+    for (usage, evidence) in usages.iter().zip(sources) {
+        let Evidence {
+            scene_id, range, ..
+        } = evidence;
+        if confirmed
+            .insert(
+                (
+                    usage.entry_id.as_str(),
+                    scene_id,
+                    range.byte_start,
+                    range.byte_end,
+                ),
+                usage.id.as_str(),
+            )
+            .is_some()
+        {
+            return Err(Error::InvalidInput(
+                "historical usage annotations duplicate the same occurrence".into(),
+            ));
+        }
+    }
+    let mut candidates = Vec::new();
+    let mut total_tokens = 0;
+    for scene in &manuscript.scenes {
+        let text = &scene.text;
+        let mut active: Vec<(usize, usize, u32)> = Vec::new();
+        let mut previous_end = 0;
+        let mut previous_utf16 = 0u32;
+        for token in historical_tokens().find_iter(text) {
+            total_tokens += 1;
+            if total_tokens > MAX_HISTORICAL_TOKENS {
+                return Err(Error::InvalidInput(
+                    "historical source token budget exceeded".into(),
+                ));
+            }
+            let utf16_start =
+                previous_utf16 + text[previous_end..token.start()].encode_utf16().count() as u32;
+            let utf16_end = utf16_start + token.as_str().encode_utf16().count() as u32;
+            let spaced = !text[previous_end..token.start()].is_empty();
+            previous_end = token.end();
+            previous_utf16 = utf16_end;
+            if token.len() > MAX_HISTORICAL_TERM_BYTES {
+                active.clear();
                 continue;
             }
-            for token in tokens {
-                if token.to_lowercase() == concept {
-                    results.push(AnachronismItem {
-                        word: format!("{} ({})", token, description),
-                        introduced_year: 1500,
-                        target_year,
-                        scene_id,
+            let word = token.as_str().to_lowercase();
+            let mut next: Vec<_> = active
+                .iter()
+                .filter_map(|(node, start, utf16)| {
+                    nodes[*node]
+                        .children
+                        .get(&(spaced, word.clone()))
+                        .map(|child| (*child, *start, *utf16))
+                })
+                .collect();
+            if let Some(node) = nodes[0].children.get(&(false, word)) {
+                next.push((*node, token.start(), utf16_start));
+            }
+            for (node, start, utf16) in &next {
+                for &index in &nodes[*node].entries {
+                    if candidates.len() >= MAX_HISTORICAL_CANDIDATES
+                        || token.end() - start > MAX_HISTORICAL_MATCH_BYTES
+                    {
+                        return Err(Error::InvalidInput(
+                            "historical candidate count or span exceeds limit".into(),
+                        ));
+                    }
+                    let entry = &catalogue[index];
+                    let author_usage_id = confirmed
+                        .remove(&(entry.id.as_str(), scene.id.clone(), *start, token.end()))
+                        .map(str::to_string);
+                    let date_conflict =
+                        (!entry.sense_ambiguous || author_usage_id.is_some()).then(|| {
+                            i64::from(entry.earliest_year)
+                                > i64::from(target_year) + i64::from(tolerance_years)
+                        });
+                    candidates.push(HistoricalCandidate {
+                        entry_id: entry.id.clone(),
+                        scene_id: scene.id.clone(),
+                        range: TextRange {
+                            byte_start: *start,
+                            byte_end: token.end(),
+                            utf16_start: *utf16,
+                            utf16_end,
+                        },
+                        quote: text[*start..token.end()].into(),
+                        date_conflict,
+                        author_usage_id,
                     });
-                    break;
                 }
             }
+            active = next;
         }
     }
-
-    results
+    if !confirmed.is_empty() {
+        return Err(Error::InvalidInput(
+            "historical usage does not align with a whole located term".into(),
+        ));
+    }
+    candidates.sort_unstable_by(|a, b| {
+        a.scene_id
+            .cmp(&b.scene_id)
+            .then_with(|| a.range.byte_start.cmp(&b.range.byte_start))
+            .then_with(|| a.range.byte_end.cmp(&b.range.byte_end))
+            .then_with(|| a.entry_id.cmp(&b.entry_id))
+    });
+    let mut catalogue = catalogue.to_vec();
+    catalogue.sort_unstable_by(|a, b| a.id.cmp(&b.id));
+    Ok(HistoricalAnalysisResult { document_id: manuscript.document_id.clone(), target_year, tolerance_years,
+        catalogue, candidates, availability: AnalysisAvailability::Partial,
+        diagnostics: vec!["caller_catalogue_dates_and_context_not_independently_verified; matches_are_review_candidates".into(),
+            "first_attestation_is_not_first_use; source_annotations_confirm_location_and_declared_sense_only".into(),
+            "integer_year_constraints_not_calendar_conversion_or_inferred_scene_chronology".into()] })
 }
 
 #[cfg(test)]
@@ -578,22 +950,25 @@ mod tests {
             .into_iter()
             .map(String::from)
             .collect();
-        let results = analyze_scene(&tokens, 1200, 0);
-        assert!(results.iter().any(|a| a.word == "cool"));
+        let results = analyze_scene_checked(&tokens, 1200, 0).unwrap();
+        assert!(results.items.is_empty());
+        assert!(results.abstained_terms.iter().any(|term| term == "cool"));
     }
 
     #[test]
     fn test_slang_okay_before_1839() {
         let tokens: Vec<String> = vec!["okay"].into_iter().map(String::from).collect();
-        let results = analyze_scene(&tokens, 1700, 0);
-        assert!(results.iter().any(|a| a.word == "okay"));
+        let results = analyze_scene_checked(&tokens, 1700, 0).unwrap();
+        assert!(results.items.is_empty());
+        assert!(results.abstained_terms.iter().any(|term| term == "okay"));
     }
 
     #[test]
     fn test_slang_awesome_modern() {
         let tokens: Vec<String> = vec!["awesome"].into_iter().map(String::from).collect();
-        let results = analyze_scene(&tokens, 1900, 0);
-        assert!(results.iter().any(|a| a.word == "awesome"));
+        let results = analyze_scene_checked(&tokens, 1900, 0).unwrap();
+        assert!(results.items.is_empty());
+        assert!(results.abstained_terms.iter().any(|term| term == "awesome"));
     }
 
     #[test]
@@ -602,17 +977,17 @@ mod tests {
             .into_iter()
             .map(String::from)
             .collect();
-        let results = analyze_scene(&tokens, 1200, 0);
-        assert!(results
-            .iter()
-            .any(|a| a.word.contains("democracy") && a.word.contains("modern democratic")));
+        let results = analyze_scene_checked(&tokens, 1200, 0).unwrap();
+        assert!(results.items.is_empty());
+        assert_eq!(results.abstained_terms, ["democracy"]);
     }
 
     #[test]
     fn test_medieval_psychology_warning() {
         let tokens: Vec<String> = vec!["psychology"].into_iter().map(String::from).collect();
-        let results = analyze_scene(&tokens, 1100, 0);
-        assert!(results.iter().any(|a| a.word.contains("psychology")));
+        let results = analyze_scene_checked(&tokens, 1100, 0).unwrap();
+        assert!(results.items.is_empty());
+        assert_eq!(results.abstained_terms, ["psychology"]);
     }
 
     #[test]

@@ -1,0 +1,44 @@
+{
+  "repository": "cmusphinx/cmudict",
+  "revision": "74790861f652b15e4ac49015a90074ad62a27690",
+  "cache": "target/external-validation/cmudict",
+  "license": "CMU permissive license;see pinned LICENSE",
+  "scope": "Published English pronunciation-reference compatibility,not human reading comprehension or perfect pronunciation truth.",
+  "split": {
+    "seed": "narrative-lens-cmudict-v1",
+    "unit": "first4 lowercase ASCII letters;prefix-disjoint groups,not claimed linguistic-family independence",
+    "holdout_modulo": 5
+  },
+  "limits": {
+    "archiveBytes": 12582912,
+    "memberBytes": 4194304,
+    "selectedBytes": 5242880
+  },
+  "files": [
+    {
+      "path": "LICENSE",
+      "size": 1754,
+      "gitBlobSha1": "81a0ae8ec00962d2ccce9f93c1dcb17d3cb57abb",
+      "sha256": "bd4ce8e44170a5f9f481310ca85c51de3c4f851a65e679b40e603b143bd3542a"
+    },
+    {
+      "path": "README",
+      "size": 1412,
+      "gitBlobSha1": "ea3110304364dd43905fc3c5fb6d94bbb3544d6c",
+      "sha256": "00c34e7564f1f6a68de02e12c123d801471da92bc3091f7d89b605f238bf8554"
+    },
+    {
+      "path": "cmudict.dict",
+      "size": 3618488,
+      "gitBlobSha1": "2c0411740cce3e2026a80b90b650d5f6a7258164",
+      "sha256": "81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22"
+    },
+    {
+      "path": "cmudict.phones",
+      "size": 382,
+      "gitBlobSha1": "f02d34711061230f862dfc2c2bee8a15ebbc9622",
+      "sha256": "ffb588a5e55684723582c7256e1d2f9fadb130011392d9e59237c76e34c2cfd6"
+    }
+  ],
+  "archiveSha256": "741c592660bbf10ab93fe3d5aa709b73a3b5ba91e3291a066715440f4137a58d"
+}

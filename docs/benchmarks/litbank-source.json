@@ -1,0 +1,4844 @@
+{
+  "schemaVersion": 1,
+  "repository": "dbamman/litbank",
+  "revision": "3e50db0ffc033d7ccbb94f4d88f6b99210328ed8",
+  "license": "CC-BY-4.0",
+  "licenseSource": "https://github.com/dbamman/litbank/blob/3e50db0ffc033d7ccbb94f4d88f6b99210328ed8/README.md",
+  "citation": {
+    "authors": "David Bamman, Sejal Popat and Sheng Shen (2019); David Bamman, Olivia Lewke and Anya Mansoor (2020)",
+    "papers": [
+      "https://aclanthology.org/N19-1220/",
+      "https://aclanthology.org/2020.lrec-1.6/"
+    ]
+  },
+  "cache": "target/external-validation/litbank",
+  "split": {
+    "seed": "narrative-lens-litbank-v1",
+    "group": "author",
+    "method": "int(sha256(seed + '\\n' + author)[:8],16) % 5 == 0 -> final_holdout; otherwise development",
+    "holdoutPolicy": "Do not inspect held-out labels or per-document errors during development; capture baseline predictions before implementation changes and evaluate final frozen candidates once."
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "size": 13172,
+      "gitBlobSha1": "2796b968332b705af627a186b6afcd9a1ff85f98",
+      "sha256": "10e740b0beb5482490c0dc4eabd0c79a31eb881fa895c18b49993cd9e31af268"
+    },
+    {
+      "path": "coref/brat/1023_bleak_house_brat.ann",
+      "size": 25073,
+      "gitBlobSha1": "a1be3ae7e77a8b3caa15d0dc3edf0f5bad790eee",
+      "sha256": "a264db90a2f17d36ebe6082fcc9efc0e3a20b97066d07de48338579e5599e55c"
+    },
+    {
+      "path": "coref/brat/1023_bleak_house_brat.txt",
+      "size": 11738,
+      "gitBlobSha1": "b0d606fea56f508eaa9cd0d668d0bbc98a4515a4",
+      "sha256": "6e18013c61bdac1c31109c9f2039f69b2200ecac9514ecd45175877a8fe5ab58"
+    },
+    {
+      "path": "coref/brat/105_persuasion_brat.ann",
+      "size": 22273,
+      "gitBlobSha1": "f18c96a445abd00c473e85324e2e891bb2b4c9de",
+      "sha256": "70054d99dd852d5f76b12a5cd2cc02896f65cc3ef1a020a30e6016d7907dcd8a"
+    },
+    {
+      "path": "coref/brat/105_persuasion_brat.txt",
+      "size": 10614,
+      "gitBlobSha1": "02764f4722853c7c3c76c9294e71dadff5431f93",
+      "sha256": "eab990f51538abd93973f6a4e79c6db3796d6beef36cf593b4f5a3acbc6ba61d"
+    },
+    {
+      "path": "coref/brat/1064_the_masque_of_the_red_death_brat.ann",
+      "size": 11692,
+      "gitBlobSha1": "cd8dafd904932525f2709ed97b8184a966c9eb36",
+      "sha256": "4a515dec6d1f361033503434fbd178d4f858fd9df340e1faaf08994a930f15da"
+    },
+    {
+      "path": "coref/brat/1064_the_masque_of_the_red_death_brat.txt",
+      "size": 10730,
+      "gitBlobSha1": "7de80fc81169cb19d4fca7b7b4d3b6bb4f2faa53",
+      "sha256": "b6debfb97a60107d3d2afcc7a008143935a234ce2adcc99e28c79e3db081de05"
+    },
+    {
+      "path": "coref/brat/110_tess_of_the_durbervilles_a_pure_woman_brat.ann",
+      "size": 22967,
+      "gitBlobSha1": "ea55a0bc7a32309f7f3711751467f55600e2a33d",
+      "sha256": "2384d87353aedee8dccd1d26e1d49581c5c93fdd3c549ae9a3171b8f72055e0b"
+    },
+    {
+      "path": "coref/brat/110_tess_of_the_durbervilles_a_pure_woman_brat.txt",
+      "size": 9120,
+      "gitBlobSha1": "d4bc73f2471a0e2b6a5ff5ffae0295146e6d922a",
+      "sha256": "6da7a5ec7b825cb7fb657ec5a419c2a152c1f602bc20132199e9a0f2f4880226"
+    },
+    {
+      "path": "coref/brat/11231_bartleby_the_scrivener_a_story_of_wallstreet_brat.ann",
+      "size": 21950,
+      "gitBlobSha1": "4e6204c7d0f106e285d56d3e4c595d63da3f1bda",
+      "sha256": "43df9d1020221e2b5f14544d3a6598d1145ff7d3d280f145c85579d088e2aaff"
+    },
+    {
+      "path": "coref/brat/11231_bartleby_the_scrivener_a_story_of_wallstreet_brat.txt",
+      "size": 13023,
+      "gitBlobSha1": "1dc3621be5b4fa5286ad97e1853e5e9d4085cb06",
+      "sha256": "5bce9189d617a6b10d25f6cffaa6a4791940e3cadb5d73bfbde1d6d5e3157b21"
+    },
+    {
+      "path": "coref/brat/113_the_secret_garden_brat.ann",
+      "size": 23106,
+      "gitBlobSha1": "ed29622265aa8faddec20e69792a3cbc2ec5adec",
+      "sha256": "0aef200360e9c87793211272b72473bd7a06d2cb753c7d00b2498234308d095f"
+    },
+    {
+      "path": "coref/brat/113_the_secret_garden_brat.txt",
+      "size": 9584,
+      "gitBlobSha1": "0ef69f08a6349af646f6b2b3645002a527b65037",
+      "sha256": "096ed59ffc624812cb176f8a0086d0adf405ff52ce44f85b8e116f7e2322457b"
+    },
+    {
+      "path": "coref/brat/1155_the_secret_adversary_brat.ann",
+      "size": 18936,
+      "gitBlobSha1": "b33d6b38f2dde6d906c8f60db160d83439075334",
+      "sha256": "6093865880796fccc2720e56476f2f7f689bcc6be1f8d8a0a87cdead1514b6fb"
+    },
+    {
+      "path": "coref/brat/1155_the_secret_adversary_brat.txt",
+      "size": 10167,
+      "gitBlobSha1": "afdfd381e5545d166d9dcc1d94d2d84240a9bcb8",
+      "sha256": "01e44b1a7626b71d326389b98f0f05e02967bcfd4935c031ee5cd71d6b5677b1"
+    },
+    {
+      "path": "coref/brat/11_alices_adventures_in_wonderland_brat.ann",
+      "size": 14842,
+      "gitBlobSha1": "11ff20601fa2aeccbdab962fa62f04d71e1476a7",
+      "sha256": "fa17bca6524d9597926c00acd89e56525a99004a19d9b7b88b6c9d8d2255a4ca"
+    },
+    {
+      "path": "coref/brat/11_alices_adventures_in_wonderland_brat.txt",
+      "size": 9735,
+      "gitBlobSha1": "90151f79a03b480a7900450174eaffaac8ae491b",
+      "sha256": "6828505c307e327559d21a92816f6de0eda01a0c7ce08fbcd43e5e1a92670a94"
+    },
+    {
+      "path": "coref/brat/1206_the_flying_u_ranch_brat.ann",
+      "size": 16235,
+      "gitBlobSha1": "e7d0ded51b3b7f39540bf1d91fc2faa9a64f0b56",
+      "sha256": "8ce28cec69d0ec90ae683ce062cc5a2aafc03d25b51728c82475d14c6d3e37b5"
+    },
+    {
+      "path": "coref/brat/1206_the_flying_u_ranch_brat.txt",
+      "size": 9979,
+      "gitBlobSha1": "58b5dc8d51aa32cd9f03eed8a878c3181b332487",
+      "sha256": "9641094879a2c8cba0615f89e71be6ffa7edb0641bdaa178be719dae9fe3c21a"
+    },
+    {
+      "path": "coref/brat/120_treasure_island_brat.ann",
+      "size": 24958,
+      "gitBlobSha1": "9632434978d12c1b4bfb4c7e06ed6c857ee2c074",
+      "sha256": "59a590618fdf9a69c5f9d1646e393f4e295f64b2fe8261ed419a6a85f7e11493"
+    },
+    {
+      "path": "coref/brat/120_treasure_island_brat.txt",
+      "size": 10349,
+      "gitBlobSha1": "b6e8221a40c7fd6e47e8203634139274e02248e7",
+      "sha256": "2d60e063930543a6ef8e3ed640e979ce9084ef518f2d92bb3ed0ffc5ab14b8c3"
+    },
+    {
+      "path": "coref/brat/1245_night_and_day_brat.ann",
+      "size": 23353,
+      "gitBlobSha1": "7dc8610bce17cb412f92b5550d67ca5da8cd10f3",
+      "sha256": "8c145017a8603871940a2291bee3375f3b372837442ffa892cb325b6bf0c014c"
+    },
+    {
+      "path": "coref/brat/1245_night_and_day_brat.txt",
+      "size": 11414,
+      "gitBlobSha1": "0efe09c8008c005cd1f2ca89995f5caf27b947d2",
+      "sha256": "b62f856101716342b5ccf03cd95ca50bf073c392f28c1eaa5d537dbab9d8e45e"
+    },
+    {
+      "path": "coref/brat/1260_jane_eyre_an_autobiography_brat.ann",
+      "size": 19368,
+      "gitBlobSha1": "bed860087ac37b0a4e91b1b0cc402ab3ffb95612",
+      "sha256": "d18993494a66f2b1251e79c59a3a39e7c40509feb2460c6bd08d0e572523d311"
+    },
+    {
+      "path": "coref/brat/1260_jane_eyre_an_autobiography_brat.txt",
+      "size": 9863,
+      "gitBlobSha1": "c3c9c5b5b0befaf3218631fea470e66f24cafde4",
+      "sha256": "4d48eaea10338185b4dda56a34e50ac8fc5caf3764152b88b98eb8d9bd2264a3"
+    },
+    {
+      "path": "coref/brat/12677_personality_plus_some_experiences_of_emma_mcchesney_and_her_son_jock_brat.ann",
+      "size": 20663,
+      "gitBlobSha1": "a89ba5008df75131dafa6a0f035b20f13d59b345",
+      "sha256": "e0bc21c9f9c620bca49d55e4756d15cf7c17b69f0aac8d155527756dcac79290"
+    },
+    {
+      "path": "coref/brat/12677_personality_plus_some_experiences_of_emma_mcchesney_and_her_son_jock_brat.txt",
+      "size": 9806,
+      "gitBlobSha1": "0199cb2b3091705d82d2f55614d2d64d2727ca04",
+      "sha256": "6452f1262746c8cb695c384b9187a33dbc8919f0d6013da65701854741f881f7"
+    },
+    {
+      "path": "coref/brat/1327_elizabeth_and_her_german_garden_brat.ann",
+      "size": 14528,
+      "gitBlobSha1": "0401f2bdce619c05e0743ad5fd9ecbd11977785c",
+      "sha256": "ce9dd8844d860880feeb02b78d1d1fb5ef47d3d15a74fbe17b0a011b46f4f5bf"
+    },
+    {
+      "path": "coref/brat/1327_elizabeth_and_her_german_garden_brat.txt",
+      "size": 10129,
+      "gitBlobSha1": "412a8f792c65029ce13056af14df90fab7015e61",
+      "sha256": "3c224a59ac935c16433cddff206fe5e0e856b8e97794efd664c2f45904b09c38"
+    },
+    {
+      "path": "coref/brat/1342_pride_and_prejudice_brat.ann",
+      "size": 23977,
+      "gitBlobSha1": "653c83e4f0fac314a318c1fb01987ea873478c00",
+      "sha256": "7a1002070de75ab703589fd9a0d26ac400c9479faed69b917a777a9dd0a2f7c8"
+    },
+    {
+      "path": "coref/brat/1342_pride_and_prejudice_brat.txt",
+      "size": 9168,
+      "gitBlobSha1": "32af049471e8fc4ffc108acfa3dac7711083ad14",
+      "sha256": "2d1279fe91492f76ee72a5dd10da7dc47f4d620029fdce8c4444fa83e3e55cb7"
+    },
+    {
+      "path": "coref/brat/1400_great_expectations_brat.ann",
+      "size": 22506,
+      "gitBlobSha1": "537b1b7d8b593f3aec05b9f4b8e9391cce4d72c9",
+      "sha256": "237374f03fc6757511604e5a3cceaf8bff900dd50f6bbccfd4a2bf7d7e082fe6"
+    },
+    {
+      "path": "coref/brat/1400_great_expectations_brat.txt",
+      "size": 9146,
+      "gitBlobSha1": "0a6544b0a35ee7df8f8164d639919faf395e1943",
+      "sha256": "99f4a03221880823a521905bc5a55ff6a0761a9bbbd12a9e6b404b8fd184f63b"
+    },
+    {
+      "path": "coref/brat/145_middlemarch_brat.ann",
+      "size": 18781,
+      "gitBlobSha1": "c897df3e2887b072c5c60c7312b7b69b72a5ca86",
+      "sha256": "aab728f2e77fd08831f0ff69d04646bcfc2d575f5a192c745c8dbbc2c65d5e0f"
+    },
+    {
+      "path": "coref/brat/145_middlemarch_brat.txt",
+      "size": 10617,
+      "gitBlobSha1": "252ff24ee5379302f4bc00c44513ce4605c9b7b3",
+      "sha256": "a7cd871276914868c5e6df6ecd023d44d2c8afd6dbe0fb78988f67fefd46f16a"
+    },
+    {
+      "path": "coref/brat/15265_the_quest_of_the_silver_fleece_a_novel_brat.ann",
+      "size": 13651,
+      "gitBlobSha1": "232991b813e383b4698add245c258a94ba92451d",
+      "sha256": "d3bbe6f82a7295a4f72f34caf336da463e059eea703db870eaec3451a9778c78"
+    },
+    {
+      "path": "coref/brat/15265_the_quest_of_the_silver_fleece_a_novel_brat.txt",
+      "size": 9259,
+      "gitBlobSha1": "57288c98ea1249b6455050c5f963efc07f15a92e",
+      "sha256": "ab286c357942173cfce17dd5be5e93b87895f511fa3d078b6e30111f8c9e6e6d"
+    },
+    {
+      "path": "coref/brat/155_the_moonstone_brat.ann",
+      "size": 21964,
+      "gitBlobSha1": "e1043aa41f5f702aadc3f247cad7580fe35c7b9f",
+      "sha256": "f974ed46ee7cde766f547edbcb809e57067d72971ce7b8aa332df76835a40ce9"
+    },
+    {
+      "path": "coref/brat/155_the_moonstone_brat.txt",
+      "size": 10103,
+      "gitBlobSha1": "a0f1569e0e328f3ff190a2bc41ce44d2dddbdbf7",
+      "sha256": "e7da96571046b38e5e3fc2edeb8bc17a57b652c5e7369b345c64cd54c49b2ed1"
+    },
+    {
+      "path": "coref/brat/158_emma_brat.ann",
+      "size": 26918,
+      "gitBlobSha1": "a104b8b94ac500a7f227a094f3fdbaedd1a304cd",
+      "sha256": "855f6abb43a615a0ded0a5d6e86dc360e360783da8aea44e6295c2d1e1200be3"
+    },
+    {
+      "path": "coref/brat/158_emma_brat.txt",
+      "size": 10116,
+      "gitBlobSha1": "1f41e78b46f99aa2a01a3bb38a4f79e7d25eaa21",
+      "sha256": "1f51b3cc0d67758ebc0c21b852ef49e9043e7d26e5d3b8e8eff5274c29f3c473"
+    },
+    {
+      "path": "coref/brat/160_the_awakening_and_selected_short_stories_brat.ann",
+      "size": 22914,
+      "gitBlobSha1": "30539c3b3847b5ddfc7bfd21badcd2368b6f84e5",
+      "sha256": "768147390b3ba4020c8dcc4f8eccb725969b0eafee3ad4af03df154a5c9154f8"
+    },
+    {
+      "path": "coref/brat/160_the_awakening_and_selected_short_stories_brat.txt",
+      "size": 10281,
+      "gitBlobSha1": "b90e2346b20f60159ff8c53e4b284997afd0c758",
+      "sha256": "18138d83d29a936cfa0ec09f9874624d7c17176d38393aadd8ed4b2bca16cdce"
+    },
+    {
+      "path": "coref/brat/16357_mary_a_fiction_brat.ann",
+      "size": 17573,
+      "gitBlobSha1": "8abddac3b28c10262943384239c801c33114bd31",
+      "sha256": "034de3de0f23c37f9f848feac79ae0415e0059617a0c21a36423614a68e65336"
+    },
+    {
+      "path": "coref/brat/16357_mary_a_fiction_brat.txt",
+      "size": 10392,
+      "gitBlobSha1": "f88fc5c5f186086413c9941c1023c3c2bd1c3e8b",
+      "sha256": "8595bc7ae5e74334c72f40f2d5eeda24630afb0d0dfa780d15edc77b7890ea15"
+    },
+    {
+      "path": "coref/brat/1661_the_adventures_of_sherlock_holmes_brat.ann",
+      "size": 19980,
+      "gitBlobSha1": "c188b6dc0a6acf6e64a0e122e9e77e1e7d9aaffa",
+      "sha256": "1aabccd438f8d1922bf6ffb007693faa3ec1c6e655ce434eff6bc5e8f87f662e"
+    },
+    {
+      "path": "coref/brat/1661_the_adventures_of_sherlock_holmes_brat.txt",
+      "size": 9829,
+      "gitBlobSha1": "75514adadc920d6a1ee6901453e0901da063133c",
+      "sha256": "3b70d37856884bd14fd74acbe0b749afba94cd9710a3488fdc30e77d615acc63"
+    },
+    {
+      "path": "coref/brat/1695_the_man_who_was_thursday_a_nightmare_brat.ann",
+      "size": 21069,
+      "gitBlobSha1": "a00beeef0a35593d455dfbcb516d4f9fdcd54071",
+      "sha256": "d9d0bd42519a90bf9e3578bc6afb0cfc3ede91de54f5ae50413d356cd93151fd"
+    },
+    {
+      "path": "coref/brat/1695_the_man_who_was_thursday_a_nightmare_brat.txt",
+      "size": 10308,
+      "gitBlobSha1": "a70152eac697a9d23586aabdcd78a0ca40d40ff0",
+      "sha256": "40b3fca21e02f9c1622325cdc5b3a7cc7aa33eac6a3df6680ce38931525b3843"
+    },
+    {
+      "path": "coref/brat/171_charlotte_temple_brat.ann",
+      "size": 24009,
+      "gitBlobSha1": "0b1d2a4796f315cd4db252cccabf99d250c3d4a6",
+      "sha256": "d4f3d4b2dbe1136a3198d22bbbd9b29727da4fb87135ada490dbdd65d7d7c555"
+    },
+    {
+      "path": "coref/brat/171_charlotte_temple_brat.txt",
+      "size": 10187,
+      "gitBlobSha1": "490dc8f6003e43b223a992a38b3a6fb52dd2a6d9",
+      "sha256": "55b318a498bc97d866e9bfcf00d6fe10e0d449af45abf6669c5ac6f60e127b3d"
+    },
+    {
+      "path": "coref/brat/174_the_picture_of_dorian_gray_brat.ann",
+      "size": 18091,
+      "gitBlobSha1": "c66b4b1ca593d078c27c8f22a210f2cb8c7c0dc3",
+      "sha256": "3cef238203798941467be8b93d358d946533e63a532803e34a54bb9581662029"
+    },
+    {
+      "path": "coref/brat/174_the_picture_of_dorian_gray_brat.txt",
+      "size": 9448,
+      "gitBlobSha1": "95996f2e4468f0066a1bcd599acc16825a1168c6",
+      "sha256": "4af78eedb1d47e838695caa8eb93624a19fd54dc44f21cd2c690422678d815e9"
+    },
+    {
+      "path": "coref/brat/18581_adrift_in_new_york_tom_and_florence_braving_the_world_brat.ann",
+      "size": 22084,
+      "gitBlobSha1": "c8c9c0d5e7d61713132d76ece221967e7582c6a6",
+      "sha256": "b8d3e2aafb06d855506fabdca14287f07ee9a33b529f8788505f023ed133be12"
+    },
+    {
+      "path": "coref/brat/18581_adrift_in_new_york_tom_and_florence_braving_the_world_brat.txt",
+      "size": 8934,
+      "gitBlobSha1": "d190a71777537565e912b28632b6dfec375a04b3",
+      "sha256": "74b736ab53d28d78105bc9ccaedad3bb01d28476d30c6b4a0b0940843951131b"
+    },
+    {
+      "path": "coref/brat/2005_piccadilly_jim_brat.ann",
+      "size": 23172,
+      "gitBlobSha1": "d7dc6c5bfe6727ac7e0093a584c98ca477733cab",
+      "sha256": "c7502c4808e68b44c262c437ca9274ee6ef011ae3f1ac44e43ffedd0d0700d13"
+    },
+    {
+      "path": "coref/brat/2005_piccadilly_jim_brat.txt",
+      "size": 10056,
+      "gitBlobSha1": "a6d8b9122d7e1b015bc22dbec4e39651b8b408fc",
+      "sha256": "2eaef49f4d3dc5dc0c3bc1f271301f12d2f1dc8bcf43d6c0a3e75e4a6575eec2"
+    },
+    {
+      "path": "coref/brat/2084_the_way_of_all_flesh_brat.ann",
+      "size": 23847,
+      "gitBlobSha1": "dfa410baeb1aeff54a11733e459117153c479647",
+      "sha256": "eec5f24488e12eacdab6143e2574fd662706c9d4d1dcafe1e0935eb90145d413"
+    },
+    {
+      "path": "coref/brat/2084_the_way_of_all_flesh_brat.txt",
+      "size": 9575,
+      "gitBlobSha1": "ec37f2196cba9dc6f042323818319a00d5a346b4",
+      "sha256": "aa1485193c58321bd34180a1d1fe2b8633f17d73eeb57e626097f44a0c1d7e1c"
+    },
+    {
+      "path": "coref/brat/208_daisy_miller_a_study_brat.ann",
+      "size": 24990,
+      "gitBlobSha1": "4176082bc39433883b7899319c7fbd9265c53342",
+      "sha256": "f94af16201b42cdffb8f658586d11bbb79046d305089a362e202ff4f851ca235"
+    },
+    {
+      "path": "coref/brat/208_daisy_miller_a_study_brat.txt",
+      "size": 9937,
+      "gitBlobSha1": "f081b25f64b320eaebea4086e2f9c268a821e99e",
+      "sha256": "62d72edfc90101330e6054c6d27809106eb96f245e0001aa1edf61712519f958"
+    },
+    {
+      "path": "coref/brat/2095_clotelle_a_tale_of_the_southern_states_brat.ann",
+      "size": 26205,
+      "gitBlobSha1": "98955bacc047185a49ba776c0ecf8b3762a3bf13",
+      "sha256": "ccc3abc16c66aac2891a534a9a38f38a72b8305e9e9f8db35b1e273495f4fb3d"
+    },
+    {
+      "path": "coref/brat/2095_clotelle_a_tale_of_the_southern_states_brat.txt",
+      "size": 10389,
+      "gitBlobSha1": "ae32233e20745d3b422c88ee5c35a8a1d9b73942",
+      "sha256": "c38e3b41f78c31ec1efa6ca5902edcefd357dc7bf703920452baf309ce0bd187"
+    },
+    {
+      "path": "coref/brat/209_the_turn_of_the_screw_brat.ann",
+      "size": 16759,
+      "gitBlobSha1": "71707400b26ecbff1cff092ff3552eb68c83a532",
+      "sha256": "079de4ac3f7a69212317c71ed1f555b03f408ab06f851774d559d7503f682008"
+    },
+    {
+      "path": "coref/brat/209_the_turn_of_the_screw_brat.txt",
+      "size": 9259,
+      "gitBlobSha1": "27ccd20abd6c4906fdd03907ed0ca1e537d6c84e",
+      "sha256": "dd14f7822448f1a91f93f9070f68c594d876119e8eacb43fceb208bb19344ac8"
+    },
+    {
+      "path": "coref/brat/215_the_call_of_the_wild_brat.ann",
+      "size": 22225,
+      "gitBlobSha1": "4290747c00b025c017b16e365e231d8160a36b8c",
+      "sha256": "506dbfeb07425c4d9095bff051786b4c1dd17bdd8c2e8053f41ab6d205c34a4c"
+    },
+    {
+      "path": "coref/brat/215_the_call_of_the_wild_brat.txt",
+      "size": 9929,
+      "gitBlobSha1": "a62be448f9d3a232a272296442be7e9cfe06389e",
+      "sha256": "c5911bfdbd2b48a6545db15748510726992d82fea865997485a87b5998edac63"
+    },
+    {
+      "path": "coref/brat/2166_king_solomons_mines_brat.ann",
+      "size": 20142,
+      "gitBlobSha1": "8e119b77bfa6881eac1dd405a7042d27b7568a77",
+      "sha256": "14e4d42eaaf08bd80df855496421ebf77a2c398aadedea3f634591d60fff483e"
+    },
+    {
+      "path": "coref/brat/2166_king_solomons_mines_brat.txt",
+      "size": 9345,
+      "gitBlobSha1": "76f2b1e737686e76fc21a594e1b3918f87a05565",
+      "sha256": "a019493f12dca5c2acf2c8ed5abd12da67049f94dcc90efc6c9ab4898dbefaec"
+    },
+    {
+      "path": "coref/brat/217_sons_and_lovers_brat.ann",
+      "size": 23661,
+      "gitBlobSha1": "d35c2ebafa4533f2bd01daf8b964e354a50ca847",
+      "sha256": "0e34b6d8de68040e44db478b9564bc88fa04eeed7d0c3b5386d1233ebc2a8216"
+    },
+    {
+      "path": "coref/brat/217_sons_and_lovers_brat.txt",
+      "size": 9549,
+      "gitBlobSha1": "62c69dd1c97a341b0c08460b311d290782d9dd76",
+      "sha256": "4be2aa1730457b37bc9bfe65480c63969b420a9f6e0c9513bb94e2bd7ed2b929"
+    },
+    {
+      "path": "coref/brat/219_heart_of_darkness_brat.ann",
+      "size": 17539,
+      "gitBlobSha1": "c95d94dd275f531a8f982f59cf59874ced4a5ad2",
+      "sha256": "90a1eb76107f9e61cf742c8707d8cd47c4c18b97a96e16a49fdd48c78d87dafa"
+    },
+    {
+      "path": "coref/brat/219_heart_of_darkness_brat.txt",
+      "size": 9900,
+      "gitBlobSha1": "a28be2f764fe716091fc1c67e71e916fa5d70c85",
+      "sha256": "7bd1a104c245d8fe3e860a7e54e8c93a3d4b1bc71f35c7d191661fce0ab9588d"
+    },
+    {
+      "path": "coref/brat/233_sister_carrie_a_novel_brat.ann",
+      "size": 18047,
+      "gitBlobSha1": "3017c3cd1726e5778e0595cdec56f6bd51560451",
+      "sha256": "16dd7291b8790fa5587aa0a868424b2a8146bacfa1825857ba5246bfbfaa4229"
+    },
+    {
+      "path": "coref/brat/233_sister_carrie_a_novel_brat.txt",
+      "size": 10427,
+      "gitBlobSha1": "5cd63149ae089911ee33d8c9135e4b0afd2c946e",
+      "sha256": "3a962a05d90cf0884290462b37d039b3bd875b385f267be88970b19fcceaf597"
+    },
+    {
+      "path": "coref/brat/238_dear_enemy_brat.ann",
+      "size": 24735,
+      "gitBlobSha1": "cdef3dca00b40a98dc902849d56763b3a1128456",
+      "sha256": "dd2331eb864ca27defbe7b9cac829a63f89a870048f2a68ee113db1c2c9739b0"
+    },
+    {
+      "path": "coref/brat/238_dear_enemy_brat.txt",
+      "size": 10047,
+      "gitBlobSha1": "260f98dace59de955deb88154e4fc4b7ced7655b",
+      "sha256": "4a08850ed27e4edc00c5f3781344f34466dfa3a31e5ea9ebc81a00af9ee44b2e"
+    },
+    {
+      "path": "coref/brat/2489_moby_dick_brat.ann",
+      "size": 23110,
+      "gitBlobSha1": "9bca3bbaa4520048a4a35937a4fac1f80b4741d5",
+      "sha256": "43859692a2557ef77796568bdaabad9834bf05fd106ab4a6828e96cacb4e16e2"
+    },
+    {
+      "path": "coref/brat/2489_moby_dick_brat.txt",
+      "size": 10625,
+      "gitBlobSha1": "7e967ebc65d1b6ecf0bb22d7928f12dfbf06ed97",
+      "sha256": "fc9246e1b5637ae3d8196484bf29ecfcabdaa059633f39e00cf8d1443de6ccf9"
+    },
+    {
+      "path": "coref/brat/24_o_pioneers_brat.ann",
+      "size": 26191,
+      "gitBlobSha1": "5f46a8263911da17e2a4210f8c3454a3f0f51669",
+      "sha256": "872898cc1eaeccc4c26ca6e6d24dc9eb5675aff3568ccaf2e48d2ea09a7347f5"
+    },
+    {
+      "path": "coref/brat/24_o_pioneers_brat.txt",
+      "size": 9699,
+      "gitBlobSha1": "e037a974999e0044e93ff1fc189d55cbb16e2f86",
+      "sha256": "60f874d3fe45ba04eb1d15f5185492a850ac549dfce622b36338c7b78581f366"
+    },
+    {
+      "path": "coref/brat/2641_a_room_with_a_view_brat.ann",
+      "size": 26868,
+      "gitBlobSha1": "6a3a7c8ebcffa8d4dfa8dae7bde16a0fe7eea2f4",
+      "sha256": "c1a35a5e11ea5e82181945e1787f87ec5a933dd9ae7542590441901816132982"
+    },
+    {
+      "path": "coref/brat/2641_a_room_with_a_view_brat.txt",
+      "size": 9398,
+      "gitBlobSha1": "e7c0c90f89d2253c50385eef529613b1f4e5c2e4",
+      "sha256": "eabb2d5b1575b2c98bdd6f47abd74a041ab2bdd78390128e5ad4ec478763ff30"
+    },
+    {
+      "path": "coref/brat/271_black_beauty_brat.ann",
+      "size": 23522,
+      "gitBlobSha1": "03fcbf67114622fc94f6665c2bcd4338edf1ba63",
+      "sha256": "4469b7df166c6f152f5e8fb05cfb3e6138d85487280099ba86788b564f2d8975"
+    },
+    {
+      "path": "coref/brat/271_black_beauty_brat.txt",
+      "size": 8877,
+      "gitBlobSha1": "a4673c86b61e693d0ea3d707d054cd7b01a758cd",
+      "sha256": "a84d0996d57a604bc1da3c104d4f2e6fbe72fc8bc3884d5d3d36bde8647b4369"
+    },
+    {
+      "path": "coref/brat/2775_the_good_soldier_brat.ann",
+      "size": 23501,
+      "gitBlobSha1": "9432ccfddedabd1bdd55481d257a782479835f6e",
+      "sha256": "91930f3c6aebdf27a5970b2b3af5acf4cd4ba682e7335825734ceb2cc5eaef25"
+    },
+    {
+      "path": "coref/brat/2775_the_good_soldier_brat.txt",
+      "size": 11214,
+      "gitBlobSha1": "72442cf77854e4b10c090b3c83124dc0f3e6bafd",
+      "sha256": "a9dc7431456066bc65aca216130b8aa85d84f4eb92c90e6465d248ba46d817bf"
+    },
+    {
+      "path": "coref/brat/27_far_from_the_madding_crowd_brat.ann",
+      "size": 18862,
+      "gitBlobSha1": "2b33df2d9728afb1ad86d369052ab31c5d2e4315",
+      "sha256": "aa552ec0d64657564f4803e94cb8409692b27301022d457954369b8054528a22"
+    },
+    {
+      "path": "coref/brat/27_far_from_the_madding_crowd_brat.txt",
+      "size": 11627,
+      "gitBlobSha1": "55f9eb52ba3ac923eac9525be46380de020081b9",
+      "sha256": "e4aaf80c8371645b7690f5ec7b37db5f5cdf3cc9b8bb28220ef0946ce701e3b7"
+    },
+    {
+      "path": "coref/brat/2807_to_have_and_to_hold_brat.ann",
+      "size": 21774,
+      "gitBlobSha1": "d2924e0990e99f21a3083f67702d24834906743e",
+      "sha256": "3342ea3ac6c51bc4136481d660845aa216bb76205551f2c1f9a22360c9d986af"
+    },
+    {
+      "path": "coref/brat/2807_to_have_and_to_hold_brat.txt",
+      "size": 9251,
+      "gitBlobSha1": "5be0f6f29e898ebbb48ff2e66511b5bbe6d4214f",
+      "sha256": "ebae14f1bd1f850143c665e3fc1ddfd01559b06d81b96d3ee9e4fb6308236e6a"
+    },
+    {
+      "path": "coref/brat/2814_dubliners_brat.ann",
+      "size": 21342,
+      "gitBlobSha1": "8fcf8c53432f471668943641dfc49b8aa77f6839",
+      "sha256": "974815af995189a0c2d2d27534b6d39a60ea55bffb95958e84be7da2619fa2e0"
+    },
+    {
+      "path": "coref/brat/2814_dubliners_brat.txt",
+      "size": 9629,
+      "gitBlobSha1": "84abff27c2a4f254323cc356d5cafa9b3f45583c",
+      "sha256": "8da5fc06c0e39e051ab3a161feb1554004c0defc232817e8eb6356f03e951cad"
+    },
+    {
+      "path": "coref/brat/2852_the_hound_of_the_baskervilles_brat.ann",
+      "size": 21184,
+      "gitBlobSha1": "8ba21a3d1e59e92fff52567d1ddb2583b8c01fe5",
+      "sha256": "ee83db513cd4c758796bf2effc278721aa680fb7bac086dea6abf526faa82405"
+    },
+    {
+      "path": "coref/brat/2852_the_hound_of_the_baskervilles_brat.txt",
+      "size": 10096,
+      "gitBlobSha1": "2d07fab2df164cbdab5ad36b6fbff60057f638b4",
+      "sha256": "d251447974991df15ee6f83853ea42b92122f48c17a73e8d14dcf3f65b875ad3"
+    },
+    {
+      "path": "coref/brat/2891_howards_end_brat.ann",
+      "size": 22910,
+      "gitBlobSha1": "2832fe2337a3108a2f6fe8f2b3415088c67cb2db",
+      "sha256": "a102972821933d827c1ebbe495fae655ec4d84eac0e5aa1ac7561cfb751873a4"
+    },
+    {
+      "path": "coref/brat/2891_howards_end_brat.txt",
+      "size": 9371,
+      "gitBlobSha1": "94f2b64a63cd0f985e3fefe7337e2670b2f46a05",
+      "sha256": "3a6b6e66ee7bea043ab201fa104cab4f1e0e706aee057359eeaa4a4a5ef5e4aa"
+    },
+    {
+      "path": "coref/brat/3268_the_mysteries_of_udolpho_brat.ann",
+      "size": 19642,
+      "gitBlobSha1": "4b39ff3a2332dbe9c2388c505294023a698be8b4",
+      "sha256": "7181f77bbc479409cf57d28fdd4c1d26e2f283761a32bfe0496b76d5557b04db"
+    },
+    {
+      "path": "coref/brat/3268_the_mysteries_of_udolpho_brat.txt",
+      "size": 10514,
+      "gitBlobSha1": "3f364d5243ac8d3234217ab053eece2bed892d90",
+      "sha256": "0c4dce3f4ad9db0de16202bbd37898f547429d700442c6fefee4cf0d0835b567"
+    },
+    {
+      "path": "coref/brat/32_herland_brat.ann",
+      "size": 22336,
+      "gitBlobSha1": "ce9a3fd4103c56f0a99f213b76cc3268241a89d4",
+      "sha256": "9f70f01a901defb267eae6f11c96ed836daf1141651b2564155f433c2bab9514"
+    },
+    {
+      "path": "coref/brat/32_herland_brat.txt",
+      "size": 9426,
+      "gitBlobSha1": "30b1b73e7d472a083a918037a910e95266f65896",
+      "sha256": "4b3407e73d948dce8bd3bf483c6809ef82fb376f3faf6d2ced7f05d7766c81eb"
+    },
+    {
+      "path": "coref/brat/33_the_scarlet_letter_brat.ann",
+      "size": 18480,
+      "gitBlobSha1": "6c83562944bd541d415ab1a4f7aae1a8aab4578b",
+      "sha256": "a96a38c5fcd711630815188f8dbe0c2e6d7a622417b45885c13691220aed6b43"
+    },
+    {
+      "path": "coref/brat/33_the_scarlet_letter_brat.txt",
+      "size": 11057,
+      "gitBlobSha1": "401d9f383f2e1f1a33b3e35123d942fd1a893e63",
+      "sha256": "f82a01814ab160e0ffef356b9d862d01d1906f9c3298e781259b812f74cde8c5"
+    },
+    {
+      "path": "coref/brat/3457_the_man_of_the_forest_brat.ann",
+      "size": 18150,
+      "gitBlobSha1": "d525ebae65a7b5279daaf9a6594bbaaa656c0662",
+      "sha256": "fad774e3471a6eea51179cd6f4466078ee2635e79ef4c785e500dbd0dc070de8"
+    },
+    {
+      "path": "coref/brat/3457_the_man_of_the_forest_brat.txt",
+      "size": 9729,
+      "gitBlobSha1": "9e535ca279213e6c3cf8dbfbe18bad6a75720a18",
+      "sha256": "6548566ba55671c8878055403775d591d781aa035d9f7e73779ab48f1e2b3040"
+    },
+    {
+      "path": "coref/brat/345_dracula_brat.ann",
+      "size": 25919,
+      "gitBlobSha1": "961778d477a11e4b4cf8c492727a34d8660532c4",
+      "sha256": "e5f248bfbe6b9ffcf76898391e16c79e4206c20242934ea06456adb8c8456a19"
+    },
+    {
+      "path": "coref/brat/345_dracula_brat.txt",
+      "size": 10554,
+      "gitBlobSha1": "f56913fcd37aaedba8b9f0486d2dac638bb81202",
+      "sha256": "072b11d12cdcc7855e8cb09d3ba57de38a51e721e480fe819a56ff61128fd194"
+    },
+    {
+      "path": "coref/brat/351_of_human_bondage_brat.ann",
+      "size": 26022,
+      "gitBlobSha1": "72fefe23cd49519802988cc79a2623a1013bba82",
+      "sha256": "6837e014273de247cd1186d45021f304b8d64828885e0990d32a6bf06d07b53f"
+    },
+    {
+      "path": "coref/brat/351_of_human_bondage_brat.txt",
+      "size": 8931,
+      "gitBlobSha1": "6f7dbe3964fc863ff941ddfceb1cf435435162f6",
+      "sha256": "49e60690499c0f4db089e46f6553aa5ef741e7186f6f9a2d1dc02dcf3f767ecd"
+    },
+    {
+      "path": "coref/brat/367_country_of_the_pointed_firs_brat.ann",
+      "size": 15546,
+      "gitBlobSha1": "e84c5e9ed632817ab969169f88c27198a9d4d23a",
+      "sha256": "fdee24bc2a4060dd0166b956d848864a8f4e3bcefb607bda85c1814caa656d61"
+    },
+    {
+      "path": "coref/brat/367_country_of_the_pointed_firs_brat.txt",
+      "size": 10624,
+      "gitBlobSha1": "f53f8bbc8fc8ba5d4e802d6cd61e93821d961729",
+      "sha256": "5823b48d7137f826631d1dcd5e75bbae95b2eb5da54960354475a26ff2a4db9f"
+    },
+    {
+      "path": "coref/brat/36_the_war_of_the_worlds_brat.ann",
+      "size": 14727,
+      "gitBlobSha1": "801af7053e7676b9503497461ff09c8a137c8d72",
+      "sha256": "83e6a8cd92978d599e6b827cd0289c95b8bae8e7be30d185cf96a45cc09b14ca"
+    },
+    {
+      "path": "coref/brat/36_the_war_of_the_worlds_brat.txt",
+      "size": 10518,
+      "gitBlobSha1": "da1fa4dbb5f9770fed0aa1fa9e99452c0c9543fe",
+      "sha256": "858548678adb8b85cb8110990a4f5caf7e6a25e6617d6258337a26ccef47e958"
+    },
+    {
+      "path": "coref/brat/4051_lady_bridget_in_the_nevernever_land_a_story_of_australian_life_brat.ann",
+      "size": 16738,
+      "gitBlobSha1": "288c1ae87e123f4ddbabea4f885ab9e255f5d5ae",
+      "sha256": "10a2394ca3094bee030ed4078556f37e1ea1b3a162b9c725e9b6c6e920a8935c"
+    },
+    {
+      "path": "coref/brat/4051_lady_bridget_in_the_nevernever_land_a_story_of_australian_life_brat.txt",
+      "size": 10951,
+      "gitBlobSha1": "1f31e300f418075bc759eabddf1a7cf92511325a",
+      "sha256": "c388073fb9c9ba92fdd5cfdf26c41290434558b51d5797fc9d5c28e04fbb7fb8"
+    },
+    {
+      "path": "coref/brat/41286_miss_marjoribanks_brat.ann",
+      "size": 29956,
+      "gitBlobSha1": "4f220875f686e10652ecacdcf3c1555b59369bbe",
+      "sha256": "68cd9b5727ccfaf7a450795669464ea225d02d1230083196f03f0aaef500ff95"
+    },
+    {
+      "path": "coref/brat/41286_miss_marjoribanks_brat.txt",
+      "size": 13785,
+      "gitBlobSha1": "13273b93551a556a41585e57d9008eb1c624e97d",
+      "sha256": "132b73eacb59a2816c8e8f35f8c610e76d937429f0218f7a2a7165c6454a3b73"
+    },
+    {
+      "path": "coref/brat/41_the_legend_of_sleepy_hollow_brat.ann",
+      "size": 24314,
+      "gitBlobSha1": "31f2e57630b4a8a0550a31b9661c6c3d4ada8931",
+      "sha256": "00c7589aec7473deb2ab7f3e51edfa531761d3769c106bac13975c06cc8d276d"
+    },
+    {
+      "path": "coref/brat/41_the_legend_of_sleepy_hollow_brat.txt",
+      "size": 11153,
+      "gitBlobSha1": "94542d0b2a83aeaa7550276b81cb4d7891ce7bea",
+      "sha256": "0ffe2114a464cb91691e3c32b384a3d165f843f6b937d6ad947bb2c3813da474"
+    },
+    {
+      "path": "coref/brat/4217_a_portrait_of_the_artist_as_a_young_man_brat.ann",
+      "size": 21926,
+      "gitBlobSha1": "7e72a5299a34626aee2e2280ee98d025a65e9137",
+      "sha256": "a8f49b447dd213abc416478fcfdadb2cf87e33e99259b1e655691b700b66aeab"
+    },
+    {
+      "path": "coref/brat/4217_a_portrait_of_the_artist_as_a_young_man_brat.txt",
+      "size": 10109,
+      "gitBlobSha1": "fab9a7edf9843090e156aee88b9f5c519c5deba6",
+      "sha256": "56952f35b9630d9342061e483b1f1b2a1e38277a2c91b95d009274afc35086cb"
+    },
+    {
+      "path": "coref/brat/4276_north_and_south_brat.ann",
+      "size": 22607,
+      "gitBlobSha1": "5766db08f2fee2b28e484acc1a109ce5d2bfc2e6",
+      "sha256": "77faafad20cda11cbfb26d645f26d474f9b94ac22812ec6794e1050be0a37b0a"
+    },
+    {
+      "path": "coref/brat/4276_north_and_south_brat.txt",
+      "size": 10081,
+      "gitBlobSha1": "ee5cf6a04067beaca5defad6a7465652caab4303",
+      "sha256": "f9b1f2a091970cec6afc189682596b22c3e1016ecbb1529537c38583045e4f5c"
+    },
+    {
+      "path": "coref/brat/4300_ulysses_brat.ann",
+      "size": 24200,
+      "gitBlobSha1": "84c731493b6eb39e0bff859ae88410d7e478db74",
+      "sha256": "10e87a5e26aab0fca94b54a6423148de56626c35b8144592de1b62fb9fd8e00b"
+    },
+    {
+      "path": "coref/brat/4300_ulysses_brat.txt",
+      "size": 9799,
+      "gitBlobSha1": "1b7400791a5423392ff436092d6729f5e12ca36b",
+      "sha256": "5daab9367a31040d22ac11c4646c362d7198eb8e53c6620695f6f90bad505c99"
+    },
+    {
+      "path": "coref/brat/432_the_ambassadors_brat.ann",
+      "size": 31493,
+      "gitBlobSha1": "00cbfc4839f91792079761faa6cae00edc233d8d",
+      "sha256": "e0bde67044bc40188bfa4fbfec94bb60a376ae07de3c03ad0aab7ca4a22a2e1b"
+    },
+    {
+      "path": "coref/brat/432_the_ambassadors_brat.txt",
+      "size": 11403,
+      "gitBlobSha1": "374dcb0c2e03e4dd4f85c9fa395e94e0ce9ab9bd",
+      "sha256": "f0f632e9a9c4497611e63eeaa12cbd565a60e64ab8dfa9bffd32f863155a07a2"
+    },
+    {
+      "path": "coref/brat/434_the_circular_staircase_brat.ann",
+      "size": 21808,
+      "gitBlobSha1": "a122479992648f3961f9607bfb4970099b8724c1",
+      "sha256": "79451018baa82c1c93a7a190753d29f3afdd697ee2ef66baf6cdaf1de62332d8"
+    },
+    {
+      "path": "coref/brat/434_the_circular_staircase_brat.txt",
+      "size": 10167,
+      "gitBlobSha1": "0e17854728ec0153e22ee451d788fae6c4803bae",
+      "sha256": "bdcfaace722edd8967279070a77f84ac4bed55fbb0a038557da218b511de4a51"
+    },
+    {
+      "path": "coref/brat/44_the_song_of_the_lark_brat.ann",
+      "size": 22426,
+      "gitBlobSha1": "1d30d91a041b9027b2f4b8d912549aa7fc2f1f1c",
+      "sha256": "794d6a63f39f2348fac071cb2811f2dad03907f0c1511ea589f25a0f9fbef705"
+    },
+    {
+      "path": "coref/brat/44_the_song_of_the_lark_brat.txt",
+      "size": 9990,
+      "gitBlobSha1": "13a5ac0dd476825064e03492714deee4a52b82bb",
+      "sha256": "bb2cd8d0e32b703b99a5e58c1d49593c5f1bb4305441cbed118c93b9a9d18d36"
+    },
+    {
+      "path": "coref/brat/45_anne_of_green_gables_brat.ann",
+      "size": 24604,
+      "gitBlobSha1": "e7cd9c1f3171a597a22b6cdd9068578d4959b21e",
+      "sha256": "b0fd03f60413246abfc23f6bff91eac996e34ae07ac6f38c870a4792aad935a0"
+    },
+    {
+      "path": "coref/brat/45_anne_of_green_gables_brat.txt",
+      "size": 10079,
+      "gitBlobSha1": "3b605c35ab1bc2e311bbe64867f42cbddd691f71",
+      "sha256": "b794f082918cffda94a444fe8303bfbdc8aa5d391d2d4e26f57881cb308ad8bc"
+    },
+    {
+      "path": "coref/brat/472_the_house_behind_the_cedars_brat.ann",
+      "size": 33093,
+      "gitBlobSha1": "6e38c7e32bd74caefa2d0c9339c98082c057aa3d",
+      "sha256": "dd41b061968a3aaae79982978e3d230976b32fe617156eb915f3e182351379dd"
+    },
+    {
+      "path": "coref/brat/472_the_house_behind_the_cedars_brat.txt",
+      "size": 10015,
+      "gitBlobSha1": "fb91da2fbfcedd91494e205f8307e3cd670a0e5e",
+      "sha256": "93e8410cad04a77a373a2b7ababac3be490c00d3f94b311f348d7680b44b9349"
+    },
+    {
+      "path": "coref/brat/502_desert_gold_brat.ann",
+      "size": 19801,
+      "gitBlobSha1": "ad2cbe7830965fa3275f8095372adee06e5440ec",
+      "sha256": "d81a4e2590df9810b99bbc8b88279246342eea43c7d8ae78deff0870c05426b8"
+    },
+    {
+      "path": "coref/brat/502_desert_gold_brat.txt",
+      "size": 10012,
+      "gitBlobSha1": "2072d3b8ec26b6995f338af3890b58539f8b52b8",
+      "sha256": "162c8e14056b5fda1ab830ad8c1f0c6bc294e6b6656c88ab01a8a100c6a60214"
+    },
+    {
+      "path": "coref/brat/514_little_women_brat.ann",
+      "size": 18601,
+      "gitBlobSha1": "91b673c498f57b3facb0956a7e2bd90edb385069",
+      "sha256": "1873c9a08e2c95d47072eb559ce76695fc56f5b3790f3a387ce7736404e7bad9"
+    },
+    {
+      "path": "coref/brat/514_little_women_brat.txt",
+      "size": 8949,
+      "gitBlobSha1": "7c3f6364050330dba96d21d549a22c723fcdf773",
+      "sha256": "faddb22c433b8b9444077bd6c8131e3eb0b06fb45a4480f0a24b68a8a56d6d9c"
+    },
+    {
+      "path": "coref/brat/521_the_life_and_adventures_of_robinson_crusoe_brat.ann",
+      "size": 24247,
+      "gitBlobSha1": "133b1d6f910a059654c84ce153526c0a5ab06ac3",
+      "sha256": "25e5449ad882c660d6767fef02d4e2a6731504f7ef793e35fc3fa616d0f8f30f"
+    },
+    {
+      "path": "coref/brat/521_the_life_and_adventures_of_robinson_crusoe_brat.txt",
+      "size": 11009,
+      "gitBlobSha1": "61110c474795dcbe057be545cd08a94cb33d76c7",
+      "sha256": "02183a436eb235ea8dc23a2e7191309b426d56eb8acf3c1a7da84d0944469b10"
+    },
+    {
+      "path": "coref/brat/5230_the_invisible_man_a_grotesque_romance_brat.ann",
+      "size": 17832,
+      "gitBlobSha1": "63e851549e8377210dd7a13fd42b2f317affb1c7",
+      "sha256": "4b34d66f5602109cd007757b2d72d25a7eae873e0325ab812b07a6342f20e078"
+    },
+    {
+      "path": "coref/brat/5230_the_invisible_man_a_grotesque_romance_brat.txt",
+      "size": 9457,
+      "gitBlobSha1": "0b848fe77e35fd03fc707da6455dd08503b70b88",
+      "sha256": "cc6900717317dd0097dacb3b192b973d530dd05d884cf232ed33d8e62a80a913"
+    },
+    {
+      "path": "coref/brat/5348_ragged_dick_or_street_life_in_new_york_with_the_bootblacks_brat.ann",
+      "size": 22484,
+      "gitBlobSha1": "4aa97e90f058a39d56937c158d3fb4daad66b7be",
+      "sha256": "241ee5467e6c2fb638d9be80da59d592d7536bce4c727e7af440f8e4f84a83e3"
+    },
+    {
+      "path": "coref/brat/5348_ragged_dick_or_street_life_in_new_york_with_the_bootblacks_brat.txt",
+      "size": 9588,
+      "gitBlobSha1": "2dc5bb81b0190fc94638b939a1482c9a24eb0b67",
+      "sha256": "11ed1b05c7bb4f7bb2a6f96e8dc1de910b23b7a0900d7b6dc83a109ff997d043"
+    },
+    {
+      "path": "coref/brat/541_the_age_of_innocence_brat.ann",
+      "size": 21937,
+      "gitBlobSha1": "172b1b321d1ce98889b784fe48d85dbe8569dc13",
+      "sha256": "6ad96a03aaa9a4f860aeaae554c9374849b12dc045d8ca8788bc57ac8d20c818"
+    },
+    {
+      "path": "coref/brat/541_the_age_of_innocence_brat.txt",
+      "size": 10645,
+      "gitBlobSha1": "018933fd44dd3a6a2e7844a22024f3cebd49495d",
+      "sha256": "2dee83bcd4650d874a69090b1ba74e4fadf550ed32fe37d8249eca62ab02b776"
+    },
+    {
+      "path": "coref/brat/543_main_street_brat.ann",
+      "size": 28731,
+      "gitBlobSha1": "3b355d58b0972bea8643e537ea8f62c9f1558b35",
+      "sha256": "452f5332c55a24fed5aa658a8bbc93dc53b7e615dca406fef1f0ab3fddf49aec"
+    },
+    {
+      "path": "coref/brat/543_main_street_brat.txt",
+      "size": 10848,
+      "gitBlobSha1": "2a799617465ebe2c132055576d67c2a8c1ea5473",
+      "sha256": "e2f63a2be049a530716539cad6e1352027fb47b3352620c5128ca335fb8ac0b6"
+    },
+    {
+      "path": "coref/brat/550_silas_marner_brat.ann",
+      "size": 30711,
+      "gitBlobSha1": "3f3d0e5987bb901c8ee1a0475feabada33ae7bbf",
+      "sha256": "12349657947478898fbb521c32d1c85fef8a9b85e2a0f1e63cb4dc72fd20f83b"
+    },
+    {
+      "path": "coref/brat/550_silas_marner_brat.txt",
+      "size": 10289,
+      "gitBlobSha1": "d7e06fa5bc24593a796ac5c50ad0f2bd5f415d27",
+      "sha256": "d6f0861e318105ff3ce3b0842a4a3ad5998ee0a59d3e78585d879c1626a0170b"
+    },
+    {
+      "path": "coref/brat/599_vanity_fair_brat.ann",
+      "size": 22931,
+      "gitBlobSha1": "28c5c14949a7346e6606f3e98d8f4584c9449a50",
+      "sha256": "5d96711c1a703a6fcd00e39436202efc72699d22855bff23abb41eb1c70a565b"
+    },
+    {
+      "path": "coref/brat/599_vanity_fair_brat.txt",
+      "size": 10277,
+      "gitBlobSha1": "daaf4102e1c50668d8a1c1847e58a529bfd42159",
+      "sha256": "b6b166ba1a9a7324b499a4bdde77c5d12c71ac0d0449579a03969f8fc6ccb07a"
+    },
+    {
+      "path": "coref/brat/6053_evelina_or_the_history_of_a_young_ladys_entrance_into_the_world_brat.ann",
+      "size": 24517,
+      "gitBlobSha1": "7fde208c9a3a96b049693f6506e85e98e63a8f49",
+      "sha256": "374a854eeefdad4e3d5581ae4be697825facaecb9ef9a682874b10093646bd36"
+    },
+    {
+      "path": "coref/brat/6053_evelina_or_the_history_of_a_young_ladys_entrance_into_the_world_brat.txt",
+      "size": 10208,
+      "gitBlobSha1": "88fd401d1cf155ce7993947c11a380cd7b63cf57",
+      "sha256": "9ee9696b90730dc6ea97dba45193e62418b04e04c9c07ada6440d0c3ba971e0b"
+    },
+    {
+      "path": "coref/brat/60_the_scarlet_pimpernel_brat.ann",
+      "size": 25755,
+      "gitBlobSha1": "355b4f453a970f7743a2bd2ff9f2c4fda9404d69",
+      "sha256": "0c62faed5a42ceed5752017686dcea7954a8837e39d4a5e3746d75170d8980d1"
+    },
+    {
+      "path": "coref/brat/60_the_scarlet_pimpernel_brat.txt",
+      "size": 10368,
+      "gitBlobSha1": "bc6b67ba792a8f715245e2df30f898bf1fdaedd5",
+      "sha256": "ca61c805a6a01b183eb8789ebbf92728563f9db9db03265c5349843a6458bcbd"
+    },
+    {
+      "path": "coref/brat/62_a_princess_of_mars_brat.ann",
+      "size": 21715,
+      "gitBlobSha1": "9f85f6b0308dbee47c09707fa167610857095b8e",
+      "sha256": "7d7810371034bdd839a587ec2e782b65ab6cde07d9de2a6b82715bda11d1a075"
+    },
+    {
+      "path": "coref/brat/62_a_princess_of_mars_brat.txt",
+      "size": 10201,
+      "gitBlobSha1": "5f2792305fd79dbd85a76a7a1c8e7e2c2b47e41e",
+      "sha256": "aa317595e2554b4980a4493fa086de0b1a2c7f8da9224e0c7aeb181f863f786d"
+    },
+    {
+      "path": "coref/brat/6593_history_of_tom_jones_a_foundling_brat.ann",
+      "size": 17842,
+      "gitBlobSha1": "c1f02da284130f948edeac28035b7e337d2adc71",
+      "sha256": "30c3e02a94f22283965732a5fd8a09ad3bdfa9ea5797c0b28b7a115c23b40633"
+    },
+    {
+      "path": "coref/brat/6593_history_of_tom_jones_a_foundling_brat.txt",
+      "size": 10216,
+      "gitBlobSha1": "c3f94b63eeff2fffe579bb44c4b0367f3462616e",
+      "sha256": "a378fe3b789c28dc9a0c8d7c7c91bfd35c558492875d56cda7f8a76c1a5eebf4"
+    },
+    {
+      "path": "coref/brat/711_allan_quatermain_brat.ann",
+      "size": 19005,
+      "gitBlobSha1": "801b7ce046f6df37f37225cc80547525147e0f4a",
+      "sha256": "c57f5c346bef659cb391f6a8164c8c648720e6e9e83ea6fd7ebcbdbd6b94824c"
+    },
+    {
+      "path": "coref/brat/711_allan_quatermain_brat.txt",
+      "size": 9033,
+      "gitBlobSha1": "ed050fdccd350d836c632bd7142fbe5491ae0891",
+      "sha256": "f2864da2d82b5f6e98a6e55dd35d4631f5a0baa18c2db8b51bad48d84b4cc676"
+    },
+    {
+      "path": "coref/brat/730_oliver_twist_brat.ann",
+      "size": 17941,
+      "gitBlobSha1": "0da81797c694c0f30b05cdd0f2036e297354c4d7",
+      "sha256": "9341bd369a078b0eeee6a5796d51f865bcb830f2191d28eeae66de335c6cd5aa"
+    },
+    {
+      "path": "coref/brat/730_oliver_twist_brat.txt",
+      "size": 10457,
+      "gitBlobSha1": "743a5748480c848d5bff26dc18b5cfd1a72b487b",
+      "sha256": "8504bb450a318e9396ed41c1b22d3d965779b1442fa054616a143a19574ab230"
+    },
+    {
+      "path": "coref/brat/73_the_red_badge_of_courage_an_episode_of_the_american_civil_war_brat.ann",
+      "size": 20543,
+      "gitBlobSha1": "95f6184329344d0ecfe645f794dc109ccecdafd9",
+      "sha256": "fa56b32e3de9accbd7622240ff2ad4d68e76a6374b9a9c791e7377eb6b9a9439"
+    },
+    {
+      "path": "coref/brat/73_the_red_badge_of_courage_an_episode_of_the_american_civil_war_brat.txt",
+      "size": 9854,
+      "gitBlobSha1": "c7b0401f139305ff2cf2afcaa801ebd8c88b21b6",
+      "sha256": "f761a16e89f2fa440c7d9a13ce8b42bb6fc909e1d264cbbe7ffdae20a7d30bff"
+    },
+    {
+      "path": "coref/brat/74_the_adventures_of_tom_sawyer_brat.ann",
+      "size": 16949,
+      "gitBlobSha1": "68c5adf00c20ac486b912884f973b30342dd4442",
+      "sha256": "a91290a52a61d9dadc1aa6bf65cdc5880fee671b1410cbbab9f7ce1cf45c8721"
+    },
+    {
+      "path": "coref/brat/74_the_adventures_of_tom_sawyer_brat.txt",
+      "size": 8999,
+      "gitBlobSha1": "9bf26f144539d2dbcb78298baccacce99661d68b",
+      "sha256": "c822289627acc8f2812d7dd6cf6677de42254aec4a5dfffc84285dc51097101c"
+    },
+    {
+      "path": "coref/brat/766_david_copperfield_brat.ann",
+      "size": 21511,
+      "gitBlobSha1": "ea44c27dc4405f92be89724a49f67f59e4304115",
+      "sha256": "65942a92d091983c4b03b2c1fa442a80976544ca35f3a5606c7590eb97d2be6a"
+    },
+    {
+      "path": "coref/brat/766_david_copperfield_brat.txt",
+      "size": 9783,
+      "gitBlobSha1": "89463130d28ab01811ca7618ff7d07e5777df764",
+      "sha256": "3ead82effae9fd49028556bd3ebf643228c3463462f40df7c5b92b7141ffc862"
+    },
+    {
+      "path": "coref/brat/768_wuthering_heights_brat.ann",
+      "size": 16071,
+      "gitBlobSha1": "a551c2598fc64b30dae1e5a3b5d2e261ac707305",
+      "sha256": "ee083e7adc5782243b677e3f85a51ddea946b23a5f0ad8746bb3ff0a964e1b98"
+    },
+    {
+      "path": "coref/brat/768_wuthering_heights_brat.txt",
+      "size": 10349,
+      "gitBlobSha1": "a905bfd6e37cb6337f0a348479d277b732d60ac4",
+      "sha256": "5073ba6c8d9a4ee6a6ffab278778b07b0748e2ff6835f99a61a7ab354fbce442"
+    },
+    {
+      "path": "coref/brat/76_adventures_of_huckleberry_finn_brat.ann",
+      "size": 17478,
+      "gitBlobSha1": "8714bdbb39035f35e30753deeece8e20108e228c",
+      "sha256": "c0a8a427acc67340a3ef43785bcd51e0e1cbcdd4f2404b2b750d3288ae562d0e"
+    },
+    {
+      "path": "coref/brat/76_adventures_of_huckleberry_finn_brat.txt",
+      "size": 9470,
+      "gitBlobSha1": "7550ad7863882cf907be29aa120822ed98f08bc7",
+      "sha256": "6c2bc59d41c4a7d48a181abb59e52716ce16605068110c607760449aed57dbf3"
+    },
+    {
+      "path": "coref/brat/77_the_house_of_the_seven_gables_brat.ann",
+      "size": 22882,
+      "gitBlobSha1": "ae471b63fa02f1fcd095ef5e92b671761da9d474",
+      "sha256": "37ac2555927d69e262b61a7ac4866b871004c5fd4f9055162c7ac76335358b63"
+    },
+    {
+      "path": "coref/brat/77_the_house_of_the_seven_gables_brat.txt",
+      "size": 11178,
+      "gitBlobSha1": "f11e3aff3ed76e757529d3e6ac42579e24689569",
+      "sha256": "62a800548ddd5f84fa3888b90518c15005c86eb7502f9765fb10311816792221"
+    },
+    {
+      "path": "coref/brat/78_tarzan_of_the_apes_brat.ann",
+      "size": 25369,
+      "gitBlobSha1": "41f1337bc7d02022b60d8c2c876dece6eac9d1a5",
+      "sha256": "474d53c821a925e1747c236d88de6ad09b5207694124f7da016f7c8fc594041b"
+    },
+    {
+      "path": "coref/brat/78_tarzan_of_the_apes_brat.txt",
+      "size": 10560,
+      "gitBlobSha1": "5afbf80b21f569dd61884958d44b109aae4dfc6b",
+      "sha256": "b19342d98c944eabadd7a3dc30fb6b559bd5dc04d8d4c77cfb10d327cfd512f7"
+    },
+    {
+      "path": "coref/brat/805_this_side_of_paradise_brat.ann",
+      "size": 23538,
+      "gitBlobSha1": "71440fa56697148491d4b4c92f45bcbb76bd6323",
+      "sha256": "86a8e3fbb487cf994dfb714cb65844b6b23bfed5ce84f8b5f105444d0bde8c26"
+    },
+    {
+      "path": "coref/brat/805_this_side_of_paradise_brat.txt",
+      "size": 10295,
+      "gitBlobSha1": "3b87e1f7195bfd794763508cbcf9d08e447403f7",
+      "sha256": "3837df7000f41756e94c9d498316c3e032fbf605f8e8f22351b3024c3043e1aa"
+    },
+    {
+      "path": "coref/brat/829_gullivers_travels_into_several_remote_nations_of_the_world_brat.ann",
+      "size": 33522,
+      "gitBlobSha1": "739d1d5012aedee3c0cddb210ca8003a6cdeec33",
+      "sha256": "b84c4039ce5702d739c3f4ea43a41c77c85688365dae6bdb56973b667716f777"
+    },
+    {
+      "path": "coref/brat/829_gullivers_travels_into_several_remote_nations_of_the_world_brat.txt",
+      "size": 16207,
+      "gitBlobSha1": "871bfeb6d77ff336c0b8671828de075464c1be0b",
+      "sha256": "5368c006ae732841916396df5674eba152797484dcbbb6c633e7bf97e7fe9164"
+    },
+    {
+      "path": "coref/brat/84_frankenstein_or_the_modern_prometheus_brat.ann",
+      "size": 26581,
+      "gitBlobSha1": "890d8d3b0893dfadd0624c4deb79bf8e078552d0",
+      "sha256": "9b7396d972a802f333c5ec195113741e7d8945de0e23351128e024ef31120a12"
+    },
+    {
+      "path": "coref/brat/84_frankenstein_or_the_modern_prometheus_brat.txt",
+      "size": 12246,
+      "gitBlobSha1": "3e9265c9d0b6d7aed80b9cef3e1622b7e67f33d5",
+      "sha256": "a2e6d612683ed25c1b5d823d69d39f31f44f80d8d6b890a37311fefe4d5e4feb"
+    },
+    {
+      "path": "coref/brat/876_life_in_the_ironmills_or_the_korl_woman_brat.ann",
+      "size": 20406,
+      "gitBlobSha1": "6ef456a3fe2857d3fc83e2d6dec18fcc6e2eca11",
+      "sha256": "f20ce6911f234dcda947de1aec3e31155a0fc63bdc81d1c9248b091f29a0f1b4"
+    },
+    {
+      "path": "coref/brat/876_life_in_the_ironmills_or_the_korl_woman_brat.txt",
+      "size": 10232,
+      "gitBlobSha1": "ce462648b64cd714791e249d1bfcccfcfe419666",
+      "sha256": "ca884f5eb7108e21814fed0721482a853213260d6ccfe9c26bd7afae06a9b8e9"
+    },
+    {
+      "path": "coref/brat/8867_the_magnificent_ambersons_brat.ann",
+      "size": 21585,
+      "gitBlobSha1": "330b101f13aea0071f4d7e7d1a8d7e6267cbc101",
+      "sha256": "b787e5ec0e79104b6c58e4dbfac3c1589a0f4126eb832c969fbf210eb1807e7b"
+    },
+    {
+      "path": "coref/brat/8867_the_magnificent_ambersons_brat.txt",
+      "size": 11114,
+      "gitBlobSha1": "d547eac21a3368d19d3488d9bfbf5a1ffe7adc8d",
+      "sha256": "554ad1997bff7306cb8ca1d94da3553fc76cbbd148ae6e1454b3da8fec7c7c90"
+    },
+    {
+      "path": "coref/brat/932_the_fall_of_the_house_of_usher_brat.ann",
+      "size": 12124,
+      "gitBlobSha1": "fad5fb586094b1fd558d5a7ea47464b5249af4e9",
+      "sha256": "43025750ad5c366725bff65921e2cde7adf271371ba0784544cb0b76f61baacf"
+    },
+    {
+      "path": "coref/brat/932_the_fall_of_the_house_of_usher_brat.txt",
+      "size": 11208,
+      "gitBlobSha1": "149800d3b337cec706de6f81a0498c7aa4f558ce",
+      "sha256": "114e0deeab02281c48f56f6d900a0696cacaaed269918ea2e51c5009f11edd57"
+    },
+    {
+      "path": "coref/brat/940_the_last_of_the_mohicans_a_narrative_of_1757_brat.ann",
+      "size": 38991,
+      "gitBlobSha1": "6fb0b1b3825a90546e56fd8a3a94a02ba5b714fd",
+      "sha256": "cbe152f292febed337fd3ff07c14755e7dfc484b5d9ebb22433426c30de2c249"
+    },
+    {
+      "path": "coref/brat/940_the_last_of_the_mohicans_a_narrative_of_1757_brat.txt",
+      "size": 12175,
+      "gitBlobSha1": "ac992aec31f6d9e00289fd15f9c8bc11fa58db7c",
+      "sha256": "70c8ca21802b344c342ced98fe20899d6d0d344df9bb7ab313b3552cef4de641"
+    },
+    {
+      "path": "coref/brat/95_the_prisoner_of_zenda_brat.ann",
+      "size": 25526,
+      "gitBlobSha1": "f4f07516792d498cd4bca1aef47183b6caf3753b",
+      "sha256": "d389eb423f80b2ac23db23b488f13e3048b775195e284a7aa958231cdc131024"
+    },
+    {
+      "path": "coref/brat/95_the_prisoner_of_zenda_brat.txt",
+      "size": 11095,
+      "gitBlobSha1": "1474fe0a9ae8d6a1e7e1da7e27495680465f08f8",
+      "sha256": "6c9e2a4aee4e5b1f69926339168126fb2c2769d95f148a9f830d7bba42228db0"
+    },
+    {
+      "path": "coref/brat/969_the_tenant_of_wildfell_hall_brat.ann",
+      "size": 23118,
+      "gitBlobSha1": "de12b97cca997ff2b273df44bd8b35aba8246e68",
+      "sha256": "72a301f9d8cba29bc1a4df38b5467fe32535a36b6d496518a5f9bd87ad850d3b"
+    },
+    {
+      "path": "coref/brat/969_the_tenant_of_wildfell_hall_brat.txt",
+      "size": 9863,
+      "gitBlobSha1": "7e9277f5bc2fc9b7a43a37de3d11e8a1958eb80c",
+      "sha256": "b7dac83c32e0c680fc560bc9ae4b9dc5e3aebbb33d0562a369711f9eeaf506ff"
+    },
+    {
+      "path": "coref/brat/974_the_secret_agent_a_simple_tale_brat.ann",
+      "size": 25328,
+      "gitBlobSha1": "0ab2865350e33a0cc2dbf36f892315936f8980a8",
+      "sha256": "c8196f8fc4b68ee02f2ab88adb61541209f874225188a9d12c615a7193d42afa"
+    },
+    {
+      "path": "coref/brat/974_the_secret_agent_a_simple_tale_brat.txt",
+      "size": 13169,
+      "gitBlobSha1": "90341e3f3d739a7c1b7b23de29bdfa7b7f436182",
+      "sha256": "27db618abdf95dfcaaf673409102ce49f819617534b989aeea95e86a1610fe05"
+    },
+    {
+      "path": "coref/brat/9830_the_beautiful_and_damned_brat.ann",
+      "size": 24754,
+      "gitBlobSha1": "96791eab2504b14a44f50a03431e2234a8041683",
+      "sha256": "b54eab21a8af55bb60ef7b1a173d8c70d907b3a673f2777caa41835739927b9a"
+    },
+    {
+      "path": "coref/brat/9830_the_beautiful_and_damned_brat.txt",
+      "size": 11022,
+      "gitBlobSha1": "c0f072b04af4dbfa8eb4bcd58538e34152bc7d50",
+      "sha256": "97582ac58d03328081cada3a5db2b18ac690aed4710c0820f70ece651280ddd8"
+    },
+    {
+      "path": "entities/brat/1023_bleak_house_brat.ann",
+      "size": 8175,
+      "gitBlobSha1": "2005d7fac9af8efa43fe3c11c45a41b948ce8724",
+      "sha256": "65ce74b4455e63903c2c835ac8a21379eb4da6fa80e8013c533f6118dbf28f9b"
+    },
+    {
+      "path": "entities/brat/1023_bleak_house_brat.txt",
+      "size": 11738,
+      "gitBlobSha1": "b0d606fea56f508eaa9cd0d668d0bbc98a4515a4",
+      "sha256": "6e18013c61bdac1c31109c9f2039f69b2200ecac9514ecd45175877a8fe5ab58"
+    },
+    {
+      "path": "entities/brat/105_persuasion_brat.ann",
+      "size": 6149,
+      "gitBlobSha1": "dae40743cb880626583f9eb9e1ecf935a3b042a1",
+      "sha256": "2d375b3c4cb25a90bf74dc3268cdf30a1f4eff9a8b10227d91e90df37d131109"
+    },
+    {
+      "path": "entities/brat/105_persuasion_brat.txt",
+      "size": 10614,
+      "gitBlobSha1": "02764f4722853c7c3c76c9294e71dadff5431f93",
+      "sha256": "eab990f51538abd93973f6a4e79c6db3796d6beef36cf593b4f5a3acbc6ba61d"
+    },
+    {
+      "path": "entities/brat/1064_the_masque_of_the_red_death_brat.ann",
+      "size": 3445,
+      "gitBlobSha1": "57df5a0b35721517dc5495e9fa81180d9c4cbb05",
+      "sha256": "0594f04b3eeed1134ab30aed71ae5cdf06c25cbdbdd0ec8bc857f58c92433af7"
+    },
+    {
+      "path": "entities/brat/1064_the_masque_of_the_red_death_brat.txt",
+      "size": 10730,
+      "gitBlobSha1": "7de80fc81169cb19d4fca7b7b4d3b6bb4f2faa53",
+      "sha256": "b6debfb97a60107d3d2afcc7a008143935a234ce2adcc99e28c79e3db081de05"
+    },
+    {
+      "path": "entities/brat/110_tess_of_the_durbervilles_a_pure_woman_brat.ann",
+      "size": 5375,
+      "gitBlobSha1": "4cbe6f747aa70b5d5aca18246cb7197c8915ff53",
+      "sha256": "2b339a3b81d296a0d886c718ac286166b680a32e65ff1cda6b6bdae1a040b108"
+    },
+    {
+      "path": "entities/brat/110_tess_of_the_durbervilles_a_pure_woman_brat.txt",
+      "size": 9120,
+      "gitBlobSha1": "d4bc73f2471a0e2b6a5ff5ffae0295146e6d922a",
+      "sha256": "6da7a5ec7b825cb7fb657ec5a419c2a152c1f602bc20132199e9a0f2f4880226"
+    },
+    {
+      "path": "entities/brat/11231_bartleby_the_scrivener_a_story_of_wallstreet_brat.ann",
+      "size": 4262,
+      "gitBlobSha1": "be29d8b3c9f7a17aa48186567549c385c5ef0c20",
+      "sha256": "2e017c94fd787ac24e6e6ae3bf87a2d0b90e3e6b6a36b062406034b24e51f4ac"
+    },
+    {
+      "path": "entities/brat/11231_bartleby_the_scrivener_a_story_of_wallstreet_brat.txt",
+      "size": 13023,
+      "gitBlobSha1": "1dc3621be5b4fa5286ad97e1853e5e9d4085cb06",
+      "sha256": "5bce9189d617a6b10d25f6cffaa6a4791940e3cadb5d73bfbde1d6d5e3157b21"
+    },
+    {
+      "path": "entities/brat/113_the_secret_garden_brat.ann",
+      "size": 4980,
+      "gitBlobSha1": "82b4f949afdb9ab1145742788aaf705eb238477e",
+      "sha256": "2500acc231e6ce5dd9fe6f1f305a78478f392ea6d21554e3a6d50d1e47dccfdc"
+    },
+    {
+      "path": "entities/brat/113_the_secret_garden_brat.txt",
+      "size": 9584,
+      "gitBlobSha1": "0ef69f08a6349af646f6b2b3645002a527b65037",
+      "sha256": "096ed59ffc624812cb176f8a0086d0adf405ff52ce44f85b8e116f7e2322457b"
+    },
+    {
+      "path": "entities/brat/1155_the_secret_adversary_brat.ann",
+      "size": 4256,
+      "gitBlobSha1": "d875cd05a02d34742fe5e403de9c3ccb964bc786",
+      "sha256": "a3718b09be59d465495f7f8ef3b086b1491651f3ebfc8df02b451e6d121baa2a"
+    },
+    {
+      "path": "entities/brat/1155_the_secret_adversary_brat.txt",
+      "size": 10167,
+      "gitBlobSha1": "afdfd381e5545d166d9dcc1d94d2d84240a9bcb8",
+      "sha256": "01e44b1a7626b71d326389b98f0f05e02967bcfd4935c031ee5cd71d6b5677b1"
+    },
+    {
+      "path": "entities/brat/11_alices_adventures_in_wonderland_brat.ann",
+      "size": 2447,
+      "gitBlobSha1": "25962bac2ccb0b69a2f18b81bcb95d02e30a0b5c",
+      "sha256": "e12625bcc0d3b0cf4b8ecebdc8c4d2b4cd690e0dc2bfe235ab0fd2e343e02462"
+    },
+    {
+      "path": "entities/brat/11_alices_adventures_in_wonderland_brat.txt",
+      "size": 9735,
+      "gitBlobSha1": "90151f79a03b480a7900450174eaffaac8ae491b",
+      "sha256": "6828505c307e327559d21a92816f6de0eda01a0c7ce08fbcd43e5e1a92670a94"
+    },
+    {
+      "path": "entities/brat/1206_the_flying_u_ranch_brat.ann",
+      "size": 3074,
+      "gitBlobSha1": "a3ae692f54f3e73cbc0bb818fc93b7614f666db0",
+      "sha256": "df9afef2e9b9d8d605b4455ee26c337f6b98133634906880ae307a5a92e33849"
+    },
+    {
+      "path": "entities/brat/1206_the_flying_u_ranch_brat.txt",
+      "size": 9979,
+      "gitBlobSha1": "58b5dc8d51aa32cd9f03eed8a878c3181b332487",
+      "sha256": "9641094879a2c8cba0615f89e71be6ffa7edb0641bdaa178be719dae9fe3c21a"
+    },
+    {
+      "path": "entities/brat/120_treasure_island_brat.ann",
+      "size": 4489,
+      "gitBlobSha1": "76a8451568c0a4c89e95f945157e737a8510a135",
+      "sha256": "cb8d05e671428c63c1091ad4b469a4309dbb78300c1c0eb39120c88e115530e2"
+    },
+    {
+      "path": "entities/brat/120_treasure_island_brat.txt",
+      "size": 10349,
+      "gitBlobSha1": "b6e8221a40c7fd6e47e8203634139274e02248e7",
+      "sha256": "2d60e063930543a6ef8e3ed640e979ce9084ef518f2d92bb3ed0ffc5ab14b8c3"
+    },
+    {
+      "path": "entities/brat/1245_night_and_day_brat.ann",
+      "size": 5578,
+      "gitBlobSha1": "d7747818cc5f270cafce7c3eac91023876f95367",
+      "sha256": "3c1cbc7f2d5ca5af774158fe6cc26489d136122299965c9bf5df5d60782e3aea"
+    },
+    {
+      "path": "entities/brat/1245_night_and_day_brat.txt",
+      "size": 11414,
+      "gitBlobSha1": "0efe09c8008c005cd1f2ca89995f5caf27b947d2",
+      "sha256": "b62f856101716342b5ccf03cd95ca50bf073c392f28c1eaa5d537dbab9d8e45e"
+    },
+    {
+      "path": "entities/brat/1260_jane_eyre_an_autobiography_brat.ann",
+      "size": 3650,
+      "gitBlobSha1": "e09f17b999dc48d60fc8a83ec49bd751ae435465",
+      "sha256": "a3cacad7414484a7d6cfe06152936ea8d95fdaf578f93cfdfbdc2c59c5a9672f"
+    },
+    {
+      "path": "entities/brat/1260_jane_eyre_an_autobiography_brat.txt",
+      "size": 9863,
+      "gitBlobSha1": "c3c9c5b5b0befaf3218631fea470e66f24cafde4",
+      "sha256": "4d48eaea10338185b4dda56a34e50ac8fc5caf3764152b88b98eb8d9bd2264a3"
+    },
+    {
+      "path": "entities/brat/12677_personality_plus_some_experiences_of_emma_mcchesney_and_her_son_jock_brat.ann",
+      "size": 3978,
+      "gitBlobSha1": "fcdd8d8e4194c8f5e02d3f2d4f5d4ccefca0dc89",
+      "sha256": "0f41247771628bd6b2995e9588ba1434dbf196a4ddb800d0b82a19b588cc4b3e"
+    },
+    {
+      "path": "entities/brat/12677_personality_plus_some_experiences_of_emma_mcchesney_and_her_son_jock_brat.txt",
+      "size": 9806,
+      "gitBlobSha1": "0199cb2b3091705d82d2f55614d2d64d2727ca04",
+      "sha256": "6452f1262746c8cb695c384b9187a33dbc8919f0d6013da65701854741f881f7"
+    },
+    {
+      "path": "entities/brat/1327_elizabeth_and_her_german_garden_brat.ann",
+      "size": 3515,
+      "gitBlobSha1": "9d8f1c47f64b8dc224160e2df61ba7cc611ab6b5",
+      "sha256": "8c655fa36c32dde137eb3658de052336317f3e0d1585e91fa1023768f5c03725"
+    },
+    {
+      "path": "entities/brat/1327_elizabeth_and_her_german_garden_brat.txt",
+      "size": 10129,
+      "gitBlobSha1": "412a8f792c65029ce13056af14df90fab7015e61",
+      "sha256": "3c224a59ac935c16433cddff206fe5e0e856b8e97794efd664c2f45904b09c38"
+    },
+    {
+      "path": "entities/brat/1342_pride_and_prejudice_brat.ann",
+      "size": 4482,
+      "gitBlobSha1": "3c3e1504de7a01b573f3e742504e8985e41ba4ae",
+      "sha256": "f32f62796d2d2fa789df2a34fb419818a2f2ce520b3426d16a28771c51444d94"
+    },
+    {
+      "path": "entities/brat/1342_pride_and_prejudice_brat.txt",
+      "size": 9168,
+      "gitBlobSha1": "32af049471e8fc4ffc108acfa3dac7711083ad14",
+      "sha256": "2d1279fe91492f76ee72a5dd10da7dc47f4d620029fdce8c4444fa83e3e55cb7"
+    },
+    {
+      "path": "entities/brat/1400_great_expectations_brat.ann",
+      "size": 4152,
+      "gitBlobSha1": "51ee55e95250666de809475c12eceb3f59268f75",
+      "sha256": "860769d10c3efd5006d300c6f4736c2cc997fe551fb1b7910b78cca1025dc10b"
+    },
+    {
+      "path": "entities/brat/1400_great_expectations_brat.txt",
+      "size": 9146,
+      "gitBlobSha1": "0a6544b0a35ee7df8f8164d639919faf395e1943",
+      "sha256": "99f4a03221880823a521905bc5a55ff6a0761a9bbbd12a9e6b404b8fd184f63b"
+    },
+    {
+      "path": "entities/brat/145_middlemarch_brat.ann",
+      "size": 5254,
+      "gitBlobSha1": "33013af7d47b6c9999c3637ad5fb678f87c10fa0",
+      "sha256": "ebaf931da3c450dea244ac9c3b9f983f482715c416c8f0a161f94d535c08e2cc"
+    },
+    {
+      "path": "entities/brat/145_middlemarch_brat.txt",
+      "size": 10617,
+      "gitBlobSha1": "252ff24ee5379302f4bc00c44513ce4605c9b7b3",
+      "sha256": "a7cd871276914868c5e6df6ecd023d44d2c8afd6dbe0fb78988f67fefd46f16a"
+    },
+    {
+      "path": "entities/brat/15265_the_quest_of_the_silver_fleece_a_novel_brat.ann",
+      "size": 1529,
+      "gitBlobSha1": "eb1a37afc7e4866656f0af9b08f89cae72e0d0d4",
+      "sha256": "1c3b95d7d412560d3194df96c07521981e53b1f8f358e4569b5b890995efb70d"
+    },
+    {
+      "path": "entities/brat/15265_the_quest_of_the_silver_fleece_a_novel_brat.txt",
+      "size": 9259,
+      "gitBlobSha1": "57288c98ea1249b6455050c5f963efc07f15a92e",
+      "sha256": "ab286c357942173cfce17dd5be5e93b87895f511fa3d078b6e30111f8c9e6e6d"
+    },
+    {
+      "path": "entities/brat/155_the_moonstone_brat.ann",
+      "size": 5112,
+      "gitBlobSha1": "c1ed6296da0e6d3ae8b1658508105794821247c2",
+      "sha256": "e17fd9ba320c2110b4722ab8fbcbd5cbe6fb77412eda5e1800603e1b0293bf76"
+    },
+    {
+      "path": "entities/brat/155_the_moonstone_brat.txt",
+      "size": 10103,
+      "gitBlobSha1": "a0f1569e0e328f3ff190a2bc41ce44d2dddbdbf7",
+      "sha256": "e7da96571046b38e5e3fc2edeb8bc17a57b652c5e7369b345c64cd54c49b2ed1"
+    },
+    {
+      "path": "entities/brat/158_emma_brat.ann",
+      "size": 5232,
+      "gitBlobSha1": "02a8caaba5726ed644307fd59bc0c1b5e2781453",
+      "sha256": "be5b25409a50e377487981b2ea6db2de8149bc040f07156acf11497f7b784dcc"
+    },
+    {
+      "path": "entities/brat/158_emma_brat.txt",
+      "size": 10116,
+      "gitBlobSha1": "1f41e78b46f99aa2a01a3bb38a4f79e7d25eaa21",
+      "sha256": "1f51b3cc0d67758ebc0c21b852ef49e9043e7d26e5d3b8e8eff5274c29f3c473"
+    },
+    {
+      "path": "entities/brat/160_the_awakening_and_selected_short_stories_brat.ann",
+      "size": 5190,
+      "gitBlobSha1": "d344ec89f15ba0a45c133013ea14fa020ed69d08",
+      "sha256": "66fac6dc13b9d6f1031aa12ff71ad036bc03140add1868a1ab04d9792b6a43a5"
+    },
+    {
+      "path": "entities/brat/160_the_awakening_and_selected_short_stories_brat.txt",
+      "size": 10281,
+      "gitBlobSha1": "b90e2346b20f60159ff8c53e4b284997afd0c758",
+      "sha256": "18138d83d29a936cfa0ec09f9874624d7c17176d38393aadd8ed4b2bca16cdce"
+    },
+    {
+      "path": "entities/brat/16357_mary_a_fiction_brat.ann",
+      "size": 2798,
+      "gitBlobSha1": "482c7bd7431099934b6df37284d68eba2474b690",
+      "sha256": "1dfba665dd52fc0620cce59ff7ca649901dae2e087f66a85caf83ccc4f9da29d"
+    },
+    {
+      "path": "entities/brat/16357_mary_a_fiction_brat.txt",
+      "size": 10392,
+      "gitBlobSha1": "f88fc5c5f186086413c9941c1023c3c2bd1c3e8b",
+      "sha256": "8595bc7ae5e74334c72f40f2d5eeda24630afb0d0dfa780d15edc77b7890ea15"
+    },
+    {
+      "path": "entities/brat/1661_the_adventures_of_sherlock_holmes_brat.ann",
+      "size": 3049,
+      "gitBlobSha1": "86003206ce7b613514aeb8cecf6fd327f7d217a0",
+      "sha256": "6a8176a897712f41027137d45e51d509226b8c2bdb3c71514b6e76f54f69985e"
+    },
+    {
+      "path": "entities/brat/1661_the_adventures_of_sherlock_holmes_brat.txt",
+      "size": 9829,
+      "gitBlobSha1": "75514adadc920d6a1ee6901453e0901da063133c",
+      "sha256": "3b70d37856884bd14fd74acbe0b749afba94cd9710a3488fdc30e77d615acc63"
+    },
+    {
+      "path": "entities/brat/1695_the_man_who_was_thursday_a_nightmare_brat.ann",
+      "size": 5362,
+      "gitBlobSha1": "7b765d280c764e7f1de8d92ad81b15f7b73ec788",
+      "sha256": "bb5e713c61281b61013eb2aa00b8786c415f967950098da05a72c96eab9f2bfb"
+    },
+    {
+      "path": "entities/brat/1695_the_man_who_was_thursday_a_nightmare_brat.txt",
+      "size": 10308,
+      "gitBlobSha1": "a70152eac697a9d23586aabdcd78a0ca40d40ff0",
+      "sha256": "40b3fca21e02f9c1622325cdc5b3a7cc7aa33eac6a3df6680ce38931525b3843"
+    },
+    {
+      "path": "entities/brat/171_charlotte_temple_brat.ann",
+      "size": 5252,
+      "gitBlobSha1": "8721832b60ec8284cb3095e0e041154902dc59a0",
+      "sha256": "e977bf59b14691c81ec5f7bf98028c8b78eb29a780c056e96bc57aa57bea993a"
+    },
+    {
+      "path": "entities/brat/171_charlotte_temple_brat.txt",
+      "size": 10187,
+      "gitBlobSha1": "490dc8f6003e43b223a992a38b3a6fb52dd2a6d9",
+      "sha256": "55b318a498bc97d866e9bfcf00d6fe10e0d449af45abf6669c5ac6f60e127b3d"
+    },
+    {
+      "path": "entities/brat/174_the_picture_of_dorian_gray_brat.ann",
+      "size": 3188,
+      "gitBlobSha1": "add1dbd8b8a3caf41caa095277dd2db38fc4efb7",
+      "sha256": "8cc8809eacb824de1043ccfa3f80126048e11ab0415fe08bed506e2f2753840e"
+    },
+    {
+      "path": "entities/brat/174_the_picture_of_dorian_gray_brat.txt",
+      "size": 9448,
+      "gitBlobSha1": "95996f2e4468f0066a1bcd599acc16825a1168c6",
+      "sha256": "4af78eedb1d47e838695caa8eb93624a19fd54dc44f21cd2c690422678d815e9"
+    },
+    {
+      "path": "entities/brat/18581_adrift_in_new_york_tom_and_florence_braving_the_world_brat.ann",
+      "size": 4328,
+      "gitBlobSha1": "cc568e6a9453b3027894da7725added05976bfab",
+      "sha256": "e1a1b0ed11de580ffa21e7fc2b71e98d22f9b4137bee3a969e5d9a52518a1bcc"
+    },
+    {
+      "path": "entities/brat/18581_adrift_in_new_york_tom_and_florence_braving_the_world_brat.txt",
+      "size": 8934,
+      "gitBlobSha1": "d190a71777537565e912b28632b6dfec375a04b3",
+      "sha256": "74b736ab53d28d78105bc9ccaedad3bb01d28476d30c6b4a0b0940843951131b"
+    },
+    {
+      "path": "entities/brat/2005_piccadilly_jim_brat.ann",
+      "size": 5313,
+      "gitBlobSha1": "2c079a8cac6ff8cc806148c7d7e7e65a38ac0d65",
+      "sha256": "62f8477f19930c5f7d29bbdcdd384f2365069e45ab7649458dc236c31b976f28"
+    },
+    {
+      "path": "entities/brat/2005_piccadilly_jim_brat.txt",
+      "size": 10056,
+      "gitBlobSha1": "a6d8b9122d7e1b015bc22dbec4e39651b8b408fc",
+      "sha256": "2eaef49f4d3dc5dc0c3bc1f271301f12d2f1dc8bcf43d6c0a3e75e4a6575eec2"
+    },
+    {
+      "path": "entities/brat/2084_the_way_of_all_flesh_brat.ann",
+      "size": 5379,
+      "gitBlobSha1": "827dcce641247145b58157228c1a18d3dd1450fd",
+      "sha256": "eebe6ac5d8137533f52752018c7fbfed8b26bcef7955881c2db2df135f7d1f63"
+    },
+    {
+      "path": "entities/brat/2084_the_way_of_all_flesh_brat.txt",
+      "size": 9575,
+      "gitBlobSha1": "ec37f2196cba9dc6f042323818319a00d5a346b4",
+      "sha256": "aa1485193c58321bd34180a1d1fe2b8633f17d73eeb57e626097f44a0c1d7e1c"
+    },
+    {
+      "path": "entities/brat/208_daisy_miller_a_study_brat.ann",
+      "size": 5830,
+      "gitBlobSha1": "774cc77abe45b18ed3bba30f8157f61668b2c1cb",
+      "sha256": "596fb7be34087d5fc370955c4a8c49ca8c7feb2252f60c16af683f2d842f82f6"
+    },
+    {
+      "path": "entities/brat/208_daisy_miller_a_study_brat.txt",
+      "size": 9937,
+      "gitBlobSha1": "f081b25f64b320eaebea4086e2f9c268a821e99e",
+      "sha256": "62d72edfc90101330e6054c6d27809106eb96f245e0001aa1edf61712519f958"
+    },
+    {
+      "path": "entities/brat/2095_clotelle_a_tale_of_the_southern_states_brat.ann",
+      "size": 7800,
+      "gitBlobSha1": "12c1d5abe16aa95388c141a0b4f2cc30effb8a39",
+      "sha256": "68361f6d36b6e96f7b77d8db83accbc57d01ba9e133396815fd8379261893f21"
+    },
+    {
+      "path": "entities/brat/2095_clotelle_a_tale_of_the_southern_states_brat.txt",
+      "size": 10389,
+      "gitBlobSha1": "ae32233e20745d3b422c88ee5c35a8a1d9b73942",
+      "sha256": "c38e3b41f78c31ec1efa6ca5902edcefd357dc7bf703920452baf309ce0bd187"
+    },
+    {
+      "path": "entities/brat/209_the_turn_of_the_screw_brat.ann",
+      "size": 1839,
+      "gitBlobSha1": "1b4ce9e8f57d7e41445e3e9cd5e63eacae3c1a80",
+      "sha256": "2d41e48e2fb93e8576adb80f7f28831c0e717d38488e52b56dce6c37ae7e475b"
+    },
+    {
+      "path": "entities/brat/209_the_turn_of_the_screw_brat.txt",
+      "size": 9259,
+      "gitBlobSha1": "27ccd20abd6c4906fdd03907ed0ca1e537d6c84e",
+      "sha256": "dd14f7822448f1a91f93f9070f68c594d876119e8eacb43fceb208bb19344ac8"
+    },
+    {
+      "path": "entities/brat/215_the_call_of_the_wild_brat.ann",
+      "size": 5506,
+      "gitBlobSha1": "34734a8e78bea512fced0878d9cafeaa58c270ab",
+      "sha256": "164e7e92edbe056c34bd7f589c9da063535802fbfd777b933d1dd96671aac405"
+    },
+    {
+      "path": "entities/brat/215_the_call_of_the_wild_brat.txt",
+      "size": 9929,
+      "gitBlobSha1": "a62be448f9d3a232a272296442be7e9cfe06389e",
+      "sha256": "c5911bfdbd2b48a6545db15748510726992d82fea865997485a87b5998edac63"
+    },
+    {
+      "path": "entities/brat/2166_king_solomons_mines_brat.ann",
+      "size": 3890,
+      "gitBlobSha1": "d3437c71b7b6afdd923c69507989c6f88e4a1dfb",
+      "sha256": "4e52303373279dab26723a6080c5a9da04048d8fd3abf823adb6124d49c5bee1"
+    },
+    {
+      "path": "entities/brat/2166_king_solomons_mines_brat.txt",
+      "size": 9345,
+      "gitBlobSha1": "76f2b1e737686e76fc21a594e1b3918f87a05565",
+      "sha256": "a019493f12dca5c2acf2c8ed5abd12da67049f94dcc90efc6c9ab4898dbefaec"
+    },
+    {
+      "path": "entities/brat/217_sons_and_lovers_brat.ann",
+      "size": 6253,
+      "gitBlobSha1": "92a3fab82cbba61850c8f5d9e130e85be65335b0",
+      "sha256": "8898815d4c4905e5817dc8f4be8913e5446870d248760b37fb54e2f0930007f2"
+    },
+    {
+      "path": "entities/brat/217_sons_and_lovers_brat.txt",
+      "size": 9549,
+      "gitBlobSha1": "62c69dd1c97a341b0c08460b311d290782d9dd76",
+      "sha256": "4be2aa1730457b37bc9bfe65480c63969b420a9f6e0c9513bb94e2bd7ed2b929"
+    },
+    {
+      "path": "entities/brat/219_heart_of_darkness_brat.ann",
+      "size": 5619,
+      "gitBlobSha1": "aabc75a07958a1b39b306a54d99d17f344e80cb1",
+      "sha256": "2f2d826f0e2c49a13339f2b5944a7f82dbb69a86b30b29bfa6a5bfb1d0135d8a"
+    },
+    {
+      "path": "entities/brat/219_heart_of_darkness_brat.txt",
+      "size": 9900,
+      "gitBlobSha1": "a28be2f764fe716091fc1c67e71e916fa5d70c85",
+      "sha256": "7bd1a104c245d8fe3e860a7e54e8c93a3d4b1bc71f35c7d191661fce0ab9588d"
+    },
+    {
+      "path": "entities/brat/233_sister_carrie_a_novel_brat.ann",
+      "size": 3026,
+      "gitBlobSha1": "ea9c2480070c4eb4412ccc9e8c30f027ab085a81",
+      "sha256": "13f4afd7f211ab7648b6339757650bddbe149245cd2ecab567853b1e468c45a5"
+    },
+    {
+      "path": "entities/brat/233_sister_carrie_a_novel_brat.txt",
+      "size": 10427,
+      "gitBlobSha1": "5cd63149ae089911ee33d8c9135e4b0afd2c946e",
+      "sha256": "3a962a05d90cf0884290462b37d039b3bd875b385f267be88970b19fcceaf597"
+    },
+    {
+      "path": "entities/brat/238_dear_enemy_brat.ann",
+      "size": 4743,
+      "gitBlobSha1": "27085a95f658dc7d4ea1837c6b591735bc503fd8",
+      "sha256": "87d4769713079dd7e15c5849e2a8aebf8f37e6b4dbd89c87cb86b84dc6c1aba5"
+    },
+    {
+      "path": "entities/brat/238_dear_enemy_brat.txt",
+      "size": 10047,
+      "gitBlobSha1": "260f98dace59de955deb88154e4fc4b7ced7655b",
+      "sha256": "4a08850ed27e4edc00c5f3781344f34466dfa3a31e5ea9ebc81a00af9ee44b2e"
+    },
+    {
+      "path": "entities/brat/2489_moby_dick_brat.ann",
+      "size": 5231,
+      "gitBlobSha1": "8fd993eda1ea94ff4077757c7486a3148ed3a156",
+      "sha256": "18af2aae1fc350295e755bbfbf724259e43023039bca3718492a3607aa02f356"
+    },
+    {
+      "path": "entities/brat/2489_moby_dick_brat.txt",
+      "size": 10625,
+      "gitBlobSha1": "7e967ebc65d1b6ecf0bb22d7928f12dfbf06ed97",
+      "sha256": "fc9246e1b5637ae3d8196484bf29ecfcabdaa059633f39e00cf8d1443de6ccf9"
+    },
+    {
+      "path": "entities/brat/24_o_pioneers_brat.ann",
+      "size": 5243,
+      "gitBlobSha1": "bfea1e2ed6a3fe5b7426ad9a21235364cf27c411",
+      "sha256": "f535ffae523a47dec73e29f240a549ac1981ae19f296cb9ed3b05369b60a5d47"
+    },
+    {
+      "path": "entities/brat/24_o_pioneers_brat.txt",
+      "size": 9699,
+      "gitBlobSha1": "e037a974999e0044e93ff1fc189d55cbb16e2f86",
+      "sha256": "60f874d3fe45ba04eb1d15f5185492a850ac549dfce622b36338c7b78581f366"
+    },
+    {
+      "path": "entities/brat/2641_a_room_with_a_view_brat.ann",
+      "size": 5625,
+      "gitBlobSha1": "d4a12b44ca9c89e6e14964b01bcbf60a9acb3dd8",
+      "sha256": "dc62c0f3f4a3e84b2d7f6878482b113a67917577f98d96dca6db89d70f1eebdc"
+    },
+    {
+      "path": "entities/brat/2641_a_room_with_a_view_brat.txt",
+      "size": 9398,
+      "gitBlobSha1": "e7c0c90f89d2253c50385eef529613b1f4e5c2e4",
+      "sha256": "eabb2d5b1575b2c98bdd6f47abd74a041ab2bdd78390128e5ad4ec478763ff30"
+    },
+    {
+      "path": "entities/brat/271_black_beauty_brat.ann",
+      "size": 4575,
+      "gitBlobSha1": "a8f381a509267e7072a9cc8af8bba190df410c7e",
+      "sha256": "817b94d3c474cac154ccf201c1928a93513004920becf24eb8d07d8c0091550e"
+    },
+    {
+      "path": "entities/brat/271_black_beauty_brat.txt",
+      "size": 8877,
+      "gitBlobSha1": "a4673c86b61e693d0ea3d707d054cd7b01a758cd",
+      "sha256": "a84d0996d57a604bc1da3c104d4f2e6fbe72fc8bc3884d5d3d36bde8647b4369"
+    },
+    {
+      "path": "entities/brat/2775_the_good_soldier_brat.ann",
+      "size": 5086,
+      "gitBlobSha1": "d098f2fa6803e803899f18a07119195b6a6711d3",
+      "sha256": "2edc7ffa165c8cad3de7fd1c78c7ed7081fb5b2f44a4a1b8d7d9b09c9e925c2c"
+    },
+    {
+      "path": "entities/brat/2775_the_good_soldier_brat.txt",
+      "size": 11214,
+      "gitBlobSha1": "72442cf77854e4b10c090b3c83124dc0f3e6bafd",
+      "sha256": "a9dc7431456066bc65aca216130b8aa85d84f4eb92c90e6465d248ba46d817bf"
+    },
+    {
+      "path": "entities/brat/27_far_from_the_madding_crowd_brat.ann",
+      "size": 3915,
+      "gitBlobSha1": "d8a5b36cb5f9e565851472bd7dcd61f6ff22512b",
+      "sha256": "3b9f22deab10c73e4982ad88cfe3b9741c6892cf6f025dd5a3b33dc30e746e9c"
+    },
+    {
+      "path": "entities/brat/27_far_from_the_madding_crowd_brat.txt",
+      "size": 11627,
+      "gitBlobSha1": "55f9eb52ba3ac923eac9525be46380de020081b9",
+      "sha256": "e4aaf80c8371645b7690f5ec7b37db5f5cdf3cc9b8bb28220ef0946ce701e3b7"
+    },
+    {
+      "path": "entities/brat/2807_to_have_and_to_hold_brat.ann",
+      "size": 3797,
+      "gitBlobSha1": "a51f4f52b96f175ced475e06750288625a822767",
+      "sha256": "5d1d903649d300aac33bc0edc19b1633a97b0d25e809898fc4a8eb349de938fa"
+    },
+    {
+      "path": "entities/brat/2807_to_have_and_to_hold_brat.txt",
+      "size": 9251,
+      "gitBlobSha1": "5be0f6f29e898ebbb48ff2e66511b5bbe6d4214f",
+      "sha256": "ebae14f1bd1f850143c665e3fc1ddfd01559b06d81b96d3ee9e4fb6308236e6a"
+    },
+    {
+      "path": "entities/brat/2814_dubliners_brat.ann",
+      "size": 3152,
+      "gitBlobSha1": "11eec8cf91cfdd83ccb8bb394996fa8685ed201c",
+      "sha256": "88ebe8bb65f3a1b36f594277cc9b57008c62616c48c826ce6027c616d2ae64fa"
+    },
+    {
+      "path": "entities/brat/2814_dubliners_brat.txt",
+      "size": 9629,
+      "gitBlobSha1": "84abff27c2a4f254323cc356d5cafa9b3f45583c",
+      "sha256": "8da5fc06c0e39e051ab3a161feb1554004c0defc232817e8eb6356f03e951cad"
+    },
+    {
+      "path": "entities/brat/2852_the_hound_of_the_baskervilles_brat.ann",
+      "size": 4317,
+      "gitBlobSha1": "7d50f1195106a9cb2637601f3a05178967085490",
+      "sha256": "a8c0d2e3adadf3f95da6ec29bdcfc2897046dad55976a7c2f8fd6beb96d32f5a"
+    },
+    {
+      "path": "entities/brat/2852_the_hound_of_the_baskervilles_brat.txt",
+      "size": 10096,
+      "gitBlobSha1": "2d07fab2df164cbdab5ad36b6fbff60057f638b4",
+      "sha256": "d251447974991df15ee6f83853ea42b92122f48c17a73e8d14dcf3f65b875ad3"
+    },
+    {
+      "path": "entities/brat/2891_howards_end_brat.ann",
+      "size": 5361,
+      "gitBlobSha1": "f93ccce368c33dd750fb3244907899839e360da3",
+      "sha256": "b4123f17c38fcde62a9b8cc54ac258805d2c98e4b6f65ade97cb523e8ea7dc45"
+    },
+    {
+      "path": "entities/brat/2891_howards_end_brat.txt",
+      "size": 9371,
+      "gitBlobSha1": "94f2b64a63cd0f985e3fefe7337e2670b2f46a05",
+      "sha256": "3a6b6e66ee7bea043ab201fa104cab4f1e0e706aee057359eeaa4a4a5ef5e4aa"
+    },
+    {
+      "path": "entities/brat/3268_the_mysteries_of_udolpho_brat.ann",
+      "size": 5399,
+      "gitBlobSha1": "072e88ce25b109b4f0bd3a36b7ddaad3a512f8b0",
+      "sha256": "c087b6959a891af5062855f6f73a94c77e13bc892a9d428bef31aa2cc64b5513"
+    },
+    {
+      "path": "entities/brat/3268_the_mysteries_of_udolpho_brat.txt",
+      "size": 10514,
+      "gitBlobSha1": "3f364d5243ac8d3234217ab053eece2bed892d90",
+      "sha256": "0c4dce3f4ad9db0de16202bbd37898f547429d700442c6fefee4cf0d0835b567"
+    },
+    {
+      "path": "entities/brat/32_herland_brat.ann",
+      "size": 4526,
+      "gitBlobSha1": "3e5bc87d121e0901b8d12cea0ddc267026ff593d",
+      "sha256": "f9a257544719065646db8f1ecf01ea759e06056944a6ff0df0e5389b96fa0b0f"
+    },
+    {
+      "path": "entities/brat/32_herland_brat.txt",
+      "size": 9426,
+      "gitBlobSha1": "30b1b73e7d472a083a918037a910e95266f65896",
+      "sha256": "4b3407e73d948dce8bd3bf483c6809ef82fb376f3faf6d2ced7f05d7766c81eb"
+    },
+    {
+      "path": "entities/brat/33_the_scarlet_letter_brat.ann",
+      "size": 5234,
+      "gitBlobSha1": "9fb6f8e094b57c89c566edeb08bf703751c9c949",
+      "sha256": "9783a7169a4826fb6440338daaa57c7edc4633d53a0c1f052c0ff3cf6a7bb7dd"
+    },
+    {
+      "path": "entities/brat/33_the_scarlet_letter_brat.txt",
+      "size": 11057,
+      "gitBlobSha1": "401d9f383f2e1f1a33b3e35123d942fd1a893e63",
+      "sha256": "f82a01814ab160e0ffef356b9d862d01d1906f9c3298e781259b812f74cde8c5"
+    },
+    {
+      "path": "entities/brat/3457_the_man_of_the_forest_brat.ann",
+      "size": 5089,
+      "gitBlobSha1": "0f91d91bfecf9533fd6e31e4c04897d9fd1e69bf",
+      "sha256": "58538b89628607a7b09870088cba2f034be4f32fe0cdc591ea00a8fd5ffa1598"
+    },
+    {
+      "path": "entities/brat/3457_the_man_of_the_forest_brat.txt",
+      "size": 9729,
+      "gitBlobSha1": "9e535ca279213e6c3cf8dbfbe18bad6a75720a18",
+      "sha256": "6548566ba55671c8878055403775d591d781aa035d9f7e73779ab48f1e2b3040"
+    },
+    {
+      "path": "entities/brat/345_dracula_brat.ann",
+      "size": 4665,
+      "gitBlobSha1": "5e0c5c5d0870855bf83c2edbc3ecd95b4c6c9180",
+      "sha256": "750b9153e4e0b485bc08aa1eb0ad546562afbcd8b68808324ba9752f6c2cf8a9"
+    },
+    {
+      "path": "entities/brat/345_dracula_brat.txt",
+      "size": 10554,
+      "gitBlobSha1": "f56913fcd37aaedba8b9f0486d2dac638bb81202",
+      "sha256": "072b11d12cdcc7855e8cb09d3ba57de38a51e721e480fe819a56ff61128fd194"
+    },
+    {
+      "path": "entities/brat/351_of_human_bondage_brat.ann",
+      "size": 5553,
+      "gitBlobSha1": "d41541918ac65a2c67e7d92f5ea896def5fe498d",
+      "sha256": "639c87ae540f2a1548cadfa0dff1ef78945915a1948a43d6664dc4548663ec2a"
+    },
+    {
+      "path": "entities/brat/351_of_human_bondage_brat.txt",
+      "size": 8931,
+      "gitBlobSha1": "6f7dbe3964fc863ff941ddfceb1cf435435162f6",
+      "sha256": "49e60690499c0f4db089e46f6553aa5ef741e7186f6f9a2d1dc02dcf3f767ecd"
+    },
+    {
+      "path": "entities/brat/367_country_of_the_pointed_firs_brat.ann",
+      "size": 3992,
+      "gitBlobSha1": "040b3f39836df06c9efd3688188bb5131a40c43e",
+      "sha256": "f1b970ce6e032a677b99a1367ded2478313d2074f1f5f4bf8be99d4d00a44806"
+    },
+    {
+      "path": "entities/brat/367_country_of_the_pointed_firs_brat.txt",
+      "size": 10624,
+      "gitBlobSha1": "f53f8bbc8fc8ba5d4e802d6cd61e93821d961729",
+      "sha256": "5823b48d7137f826631d1dcd5e75bbae95b2eb5da54960354475a26ff2a4db9f"
+    },
+    {
+      "path": "entities/brat/36_the_war_of_the_worlds_brat.ann",
+      "size": 3467,
+      "gitBlobSha1": "67830b84d68a5332e81cfd99e9a07e5cdc834f29",
+      "sha256": "66e52c572bfb2c38093c53497ddd890fff919e655848741d2ce9e7d03d947f32"
+    },
+    {
+      "path": "entities/brat/36_the_war_of_the_worlds_brat.txt",
+      "size": 10518,
+      "gitBlobSha1": "da1fa4dbb5f9770fed0aa1fa9e99452c0c9543fe",
+      "sha256": "858548678adb8b85cb8110990a4f5caf7e6a25e6617d6258337a26ccef47e958"
+    },
+    {
+      "path": "entities/brat/4051_lady_bridget_in_the_nevernever_land_a_story_of_australian_life_brat.ann",
+      "size": 5523,
+      "gitBlobSha1": "763410959b0d80da53ddbd6c96a0653aeba52242",
+      "sha256": "909f16c3a526ff6cd6996c7a6badb19d27331c0807a944643a4b6156b219f73c"
+    },
+    {
+      "path": "entities/brat/4051_lady_bridget_in_the_nevernever_land_a_story_of_australian_life_brat.txt",
+      "size": 10951,
+      "gitBlobSha1": "1f31e300f418075bc759eabddf1a7cf92511325a",
+      "sha256": "c388073fb9c9ba92fdd5cfdf26c41290434558b51d5797fc9d5c28e04fbb7fb8"
+    },
+    {
+      "path": "entities/brat/41286_miss_marjoribanks_brat.ann",
+      "size": 7093,
+      "gitBlobSha1": "ff4d79697ef9d14099c7ee3dd28238582a79335a",
+      "sha256": "7a27c2ec9c7cc22353f5ae857addd7fe2191e490ea85d39322c5c0cfc901699f"
+    },
+    {
+      "path": "entities/brat/41286_miss_marjoribanks_brat.txt",
+      "size": 13785,
+      "gitBlobSha1": "13273b93551a556a41585e57d9008eb1c624e97d",
+      "sha256": "132b73eacb59a2816c8e8f35f8c610e76d937429f0218f7a2a7165c6454a3b73"
+    },
+    {
+      "path": "entities/brat/41_the_legend_of_sleepy_hollow_brat.ann",
+      "size": 7021,
+      "gitBlobSha1": "05667b73b025eefb508a51e38531b785fe1464e2",
+      "sha256": "3174fe39da17ad141168c7a3e5bb0d0e2eacc803afd19af0eae8a1a152341384"
+    },
+    {
+      "path": "entities/brat/41_the_legend_of_sleepy_hollow_brat.txt",
+      "size": 11153,
+      "gitBlobSha1": "94542d0b2a83aeaa7550276b81cb4d7891ce7bea",
+      "sha256": "0ffe2114a464cb91691e3c32b384a3d165f843f6b937d6ad947bb2c3813da474"
+    },
+    {
+      "path": "entities/brat/4217_a_portrait_of_the_artist_as_a_young_man_brat.ann",
+      "size": 4897,
+      "gitBlobSha1": "e88bf5ae3022693227b25aa3e954096ba864b163",
+      "sha256": "780b407696049e2df3bf3ecf94822205613542eeb03596842b4fd0f4e21af651"
+    },
+    {
+      "path": "entities/brat/4217_a_portrait_of_the_artist_as_a_young_man_brat.txt",
+      "size": 10109,
+      "gitBlobSha1": "fab9a7edf9843090e156aee88b9f5c519c5deba6",
+      "sha256": "56952f35b9630d9342061e483b1f1b2a1e38277a2c91b95d009274afc35086cb"
+    },
+    {
+      "path": "entities/brat/4276_north_and_south_brat.ann",
+      "size": 6577,
+      "gitBlobSha1": "6a125d3d07cff2a04487744f8039e48883850758",
+      "sha256": "90e7233161d76ce0841110e235a7815724f05e2b57b6124022c221d0db96f6d3"
+    },
+    {
+      "path": "entities/brat/4276_north_and_south_brat.txt",
+      "size": 10081,
+      "gitBlobSha1": "ee5cf6a04067beaca5defad6a7465652caab4303",
+      "sha256": "f9b1f2a091970cec6afc189682596b22c3e1016ecbb1529537c38583045e4f5c"
+    },
+    {
+      "path": "entities/brat/4300_ulysses_brat.ann",
+      "size": 4815,
+      "gitBlobSha1": "af2f519f072bbcbce54c988fb31a944500e2cba3",
+      "sha256": "d9e3c92cdabe2cdeb3081bff87394f39f3e8c860ade79c20fadd5a5d830a5c9a"
+    },
+    {
+      "path": "entities/brat/4300_ulysses_brat.txt",
+      "size": 9799,
+      "gitBlobSha1": "1b7400791a5423392ff436092d6729f5e12ca36b",
+      "sha256": "5daab9367a31040d22ac11c4646c362d7198eb8e53c6620695f6f90bad505c99"
+    },
+    {
+      "path": "entities/brat/432_the_ambassadors_brat.ann",
+      "size": 4359,
+      "gitBlobSha1": "d69fc3e391c42f7d776d268a8ffbd0cade45185b",
+      "sha256": "02dbc5f79bec52780ef89bdbafbe264e50881f736a640dc002709f7887cd00b9"
+    },
+    {
+      "path": "entities/brat/432_the_ambassadors_brat.txt",
+      "size": 11403,
+      "gitBlobSha1": "374dcb0c2e03e4dd4f85c9fa395e94e0ce9ab9bd",
+      "sha256": "f0f632e9a9c4497611e63eeaa12cbd565a60e64ab8dfa9bffd32f863155a07a2"
+    },
+    {
+      "path": "entities/brat/434_the_circular_staircase_brat.ann",
+      "size": 5313,
+      "gitBlobSha1": "08689dd0d9e9225df11c0d72ff1575035feab923",
+      "sha256": "181186c2b452efb7dac9c9ade71910ffadc46bfc91964713fcaf5bc8044686c9"
+    },
+    {
+      "path": "entities/brat/434_the_circular_staircase_brat.txt",
+      "size": 10167,
+      "gitBlobSha1": "0e17854728ec0153e22ee451d788fae6c4803bae",
+      "sha256": "bdcfaace722edd8967279070a77f84ac4bed55fbb0a038557da218b511de4a51"
+    },
+    {
+      "path": "entities/brat/44_the_song_of_the_lark_brat.ann",
+      "size": 5202,
+      "gitBlobSha1": "25f42dc0bc7d2c9215a350017186530c15280ab1",
+      "sha256": "a744527c693362da3300489b121e57492a63844863974dae892de2e2246d9700"
+    },
+    {
+      "path": "entities/brat/44_the_song_of_the_lark_brat.txt",
+      "size": 9990,
+      "gitBlobSha1": "13a5ac0dd476825064e03492714deee4a52b82bb",
+      "sha256": "bb2cd8d0e32b703b99a5e58c1d49593c5f1bb4305441cbed118c93b9a9d18d36"
+    },
+    {
+      "path": "entities/brat/45_anne_of_green_gables_brat.ann",
+      "size": 7205,
+      "gitBlobSha1": "6c390ca19dd1f0c39f6877f7f3fd86ae3cb2693d",
+      "sha256": "007137e761725e8a23a8311afd3607706719a3bde7bfe269f6cff245ca98c5b1"
+    },
+    {
+      "path": "entities/brat/45_anne_of_green_gables_brat.txt",
+      "size": 10079,
+      "gitBlobSha1": "3b605c35ab1bc2e311bbe64867f42cbddd691f71",
+      "sha256": "b794f082918cffda94a444fe8303bfbdc8aa5d391d2d4e26f57881cb308ad8bc"
+    },
+    {
+      "path": "entities/brat/472_the_house_behind_the_cedars_brat.ann",
+      "size": 5541,
+      "gitBlobSha1": "6609a641ecbf10a92cc432c5295f9df9f4fc8a92",
+      "sha256": "b0fd30cde258077504e923f480057419e94bb076a5466aa7af457884efd30461"
+    },
+    {
+      "path": "entities/brat/472_the_house_behind_the_cedars_brat.txt",
+      "size": 10015,
+      "gitBlobSha1": "fb91da2fbfcedd91494e205f8307e3cd670a0e5e",
+      "sha256": "93e8410cad04a77a373a2b7ababac3be490c00d3f94b311f348d7680b44b9349"
+    },
+    {
+      "path": "entities/brat/502_desert_gold_brat.ann",
+      "size": 4466,
+      "gitBlobSha1": "10870e94ca39f3fa5e658150a4ff8c2abc072e35",
+      "sha256": "16dcba681681f89ca930b5e90b0c792d25cddac49bf69b7f02be124d74c238b5"
+    },
+    {
+      "path": "entities/brat/502_desert_gold_brat.txt",
+      "size": 10012,
+      "gitBlobSha1": "2072d3b8ec26b6995f338af3890b58539f8b52b8",
+      "sha256": "162c8e14056b5fda1ab830ad8c1f0c6bc294e6b6656c88ab01a8a100c6a60214"
+    },
+    {
+      "path": "entities/brat/514_little_women_brat.ann",
+      "size": 4171,
+      "gitBlobSha1": "a265871aecbad0349ef6f9070574de07a79bc11b",
+      "sha256": "4345522e68faed04c4c232822e8f1903e081d9beedf27283cebfa679c9b43b88"
+    },
+    {
+      "path": "entities/brat/514_little_women_brat.txt",
+      "size": 8949,
+      "gitBlobSha1": "7c3f6364050330dba96d21d549a22c723fcdf773",
+      "sha256": "faddb22c433b8b9444077bd6c8131e3eb0b06fb45a4480f0a24b68a8a56d6d9c"
+    },
+    {
+      "path": "entities/brat/521_the_life_and_adventures_of_robinson_crusoe_brat.ann",
+      "size": 3836,
+      "gitBlobSha1": "d441dbc4d3df11f27b6ae392f3c0868b58d1d914",
+      "sha256": "3bf9b92ae70e12a492bf15025bab6b8badef16d3ac57c8424a85ee5d99dda8cd"
+    },
+    {
+      "path": "entities/brat/521_the_life_and_adventures_of_robinson_crusoe_brat.txt",
+      "size": 11009,
+      "gitBlobSha1": "61110c474795dcbe057be545cd08a94cb33d76c7",
+      "sha256": "02183a436eb235ea8dc23a2e7191309b426d56eb8acf3c1a7da84d0944469b10"
+    },
+    {
+      "path": "entities/brat/5230_the_invisible_man_a_grotesque_romance_brat.ann",
+      "size": 2167,
+      "gitBlobSha1": "58515f6f1b2b5e0eacebf8db7974c1717aeb0422",
+      "sha256": "858dcc94c088433bb9954b71ebb9db748b0315ca38190ae20b2e0ca405a30e82"
+    },
+    {
+      "path": "entities/brat/5230_the_invisible_man_a_grotesque_romance_brat.txt",
+      "size": 9457,
+      "gitBlobSha1": "0b848fe77e35fd03fc707da6455dd08503b70b88",
+      "sha256": "cc6900717317dd0097dacb3b192b973d530dd05d884cf232ed33d8e62a80a913"
+    },
+    {
+      "path": "entities/brat/5348_ragged_dick_or_street_life_in_new_york_with_the_bootblacks_brat.ann",
+      "size": 4478,
+      "gitBlobSha1": "bb0faca68e5be17eb74c7f3d078995e7f6ad091a",
+      "sha256": "5d37538310bd9d811a910684636ab7c9f4bac7c171657a021477bd6c61250372"
+    },
+    {
+      "path": "entities/brat/5348_ragged_dick_or_street_life_in_new_york_with_the_bootblacks_brat.txt",
+      "size": 9588,
+      "gitBlobSha1": "2dc5bb81b0190fc94638b939a1482c9a24eb0b67",
+      "sha256": "11ed1b05c7bb4f7bb2a6f96e8dc1de910b23b7a0900d7b6dc83a109ff997d043"
+    },
+    {
+      "path": "entities/brat/541_the_age_of_innocence_brat.ann",
+      "size": 5301,
+      "gitBlobSha1": "611fd8688c22f5625617c900ba725b64dfe00149",
+      "sha256": "da2be39732fa193b29239b9cd39c5a0b0d397accb5058d24c6c2bdbc1a8ba500"
+    },
+    {
+      "path": "entities/brat/541_the_age_of_innocence_brat.txt",
+      "size": 10645,
+      "gitBlobSha1": "018933fd44dd3a6a2e7844a22024f3cebd49495d",
+      "sha256": "2dee83bcd4650d874a69090b1ba74e4fadf550ed32fe37d8249eca62ab02b776"
+    },
+    {
+      "path": "entities/brat/543_main_street_brat.ann",
+      "size": 6572,
+      "gitBlobSha1": "675770d149f8be730809f20673f6f30eff2f460f",
+      "sha256": "aa16cd3270b90e0d0a941854b8cc490ebd08e2e4d369e151457afddbf9677fa3"
+    },
+    {
+      "path": "entities/brat/543_main_street_brat.txt",
+      "size": 10848,
+      "gitBlobSha1": "2a799617465ebe2c132055576d67c2a8c1ea5473",
+      "sha256": "e2f63a2be049a530716539cad6e1352027fb47b3352620c5128ca335fb8ac0b6"
+    },
+    {
+      "path": "entities/brat/550_silas_marner_brat.ann",
+      "size": 7704,
+      "gitBlobSha1": "5cd4f5bb931e753a17a21e87bf9ead3cc252b143",
+      "sha256": "9e09f6ef1223cb93a99dd8b324bf66ceb75381e20113db25a0946b44216d6da8"
+    },
+    {
+      "path": "entities/brat/550_silas_marner_brat.txt",
+      "size": 10289,
+      "gitBlobSha1": "d7e06fa5bc24593a796ac5c50ad0f2bd5f415d27",
+      "sha256": "d6f0861e318105ff3ce3b0842a4a3ad5998ee0a59d3e78585d879c1626a0170b"
+    },
+    {
+      "path": "entities/brat/599_vanity_fair_brat.ann",
+      "size": 7729,
+      "gitBlobSha1": "c39eeaf9f335fcb59c7f7e294fab4c320b496039",
+      "sha256": "05f4357036847dfa6c7606e65613f42ac643036024c24003a8cf19e4f002c303"
+    },
+    {
+      "path": "entities/brat/599_vanity_fair_brat.txt",
+      "size": 10277,
+      "gitBlobSha1": "daaf4102e1c50668d8a1c1847e58a529bfd42159",
+      "sha256": "b6b166ba1a9a7324b499a4bdde77c5d12c71ac0d0449579a03969f8fc6ccb07a"
+    },
+    {
+      "path": "entities/brat/6053_evelina_or_the_history_of_a_young_ladys_entrance_into_the_world_brat.ann",
+      "size": 4890,
+      "gitBlobSha1": "53d201ad9c0727182e615ee2a4e07f3043f17fab",
+      "sha256": "4cc5dd2a0d5c1be7223ed643ac5a18c3df4e126ca198b8c75780e003c5dcbef8"
+    },
+    {
+      "path": "entities/brat/6053_evelina_or_the_history_of_a_young_ladys_entrance_into_the_world_brat.txt",
+      "size": 10208,
+      "gitBlobSha1": "88fd401d1cf155ce7993947c11a380cd7b63cf57",
+      "sha256": "9ee9696b90730dc6ea97dba45193e62418b04e04c9c07ada6440d0c3ba971e0b"
+    },
+    {
+      "path": "entities/brat/60_the_scarlet_pimpernel_brat.ann",
+      "size": 7923,
+      "gitBlobSha1": "4fcb795c0c0c8cf4ed9b39e5ebf0b660b073c670",
+      "sha256": "4667a903c7f91e4dec021afabf80ef231a7b2e60d9ebb9a3534a22287ec3fac2"
+    },
+    {
+      "path": "entities/brat/60_the_scarlet_pimpernel_brat.txt",
+      "size": 10368,
+      "gitBlobSha1": "bc6b67ba792a8f715245e2df30f898bf1fdaedd5",
+      "sha256": "ca61c805a6a01b183eb8789ebbf92728563f9db9db03265c5349843a6458bcbd"
+    },
+    {
+      "path": "entities/brat/62_a_princess_of_mars_brat.ann",
+      "size": 4588,
+      "gitBlobSha1": "c301767993c135dc34ebbb2dc5162cd1017fab72",
+      "sha256": "17bd9dc5f5f9e528916ca6c8f3aa4acb4cc0a7e4d6296b3a7e33b0bef3c3f45a"
+    },
+    {
+      "path": "entities/brat/62_a_princess_of_mars_brat.txt",
+      "size": 10201,
+      "gitBlobSha1": "5f2792305fd79dbd85a76a7a1c8e7e2c2b47e41e",
+      "sha256": "aa317595e2554b4980a4493fa086de0b1a2c7f8da9224e0c7aeb181f863f786d"
+    },
+    {
+      "path": "entities/brat/6593_history_of_tom_jones_a_foundling_brat.ann",
+      "size": 4040,
+      "gitBlobSha1": "16b52884b7e98b7731d7553926406c2934214a95",
+      "sha256": "93c4f09e80d2bd4d44494e81dc43febc45994632aa7a3a100dc25ee085cefd6b"
+    },
+    {
+      "path": "entities/brat/6593_history_of_tom_jones_a_foundling_brat.txt",
+      "size": 10216,
+      "gitBlobSha1": "c3f94b63eeff2fffe579bb44c4b0367f3462616e",
+      "sha256": "a378fe3b789c28dc9a0c8d7c7c91bfd35c558492875d56cda7f8a76c1a5eebf4"
+    },
+    {
+      "path": "entities/brat/711_allan_quatermain_brat.ann",
+      "size": 3528,
+      "gitBlobSha1": "3e3771eb332e67df835d8c3c9d3f000dd1959626",
+      "sha256": "f97acfc86387773cbb1e3700fa27b5424f7daea9374c8298697bd8ffc583caae"
+    },
+    {
+      "path": "entities/brat/711_allan_quatermain_brat.txt",
+      "size": 9033,
+      "gitBlobSha1": "ed050fdccd350d836c632bd7142fbe5491ae0891",
+      "sha256": "f2864da2d82b5f6e98a6e55dd35d4631f5a0baa18c2db8b51bad48d84b4cc676"
+    },
+    {
+      "path": "entities/brat/730_oliver_twist_brat.ann",
+      "size": 4853,
+      "gitBlobSha1": "68bde502aff00f82fd301e916c4866e586904a3c",
+      "sha256": "d78e5b509eaa74478447aa2e1d9899d65d4c8860a8db2d938b93535abe7ad35c"
+    },
+    {
+      "path": "entities/brat/730_oliver_twist_brat.txt",
+      "size": 10457,
+      "gitBlobSha1": "743a5748480c848d5bff26dc18b5cfd1a72b487b",
+      "sha256": "8504bb450a318e9396ed41c1b22d3d965779b1442fa054616a143a19574ab230"
+    },
+    {
+      "path": "entities/brat/73_the_red_badge_of_courage_an_episode_of_the_american_civil_war_brat.ann",
+      "size": 3540,
+      "gitBlobSha1": "08b39ec1d2731d84093c138d4afdfd2e9fbe2700",
+      "sha256": "252899654fcd41a79c3af33efbddc956dcbc55aae83c5f149081683dad93a70b"
+    },
+    {
+      "path": "entities/brat/73_the_red_badge_of_courage_an_episode_of_the_american_civil_war_brat.txt",
+      "size": 9854,
+      "gitBlobSha1": "c7b0401f139305ff2cf2afcaa801ebd8c88b21b6",
+      "sha256": "f761a16e89f2fa440c7d9a13ce8b42bb6fc909e1d264cbbe7ffdae20a7d30bff"
+    },
+    {
+      "path": "entities/brat/74_the_adventures_of_tom_sawyer_brat.ann",
+      "size": 2613,
+      "gitBlobSha1": "8641a33b4289eaea70dd94a145798f52bead5d25",
+      "sha256": "7ccb582fa9edf48c66e398fbd77df9e25f67633e2e1100a9b34f4614e584aa15"
+    },
+    {
+      "path": "entities/brat/74_the_adventures_of_tom_sawyer_brat.txt",
+      "size": 8999,
+      "gitBlobSha1": "9bf26f144539d2dbcb78298baccacce99661d68b",
+      "sha256": "c822289627acc8f2812d7dd6cf6677de42254aec4a5dfffc84285dc51097101c"
+    },
+    {
+      "path": "entities/brat/766_david_copperfield_brat.ann",
+      "size": 4227,
+      "gitBlobSha1": "c5f36f074bce8e64416bb825d2d0dd715ff91f1a",
+      "sha256": "93c971edffea7b7bfa646ae6116ac753f6f0a8b723be88561df4b398630cd6fd"
+    },
+    {
+      "path": "entities/brat/766_david_copperfield_brat.txt",
+      "size": 9783,
+      "gitBlobSha1": "89463130d28ab01811ca7618ff7d07e5777df764",
+      "sha256": "3ead82effae9fd49028556bd3ebf643228c3463462f40df7c5b92b7141ffc862"
+    },
+    {
+      "path": "entities/brat/768_wuthering_heights_brat.ann",
+      "size": 3209,
+      "gitBlobSha1": "e9bcc2fc651919d2db440c738aecfd8c618267b0",
+      "sha256": "49933456b8cf38092d0d2bb1280f86925b1a0bbe46eae8290b3207e9bed64afd"
+    },
+    {
+      "path": "entities/brat/768_wuthering_heights_brat.txt",
+      "size": 10349,
+      "gitBlobSha1": "a905bfd6e37cb6337f0a348479d277b732d60ac4",
+      "sha256": "5073ba6c8d9a4ee6a6ffab278778b07b0748e2ff6835f99a61a7ab354fbce442"
+    },
+    {
+      "path": "entities/brat/76_adventures_of_huckleberry_finn_brat.ann",
+      "size": 2440,
+      "gitBlobSha1": "e7efc676f7bb4ac33b09788635a99b3e8f62f886",
+      "sha256": "760a5f0e31512855459158d5681a0f4c7d718ac3aaf79306b50eca2471e0c66f"
+    },
+    {
+      "path": "entities/brat/76_adventures_of_huckleberry_finn_brat.txt",
+      "size": 9470,
+      "gitBlobSha1": "7550ad7863882cf907be29aa120822ed98f08bc7",
+      "sha256": "6c2bc59d41c4a7d48a181abb59e52716ce16605068110c607760449aed57dbf3"
+    },
+    {
+      "path": "entities/brat/77_the_house_of_the_seven_gables_brat.ann",
+      "size": 6972,
+      "gitBlobSha1": "a905c8f6c58ae7da3b0bb8fd32671ecef34fa30d",
+      "sha256": "ede064477dbd72ff315f3e2b4e5997e022c91587fb62640453cf9a2116677d23"
+    },
+    {
+      "path": "entities/brat/77_the_house_of_the_seven_gables_brat.txt",
+      "size": 11178,
+      "gitBlobSha1": "f11e3aff3ed76e757529d3e6ac42579e24689569",
+      "sha256": "62a800548ddd5f84fa3888b90518c15005c86eb7502f9765fb10311816792221"
+    },
+    {
+      "path": "entities/brat/78_tarzan_of_the_apes_brat.ann",
+      "size": 7028,
+      "gitBlobSha1": "4a7d241026494fafb72131a7c88fac54a23ecbb6",
+      "sha256": "267cf5873cbd53b785b955cb17a3ec4d525ebfaeeaf14d860dcafde34f74e222"
+    },
+    {
+      "path": "entities/brat/78_tarzan_of_the_apes_brat.txt",
+      "size": 10560,
+      "gitBlobSha1": "5afbf80b21f569dd61884958d44b109aae4dfc6b",
+      "sha256": "b19342d98c944eabadd7a3dc30fb6b559bd5dc04d8d4c77cfb10d327cfd512f7"
+    },
+    {
+      "path": "entities/brat/805_this_side_of_paradise_brat.ann",
+      "size": 5561,
+      "gitBlobSha1": "afc0f9e79e6ceb773fba180ab750497da9ed427b",
+      "sha256": "664d66bb25196e7901b61c7454a82087e2bd08363b499d16e6ce591abe6ad18e"
+    },
+    {
+      "path": "entities/brat/805_this_side_of_paradise_brat.txt",
+      "size": 10295,
+      "gitBlobSha1": "3b87e1f7195bfd794763508cbcf9d08e447403f7",
+      "sha256": "3837df7000f41756e94c9d498316c3e032fbf605f8e8f22351b3024c3043e1aa"
+    },
+    {
+      "path": "entities/brat/829_gullivers_travels_into_several_remote_nations_of_the_world_brat.ann",
+      "size": 4711,
+      "gitBlobSha1": "8b164d3853320340ee9930299f3538071da9da73",
+      "sha256": "e340c71dea3364b00c0d57ff93b1785905462682d8987c3349b33f5c45885404"
+    },
+    {
+      "path": "entities/brat/829_gullivers_travels_into_several_remote_nations_of_the_world_brat.txt",
+      "size": 16207,
+      "gitBlobSha1": "871bfeb6d77ff336c0b8671828de075464c1be0b",
+      "sha256": "5368c006ae732841916396df5674eba152797484dcbbb6c633e7bf97e7fe9164"
+    },
+    {
+      "path": "entities/brat/84_frankenstein_or_the_modern_prometheus_brat.ann",
+      "size": 5335,
+      "gitBlobSha1": "f17a33f20b34be65aa0f40e18526ffe4afea6e3c",
+      "sha256": "646e830114e143b0a1553a816d78c13ae565650b29e27400be678c0327eb7e63"
+    },
+    {
+      "path": "entities/brat/84_frankenstein_or_the_modern_prometheus_brat.txt",
+      "size": 12246,
+      "gitBlobSha1": "3e9265c9d0b6d7aed80b9cef3e1622b7e67f33d5",
+      "sha256": "a2e6d612683ed25c1b5d823d69d39f31f44f80d8d6b890a37311fefe4d5e4feb"
+    },
+    {
+      "path": "entities/brat/876_life_in_the_ironmills_or_the_korl_woman_brat.ann",
+      "size": 5239,
+      "gitBlobSha1": "6838b6297598143d8d45fb80e3e428478780fa8b",
+      "sha256": "d35adbce35c90f9a0b9b6b1c210861ea3da4c0cf2930327c24b3cda46e4acb38"
+    },
+    {
+      "path": "entities/brat/876_life_in_the_ironmills_or_the_korl_woman_brat.txt",
+      "size": 10232,
+      "gitBlobSha1": "ce462648b64cd714791e249d1bfcccfcfe419666",
+      "sha256": "ca884f5eb7108e21814fed0721482a853213260d6ccfe9c26bd7afae06a9b8e9"
+    },
+    {
+      "path": "entities/brat/8867_the_magnificent_ambersons_brat.ann",
+      "size": 6752,
+      "gitBlobSha1": "9eb1babda4927c6a963cfde065dd13233b265621",
+      "sha256": "33627b9a23dbdeb7df4dd7720a61d24533efe603349b0c7f439b300ccecc75a7"
+    },
+    {
+      "path": "entities/brat/8867_the_magnificent_ambersons_brat.txt",
+      "size": 11114,
+      "gitBlobSha1": "d547eac21a3368d19d3488d9bfbf5a1ffe7adc8d",
+      "sha256": "554ad1997bff7306cb8ca1d94da3553fc76cbbd148ae6e1454b3da8fec7c7c90"
+    },
+    {
+      "path": "entities/brat/932_the_fall_of_the_house_of_usher_brat.ann",
+      "size": 2458,
+      "gitBlobSha1": "d9cca80ff6e32d748dca76ffb82c2a76d2d9089b",
+      "sha256": "f74da54d4a0fab261d35042f0540be29320d1401fbb3e85ef1525ac8c14dc5f3"
+    },
+    {
+      "path": "entities/brat/932_the_fall_of_the_house_of_usher_brat.txt",
+      "size": 11208,
+      "gitBlobSha1": "149800d3b337cec706de6f81a0498c7aa4f558ce",
+      "sha256": "114e0deeab02281c48f56f6d900a0696cacaaed269918ea2e51c5009f11edd57"
+    },
+    {
+      "path": "entities/brat/940_the_last_of_the_mohicans_a_narrative_of_1757_brat.ann",
+      "size": 12373,
+      "gitBlobSha1": "648d532608d8387d57936a9dedeed3377a60bd3c",
+      "sha256": "c9b230bf63c8b24a1acf03264c54470479946655f47e2654a1c5a842e220e87c"
+    },
+    {
+      "path": "entities/brat/940_the_last_of_the_mohicans_a_narrative_of_1757_brat.txt",
+      "size": 12175,
+      "gitBlobSha1": "ac992aec31f6d9e00289fd15f9c8bc11fa58db7c",
+      "sha256": "70c8ca21802b344c342ced98fe20899d6d0d344df9bb7ab313b3552cef4de641"
+    },
+    {
+      "path": "entities/brat/95_the_prisoner_of_zenda_brat.ann",
+      "size": 5665,
+      "gitBlobSha1": "38b2d2b1330a9419cd6c3f1dddee216420175555",
+      "sha256": "27d3b0d420e5925a6cd78f3a8b0f1232f52416d33efbac8b5e7fa1a29d93c130"
+    },
+    {
+      "path": "entities/brat/95_the_prisoner_of_zenda_brat.txt",
+      "size": 11095,
+      "gitBlobSha1": "1474fe0a9ae8d6a1e7e1da7e27495680465f08f8",
+      "sha256": "6c9e2a4aee4e5b1f69926339168126fb2c2769d95f148a9f830d7bba42228db0"
+    },
+    {
+      "path": "entities/brat/969_the_tenant_of_wildfell_hall_brat.ann",
+      "size": 4487,
+      "gitBlobSha1": "ca1bc24fb5bfc372b876aba217b758d3b64e641e",
+      "sha256": "2944bf1d8f2dda47468b9df2120cf3dcb5c5be15f6434fd99ededcb80fda3c2a"
+    },
+    {
+      "path": "entities/brat/969_the_tenant_of_wildfell_hall_brat.txt",
+      "size": 9863,
+      "gitBlobSha1": "7e9277f5bc2fc9b7a43a37de3d11e8a1958eb80c",
+      "sha256": "b7dac83c32e0c680fc560bc9ae4b9dc5e3aebbb33d0562a369711f9eeaf506ff"
+    },
+    {
+      "path": "entities/brat/974_the_secret_agent_a_simple_tale_brat.ann",
+      "size": 6244,
+      "gitBlobSha1": "6afc250212ed9515629f32b811d4cb08644d0bb5",
+      "sha256": "5f5ca1ce7da6a59e8f8a2c9cf4e7cb335136702c133dbcb8e4784b9c50336b88"
+    },
+    {
+      "path": "entities/brat/974_the_secret_agent_a_simple_tale_brat.txt",
+      "size": 13169,
+      "gitBlobSha1": "90341e3f3d739a7c1b7b23de29bdfa7b7f436182",
+      "sha256": "27db618abdf95dfcaaf673409102ce49f819617534b989aeea95e86a1610fe05"
+    },
+    {
+      "path": "entities/brat/9830_the_beautiful_and_damned_brat.ann",
+      "size": 6364,
+      "gitBlobSha1": "e925c72a84537fcd18f10c6709895b8f3cd86d2f",
+      "sha256": "4f229d0e54d4cdb7f60ed2fa3831b9568b6a364c51fe85eddba3eced833309d9"
+    },
+    {
+      "path": "entities/brat/9830_the_beautiful_and_damned_brat.txt",
+      "size": 11022,
+      "gitBlobSha1": "c0f072b04af4dbfa8eb4bcd58538e34152bc7d50",
+      "sha256": "97582ac58d03328081cada3a5db2b18ac690aed4710c0820f70ece651280ddd8"
+    },
+    {
+      "path": "quotations/README.md",
+      "size": 648,
+      "gitBlobSha1": "6b591c584e9756e37267abb9a415461e0c5dbef5",
+      "sha256": "4c413f51e6c4d204f81f5e9b5e9648059502079be60ad30cf6619aecdbf81113"
+    },
+    {
+      "path": "quotations/tsv/1023_bleak_house_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/1023_bleak_house_brat.txt",
+      "size": 11738,
+      "gitBlobSha1": "b0d606fea56f508eaa9cd0d668d0bbc98a4515a4",
+      "sha256": "6e18013c61bdac1c31109c9f2039f69b2200ecac9514ecd45175877a8fe5ab58"
+    },
+    {
+      "path": "quotations/tsv/105_persuasion_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/105_persuasion_brat.txt",
+      "size": 10614,
+      "gitBlobSha1": "02764f4722853c7c3c76c9294e71dadff5431f93",
+      "sha256": "eab990f51538abd93973f6a4e79c6db3796d6beef36cf593b4f5a3acbc6ba61d"
+    },
+    {
+      "path": "quotations/tsv/1064_the_masque_of_the_red_death_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/1064_the_masque_of_the_red_death_brat.txt",
+      "size": 10730,
+      "gitBlobSha1": "7de80fc81169cb19d4fca7b7b4d3b6bb4f2faa53",
+      "sha256": "b6debfb97a60107d3d2afcc7a008143935a234ce2adcc99e28c79e3db081de05"
+    },
+    {
+      "path": "quotations/tsv/110_tess_of_the_durbervilles_a_pure_woman_brat.ann",
+      "size": 8765,
+      "gitBlobSha1": "7146c0cec7706d13962300e5467858107241db45",
+      "sha256": "b0857d428be1f2bc5e1ab4f4b5688f3680db0f41b66ad5f9b2613ef7c842f831"
+    },
+    {
+      "path": "quotations/tsv/110_tess_of_the_durbervilles_a_pure_woman_brat.txt",
+      "size": 9120,
+      "gitBlobSha1": "d4bc73f2471a0e2b6a5ff5ffae0295146e6d922a",
+      "sha256": "6da7a5ec7b825cb7fb657ec5a419c2a152c1f602bc20132199e9a0f2f4880226"
+    },
+    {
+      "path": "quotations/tsv/11231_bartleby_the_scrivener_a_story_of_wallstreet_brat.ann",
+      "size": 709,
+      "gitBlobSha1": "90a1d5bde9c2b452052c4322ca8dc94e27bdfd97",
+      "sha256": "1d320c26d36ea9fdfba00127ac5aa298dadfb3d79e1b03a57f867fe1f714e140"
+    },
+    {
+      "path": "quotations/tsv/11231_bartleby_the_scrivener_a_story_of_wallstreet_brat.txt",
+      "size": 13023,
+      "gitBlobSha1": "1dc3621be5b4fa5286ad97e1853e5e9d4085cb06",
+      "sha256": "5bce9189d617a6b10d25f6cffaa6a4791940e3cadb5d73bfbde1d6d5e3157b21"
+    },
+    {
+      "path": "quotations/tsv/113_the_secret_garden_brat.ann",
+      "size": 2385,
+      "gitBlobSha1": "9437f232ab111a7aae23194543ac203d978ffc56",
+      "sha256": "8420c01aad538c5a20b3ec5aa055d4145824a25559621c376067eda8a899167a"
+    },
+    {
+      "path": "quotations/tsv/113_the_secret_garden_brat.txt",
+      "size": 9584,
+      "gitBlobSha1": "0ef69f08a6349af646f6b2b3645002a527b65037",
+      "sha256": "096ed59ffc624812cb176f8a0086d0adf405ff52ce44f85b8e116f7e2322457b"
+    },
+    {
+      "path": "quotations/tsv/1155_the_secret_adversary_brat.ann",
+      "size": 8219,
+      "gitBlobSha1": "535949ccd124bf146ce9ec3852c87f48a6709bdf",
+      "sha256": "6da14099556074fe646acd665fc0ab99d9c75e34e930a0a55fd5cca3377b6032"
+    },
+    {
+      "path": "quotations/tsv/1155_the_secret_adversary_brat.txt",
+      "size": 10167,
+      "gitBlobSha1": "afdfd381e5545d166d9dcc1d94d2d84240a9bcb8",
+      "sha256": "01e44b1a7626b71d326389b98f0f05e02967bcfd4935c031ee5cd71d6b5677b1"
+    },
+    {
+      "path": "quotations/tsv/11_alices_adventures_in_wonderland_brat.ann",
+      "size": 2460,
+      "gitBlobSha1": "c39d7b8773b6d2fbbde1ad10abab8be966ae0479",
+      "sha256": "a46a2c57e3c9fadbaac9b8ba172ddfb5b5de8717713ad54c4b319abae7d318a7"
+    },
+    {
+      "path": "quotations/tsv/11_alices_adventures_in_wonderland_brat.txt",
+      "size": 9735,
+      "gitBlobSha1": "90151f79a03b480a7900450174eaffaac8ae491b",
+      "sha256": "6828505c307e327559d21a92816f6de0eda01a0c7ce08fbcd43e5e1a92670a94"
+    },
+    {
+      "path": "quotations/tsv/1206_the_flying_u_ranch_brat.ann",
+      "size": 5311,
+      "gitBlobSha1": "d3913822d04cc435d2b33656180dc934010e272e",
+      "sha256": "b88a39ea8eb63bfcaf5b7cc24b4098f30e9cfcb7502a83561cb2e4bc01cafd24"
+    },
+    {
+      "path": "quotations/tsv/1206_the_flying_u_ranch_brat.txt",
+      "size": 9979,
+      "gitBlobSha1": "58b5dc8d51aa32cd9f03eed8a878c3181b332487",
+      "sha256": "9641094879a2c8cba0615f89e71be6ffa7edb0641bdaa178be719dae9fe3c21a"
+    },
+    {
+      "path": "quotations/tsv/120_treasure_island_brat.ann",
+      "size": 1169,
+      "gitBlobSha1": "39483857f7aa6f6e6b8967f02a8cad4aa4dcc4da",
+      "sha256": "c3baa1820ccfd58f0f2c32022f78c184b93c108d61e3e856cca0fd9554d8dd4d"
+    },
+    {
+      "path": "quotations/tsv/120_treasure_island_brat.txt",
+      "size": 10349,
+      "gitBlobSha1": "b6e8221a40c7fd6e47e8203634139274e02248e7",
+      "sha256": "2d60e063930543a6ef8e3ed640e979ce9084ef518f2d92bb3ed0ffc5ab14b8c3"
+    },
+    {
+      "path": "quotations/tsv/1245_night_and_day_brat.ann",
+      "size": 3058,
+      "gitBlobSha1": "f1d877a44a5a0b683beaaf24e5623a5e54186a76",
+      "sha256": "721895549cc4ac03c644a27deb5b5a1dc47e131998a20068c3433dd1f3156b7a"
+    },
+    {
+      "path": "quotations/tsv/1245_night_and_day_brat.txt",
+      "size": 11414,
+      "gitBlobSha1": "0efe09c8008c005cd1f2ca89995f5caf27b947d2",
+      "sha256": "b62f856101716342b5ccf03cd95ca50bf073c392f28c1eaa5d537dbab9d8e45e"
+    },
+    {
+      "path": "quotations/tsv/1260_jane_eyre_an_autobiography_brat.ann",
+      "size": 2031,
+      "gitBlobSha1": "d396cd4971cf8bf25e84cf962d4af95aa37fe21c",
+      "sha256": "d173bdd52cf09e42512f122f00cb972fa716ed772ff3411844afc7af359cc701"
+    },
+    {
+      "path": "quotations/tsv/1260_jane_eyre_an_autobiography_brat.txt",
+      "size": 9863,
+      "gitBlobSha1": "c3c9c5b5b0befaf3218631fea470e66f24cafde4",
+      "sha256": "4d48eaea10338185b4dda56a34e50ac8fc5caf3764152b88b98eb8d9bd2264a3"
+    },
+    {
+      "path": "quotations/tsv/12677_personality_plus_some_experiences_of_emma_mcchesney_and_her_son_jock_brat.ann",
+      "size": 4605,
+      "gitBlobSha1": "7cd8f7c6cddce0be0e2f544fdeb682c013afb642",
+      "sha256": "62538a51f07e46161b7cf58b30fdb8e65de6d81cc8202750bc6fc83168d22ae4"
+    },
+    {
+      "path": "quotations/tsv/12677_personality_plus_some_experiences_of_emma_mcchesney_and_her_son_jock_brat.txt",
+      "size": 9806,
+      "gitBlobSha1": "0199cb2b3091705d82d2f55614d2d64d2727ca04",
+      "sha256": "6452f1262746c8cb695c384b9187a33dbc8919f0d6013da65701854741f881f7"
+    },
+    {
+      "path": "quotations/tsv/1327_elizabeth_and_her_german_garden_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/1327_elizabeth_and_her_german_garden_brat.txt",
+      "size": 10129,
+      "gitBlobSha1": "412a8f792c65029ce13056af14df90fab7015e61",
+      "sha256": "3c224a59ac935c16433cddff206fe5e0e856b8e97794efd664c2f45904b09c38"
+    },
+    {
+      "path": "quotations/tsv/1342_pride_and_prejudice_brat.ann",
+      "size": 9787,
+      "gitBlobSha1": "deb96b22a38f4abed31459ae7738e3be3e2a3541",
+      "sha256": "ec446b18d5181272e6b72aabd988f810ed2bcfe1844429e7c821b4cbb88fa131"
+    },
+    {
+      "path": "quotations/tsv/1342_pride_and_prejudice_brat.txt",
+      "size": 9168,
+      "gitBlobSha1": "32af049471e8fc4ffc108acfa3dac7711083ad14",
+      "sha256": "2d1279fe91492f76ee72a5dd10da7dc47f4d620029fdce8c4444fa83e3e55cb7"
+    },
+    {
+      "path": "quotations/tsv/1400_great_expectations_brat.ann",
+      "size": 4974,
+      "gitBlobSha1": "5eb756813d7411cae1434a9ebec2cc254ffdc3be",
+      "sha256": "012337434e690584e5f21ac0740ea086c28baef8e30a10b6b87f8388b9872499"
+    },
+    {
+      "path": "quotations/tsv/1400_great_expectations_brat.txt",
+      "size": 9146,
+      "gitBlobSha1": "0a6544b0a35ee7df8f8164d639919faf395e1943",
+      "sha256": "99f4a03221880823a521905bc5a55ff6a0761a9bbbd12a9e6b404b8fd184f63b"
+    },
+    {
+      "path": "quotations/tsv/145_middlemarch_brat.ann",
+      "size": 78,
+      "gitBlobSha1": "bfc832f71c85bd332428aaa516ac305615d12056",
+      "sha256": "85be1d7dd08d8e0f3c0f0a9c66a7aaffb09ece678dac1bfbfc640f48423cf9cb"
+    },
+    {
+      "path": "quotations/tsv/145_middlemarch_brat.txt",
+      "size": 10617,
+      "gitBlobSha1": "252ff24ee5379302f4bc00c44513ce4605c9b7b3",
+      "sha256": "a7cd871276914868c5e6df6ecd023d44d2c8afd6dbe0fb78988f67fefd46f16a"
+    },
+    {
+      "path": "quotations/tsv/15265_the_quest_of_the_silver_fleece_a_novel_brat.ann",
+      "size": 3355,
+      "gitBlobSha1": "e36b2cb735337383a2bdacb3705c86900aec322a",
+      "sha256": "903fc6a5f62ef5977a2f597a01c4aa6a3cedb1f3d81f67c9fd3a1a49aa2550c6"
+    },
+    {
+      "path": "quotations/tsv/15265_the_quest_of_the_silver_fleece_a_novel_brat.txt",
+      "size": 9259,
+      "gitBlobSha1": "57288c98ea1249b6455050c5f963efc07f15a92e",
+      "sha256": "ab286c357942173cfce17dd5be5e93b87895f511fa3d078b6e30111f8c9e6e6d"
+    },
+    {
+      "path": "quotations/tsv/155_the_moonstone_brat.ann",
+      "size": 953,
+      "gitBlobSha1": "50b7c9fed6d744bf73dad83a51627677c0e5a679",
+      "sha256": "3c4a901a1e41a33fd2f2c65f1d1d252a96191fdca7470b3c6e8e79f11d809e7d"
+    },
+    {
+      "path": "quotations/tsv/155_the_moonstone_brat.txt",
+      "size": 10103,
+      "gitBlobSha1": "a0f1569e0e328f3ff190a2bc41ce44d2dddbdbf7",
+      "sha256": "e7da96571046b38e5e3fc2edeb8bc17a57b652c5e7369b345c64cd54c49b2ed1"
+    },
+    {
+      "path": "quotations/tsv/158_emma_brat.ann",
+      "size": 3335,
+      "gitBlobSha1": "c4a089fc2223a27a3a69f5bcafe724853c72143d",
+      "sha256": "6950e6ac3b69635636a093e405246364132422cfa902cb28f7b45cd6b8a7bf84"
+    },
+    {
+      "path": "quotations/tsv/158_emma_brat.txt",
+      "size": 10116,
+      "gitBlobSha1": "1f41e78b46f99aa2a01a3bb38a4f79e7d25eaa21",
+      "sha256": "1f51b3cc0d67758ebc0c21b852ef49e9043e7d26e5d3b8e8eff5274c29f3c473"
+    },
+    {
+      "path": "quotations/tsv/160_the_awakening_and_selected_short_stories_brat.ann",
+      "size": 747,
+      "gitBlobSha1": "b45415f00d59c243c34c9bd542758839f2e45a8c",
+      "sha256": "410bdb7dac36ab4f571af409295e8ba094dcc5b47e0009116b2556c715cb5bad"
+    },
+    {
+      "path": "quotations/tsv/160_the_awakening_and_selected_short_stories_brat.txt",
+      "size": 10281,
+      "gitBlobSha1": "b90e2346b20f60159ff8c53e4b284997afd0c758",
+      "sha256": "18138d83d29a936cfa0ec09f9874624d7c17176d38393aadd8ed4b2bca16cdce"
+    },
+    {
+      "path": "quotations/tsv/16357_mary_a_fiction_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/16357_mary_a_fiction_brat.txt",
+      "size": 10392,
+      "gitBlobSha1": "f88fc5c5f186086413c9941c1023c3c2bd1c3e8b",
+      "sha256": "8595bc7ae5e74334c72f40f2d5eeda24630afb0d0dfa780d15edc77b7890ea15"
+    },
+    {
+      "path": "quotations/tsv/1661_the_adventures_of_sherlock_holmes_brat.ann",
+      "size": 6739,
+      "gitBlobSha1": "3c847d673abc3431b65b37b77189f5dd1bad6f94",
+      "sha256": "3e07c13ed6e1f56b01465bf58897420f5eca9e7665ae58e10d29f6d6fafe9dd1"
+    },
+    {
+      "path": "quotations/tsv/1661_the_adventures_of_sherlock_holmes_brat.txt",
+      "size": 9829,
+      "gitBlobSha1": "75514adadc920d6a1ee6901453e0901da063133c",
+      "sha256": "3b70d37856884bd14fd74acbe0b749afba94cd9710a3488fdc30e77d615acc63"
+    },
+    {
+      "path": "quotations/tsv/1695_the_man_who_was_thursday_a_nightmare_brat.ann",
+      "size": 4473,
+      "gitBlobSha1": "d6775e2c55ea624b177e724fa1b9aafbc7ff367a",
+      "sha256": "30f6c2c3761418ed0dbf9f9f26cbbb43514ad83dce4cb62d4dc417f8f34f436d"
+    },
+    {
+      "path": "quotations/tsv/1695_the_man_who_was_thursday_a_nightmare_brat.txt",
+      "size": 10308,
+      "gitBlobSha1": "a70152eac697a9d23586aabdcd78a0ca40d40ff0",
+      "sha256": "40b3fca21e02f9c1622325cdc5b3a7cc7aa33eac6a3df6680ce38931525b3843"
+    },
+    {
+      "path": "quotations/tsv/171_charlotte_temple_brat.ann",
+      "size": 3843,
+      "gitBlobSha1": "9f134357a8b5338477044d46e7eb6174487a5b48",
+      "sha256": "76100f2a63d0bfe50920b12fc8818339bddc6338b3134e9e6cfa449051a7a72c"
+    },
+    {
+      "path": "quotations/tsv/171_charlotte_temple_brat.txt",
+      "size": 10187,
+      "gitBlobSha1": "490dc8f6003e43b223a992a38b3a6fb52dd2a6d9",
+      "sha256": "55b318a498bc97d866e9bfcf00d6fe10e0d449af45abf6669c5ac6f60e127b3d"
+    },
+    {
+      "path": "quotations/tsv/174_the_picture_of_dorian_gray_brat.ann",
+      "size": 7701,
+      "gitBlobSha1": "90d1f295d7db070b16575412e5dd9ed097c3503c",
+      "sha256": "da883f0f4f5de443707574d779b5c8d59d4b9f01432f92f971acee75a58f238e"
+    },
+    {
+      "path": "quotations/tsv/174_the_picture_of_dorian_gray_brat.txt",
+      "size": 9448,
+      "gitBlobSha1": "95996f2e4468f0066a1bcd599acc16825a1168c6",
+      "sha256": "4af78eedb1d47e838695caa8eb93624a19fd54dc44f21cd2c690422678d815e9"
+    },
+    {
+      "path": "quotations/tsv/18581_adrift_in_new_york_tom_and_florence_braving_the_world_brat.ann",
+      "size": 9378,
+      "gitBlobSha1": "a45f189eb23b67a277def23617385bc726586d78",
+      "sha256": "173bae7a7df57eb612d9144684f028ace2727599b45d8402e4c81c16e9344a4e"
+    },
+    {
+      "path": "quotations/tsv/18581_adrift_in_new_york_tom_and_florence_braving_the_world_brat.txt",
+      "size": 8934,
+      "gitBlobSha1": "d190a71777537565e912b28632b6dfec375a04b3",
+      "sha256": "74b736ab53d28d78105bc9ccaedad3bb01d28476d30c6b4a0b0940843951131b"
+    },
+    {
+      "path": "quotations/tsv/2005_piccadilly_jim_brat.ann",
+      "size": 3577,
+      "gitBlobSha1": "f069f988174037db45d9500157c566baaed27743",
+      "sha256": "537d47e649d9e0bc6cb9fc5e8fbe720248ebf7659592a964822975e6aca6078f"
+    },
+    {
+      "path": "quotations/tsv/2005_piccadilly_jim_brat.txt",
+      "size": 10056,
+      "gitBlobSha1": "a6d8b9122d7e1b015bc22dbec4e39651b8b408fc",
+      "sha256": "2eaef49f4d3dc5dc0c3bc1f271301f12d2f1dc8bcf43d6c0a3e75e4a6575eec2"
+    },
+    {
+      "path": "quotations/tsv/2084_the_way_of_all_flesh_brat.ann",
+      "size": 3664,
+      "gitBlobSha1": "b5f9b29dde14c54c05ff390b780db745a0fc18b3",
+      "sha256": "5a54b2c5a1805d4aace42915f32f506b04aebeb9225f624f106c722c073d5e52"
+    },
+    {
+      "path": "quotations/tsv/2084_the_way_of_all_flesh_brat.txt",
+      "size": 9575,
+      "gitBlobSha1": "ec37f2196cba9dc6f042323818319a00d5a346b4",
+      "sha256": "aa1485193c58321bd34180a1d1fe2b8633f17d73eeb57e626097f44a0c1d7e1c"
+    },
+    {
+      "path": "quotations/tsv/208_daisy_miller_a_study_brat.ann",
+      "size": 3253,
+      "gitBlobSha1": "61c71bf1662207e3eec1049b0ece160ac97cf99c",
+      "sha256": "3730985a1457b32d8a28e522ea997fdd3c163cae26fb970f9db6de8c82b4b4cd"
+    },
+    {
+      "path": "quotations/tsv/208_daisy_miller_a_study_brat.txt",
+      "size": 9937,
+      "gitBlobSha1": "f081b25f64b320eaebea4086e2f9c268a821e99e",
+      "sha256": "62d72edfc90101330e6054c6d27809106eb96f245e0001aa1edf61712519f958"
+    },
+    {
+      "path": "quotations/tsv/2095_clotelle_a_tale_of_the_southern_states_brat.ann",
+      "size": 875,
+      "gitBlobSha1": "d7ae7e062837d5fe9b25d696ee5ee4e48676670b",
+      "sha256": "e7d44786522a5354b0b6599d05e4552cade8a6d34c74bf9c30fad58065986e7f"
+    },
+    {
+      "path": "quotations/tsv/2095_clotelle_a_tale_of_the_southern_states_brat.txt",
+      "size": 10389,
+      "gitBlobSha1": "ae32233e20745d3b422c88ee5c35a8a1d9b73942",
+      "sha256": "c38e3b41f78c31ec1efa6ca5902edcefd357dc7bf703920452baf309ce0bd187"
+    },
+    {
+      "path": "quotations/tsv/209_the_turn_of_the_screw_brat.ann",
+      "size": 6089,
+      "gitBlobSha1": "c3c97743f1195c82200058f844730575b68f94ba",
+      "sha256": "7ceb7a71d3c96efa85310c24558605c2fbd34e911a6f0b2ab1874147039bce87"
+    },
+    {
+      "path": "quotations/tsv/209_the_turn_of_the_screw_brat.txt",
+      "size": 9259,
+      "gitBlobSha1": "27ccd20abd6c4906fdd03907ed0ca1e537d6c84e",
+      "sha256": "dd14f7822448f1a91f93f9070f68c594d876119e8eacb43fceb208bb19344ac8"
+    },
+    {
+      "path": "quotations/tsv/215_the_call_of_the_wild_brat.ann",
+      "size": 1436,
+      "gitBlobSha1": "dbe7af690dd5bde668ff3a5494f584c7f35952d8",
+      "sha256": "9c4226deabbd44549a3056024f584a0882ecb44e50ab1b1de7280b0e9690b43c"
+    },
+    {
+      "path": "quotations/tsv/215_the_call_of_the_wild_brat.txt",
+      "size": 9929,
+      "gitBlobSha1": "a62be448f9d3a232a272296442be7e9cfe06389e",
+      "sha256": "c5911bfdbd2b48a6545db15748510726992d82fea865997485a87b5998edac63"
+    },
+    {
+      "path": "quotations/tsv/2166_king_solomons_mines_brat.ann",
+      "size": 72,
+      "gitBlobSha1": "0aedad13b2d22ade2b7129b2a36bb1fe5b17839c",
+      "sha256": "bd3a266b3f0072b1e35ac2561b2e5abb19e9f06070010ac4dd496df911a6c0f7"
+    },
+    {
+      "path": "quotations/tsv/2166_king_solomons_mines_brat.txt",
+      "size": 9345,
+      "gitBlobSha1": "76f2b1e737686e76fc21a594e1b3918f87a05565",
+      "sha256": "a019493f12dca5c2acf2c8ed5abd12da67049f94dcc90efc6c9ab4898dbefaec"
+    },
+    {
+      "path": "quotations/tsv/217_sons_and_lovers_brat.ann",
+      "size": 2668,
+      "gitBlobSha1": "1690defbc2c4e7a63aab16dadbc44dbb090a4b8d",
+      "sha256": "fb0c831474224a9f9c2964ff8285b67fab6cf89c67bcf38b3bb1f6fee5ec8d14"
+    },
+    {
+      "path": "quotations/tsv/217_sons_and_lovers_brat.txt",
+      "size": 9549,
+      "gitBlobSha1": "62c69dd1c97a341b0c08460b311d290782d9dd76",
+      "sha256": "4be2aa1730457b37bc9bfe65480c63969b420a9f6e0c9513bb94e2bd7ed2b929"
+    },
+    {
+      "path": "quotations/tsv/219_heart_of_darkness_brat.ann",
+      "size": 2813,
+      "gitBlobSha1": "5dc8c738554b4b920f28ff1f99b1536c69bad0ab",
+      "sha256": "ec0987f1b90d53696629baa83543669b10b4565ec524a855cca7e0f807ad6e82"
+    },
+    {
+      "path": "quotations/tsv/219_heart_of_darkness_brat.txt",
+      "size": 9900,
+      "gitBlobSha1": "a28be2f764fe716091fc1c67e71e916fa5d70c85",
+      "sha256": "7bd1a104c245d8fe3e860a7e54e8c93a3d4b1bc71f35c7d191661fce0ab9588d"
+    },
+    {
+      "path": "quotations/tsv/233_sister_carrie_a_novel_brat.ann",
+      "size": 1790,
+      "gitBlobSha1": "3ac7519e792463407033b6336cc4ffc6a7ea3844",
+      "sha256": "e891aa8f30b51073c1d82dfc2c95d12564810fc88f7d8180cff4d56ba223cd8e"
+    },
+    {
+      "path": "quotations/tsv/233_sister_carrie_a_novel_brat.txt",
+      "size": 10427,
+      "gitBlobSha1": "5cd63149ae089911ee33d8c9135e4b0afd2c946e",
+      "sha256": "3a962a05d90cf0884290462b37d039b3bd875b385f267be88970b19fcceaf597"
+    },
+    {
+      "path": "quotations/tsv/238_dear_enemy_brat.ann",
+      "size": 650,
+      "gitBlobSha1": "2d679d513a6acb21e433e0962882bc894a9f1662",
+      "sha256": "90985bfa46ad09c7ce127794c2bf008a9c47c3a4c5f8d770253f1d10436002f7"
+    },
+    {
+      "path": "quotations/tsv/238_dear_enemy_brat.txt",
+      "size": 10047,
+      "gitBlobSha1": "260f98dace59de955deb88154e4fc4b7ced7655b",
+      "sha256": "4a08850ed27e4edc00c5f3781344f34466dfa3a31e5ea9ebc81a00af9ee44b2e"
+    },
+    {
+      "path": "quotations/tsv/2489_moby_dick_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/2489_moby_dick_brat.txt",
+      "size": 10625,
+      "gitBlobSha1": "7e967ebc65d1b6ecf0bb22d7928f12dfbf06ed97",
+      "sha256": "fc9246e1b5637ae3d8196484bf29ecfcabdaa059633f39e00cf8d1443de6ccf9"
+    },
+    {
+      "path": "quotations/tsv/24_o_pioneers_brat.ann",
+      "size": 2129,
+      "gitBlobSha1": "be6a413d1822f71afe76425b425541f78d80cf45",
+      "sha256": "0ecbc74af7f94c5ed69b01225d9c93f37f06fdbc238c1b8c9f83d9d68d40f4c9"
+    },
+    {
+      "path": "quotations/tsv/24_o_pioneers_brat.txt",
+      "size": 9699,
+      "gitBlobSha1": "e037a974999e0044e93ff1fc189d55cbb16e2f86",
+      "sha256": "60f874d3fe45ba04eb1d15f5185492a850ac549dfce622b36338c7b78581f366"
+    },
+    {
+      "path": "quotations/tsv/2641_a_room_with_a_view_brat.ann",
+      "size": 6839,
+      "gitBlobSha1": "7fba8c688908edbe663e76828cb490beb1ae69cc",
+      "sha256": "ad07817935e7193daf51a9e91031a30ddf757830e8457e03f019c80fbbceccc0"
+    },
+    {
+      "path": "quotations/tsv/2641_a_room_with_a_view_brat.txt",
+      "size": 9398,
+      "gitBlobSha1": "e7c0c90f89d2253c50385eef529613b1f4e5c2e4",
+      "sha256": "eabb2d5b1575b2c98bdd6f47abd74a041ab2bdd78390128e5ad4ec478763ff30"
+    },
+    {
+      "path": "quotations/tsv/271_black_beauty_brat.ann",
+      "size": 2566,
+      "gitBlobSha1": "d2694c10d963bf75645d3c4882c0f29947cfd4d8",
+      "sha256": "af2c97a4adad64824711bc909678d2138b7cf02dab3d1f032059acefc4200966"
+    },
+    {
+      "path": "quotations/tsv/271_black_beauty_brat.txt",
+      "size": 8877,
+      "gitBlobSha1": "a4673c86b61e693d0ea3d707d054cd7b01a758cd",
+      "sha256": "a84d0996d57a604bc1da3c104d4f2e6fbe72fc8bc3884d5d3d36bde8647b4369"
+    },
+    {
+      "path": "quotations/tsv/2775_the_good_soldier_brat.ann",
+      "size": 1091,
+      "gitBlobSha1": "4e3d62b9e524f668ac91675ed1256bf5d8576f17",
+      "sha256": "05dd3a932fef438d3fb1ceb4c571aa653eff31c08f2a2d37af8062826dd3e4ea"
+    },
+    {
+      "path": "quotations/tsv/2775_the_good_soldier_brat.txt",
+      "size": 11214,
+      "gitBlobSha1": "72442cf77854e4b10c090b3c83124dc0f3e6bafd",
+      "sha256": "a9dc7431456066bc65aca216130b8aa85d84f4eb92c90e6465d248ba46d817bf"
+    },
+    {
+      "path": "quotations/tsv/27_far_from_the_madding_crowd_brat.ann",
+      "size": 1600,
+      "gitBlobSha1": "b36a5076628ae630daa0003b172ccb0ec063e8ba",
+      "sha256": "f387cca73e36b924d2e4b83da32c9ec446625ce144aa668bdecf97e5414a15ff"
+    },
+    {
+      "path": "quotations/tsv/27_far_from_the_madding_crowd_brat.txt",
+      "size": 11627,
+      "gitBlobSha1": "55f9eb52ba3ac923eac9525be46380de020081b9",
+      "sha256": "e4aaf80c8371645b7690f5ec7b37db5f5cdf3cc9b8bb28220ef0946ce701e3b7"
+    },
+    {
+      "path": "quotations/tsv/2807_to_have_and_to_hold_brat.ann",
+      "size": 5650,
+      "gitBlobSha1": "8ad7c8b35cdda26502bb05ced3523058c713d40a",
+      "sha256": "3b9ff4da6e97a47ba37eb2f7cdacee59d642db31d62431a84058ddbfc7c04166"
+    },
+    {
+      "path": "quotations/tsv/2807_to_have_and_to_hold_brat.txt",
+      "size": 9251,
+      "gitBlobSha1": "5be0f6f29e898ebbb48ff2e66511b5bbe6d4214f",
+      "sha256": "ebae14f1bd1f850143c665e3fc1ddfd01559b06d81b96d3ee9e4fb6308236e6a"
+    },
+    {
+      "path": "quotations/tsv/2814_dubliners_brat.ann",
+      "size": 2673,
+      "gitBlobSha1": "8b9e8e801e15c0bdec9a4a1132136f793b76154a",
+      "sha256": "386e9b3863d8635fddcaa9c0785e58cb990e0d611f34fac216508e1b56744f32"
+    },
+    {
+      "path": "quotations/tsv/2814_dubliners_brat.txt",
+      "size": 9629,
+      "gitBlobSha1": "84abff27c2a4f254323cc356d5cafa9b3f45583c",
+      "sha256": "8da5fc06c0e39e051ab3a161feb1554004c0defc232817e8eb6356f03e951cad"
+    },
+    {
+      "path": "quotations/tsv/2852_the_hound_of_the_baskervilles_brat.ann",
+      "size": 9331,
+      "gitBlobSha1": "913668d42c149f0eea91386407804458d1128a66",
+      "sha256": "51814bb1276eb4caae03c9bb17e21e287e1c4aa73fae59266c2a9df634a9db5a"
+    },
+    {
+      "path": "quotations/tsv/2852_the_hound_of_the_baskervilles_brat.txt",
+      "size": 10096,
+      "gitBlobSha1": "2d07fab2df164cbdab5ad36b6fbff60057f638b4",
+      "sha256": "d251447974991df15ee6f83853ea42b92122f48c17a73e8d14dcf3f65b875ad3"
+    },
+    {
+      "path": "quotations/tsv/2891_howards_end_brat.ann",
+      "size": 2574,
+      "gitBlobSha1": "410ccef4a026f111201a0b867449377dbfbffed8",
+      "sha256": "98c69cc7b083cd9e130cda04f6f582c43c82b2f7fdf819b2653807104e2a83e8"
+    },
+    {
+      "path": "quotations/tsv/2891_howards_end_brat.txt",
+      "size": 9371,
+      "gitBlobSha1": "94f2b64a63cd0f985e3fefe7337e2670b2f46a05",
+      "sha256": "3a6b6e66ee7bea043ab201fa104cab4f1e0e706aee057359eeaa4a4a5ef5e4aa"
+    },
+    {
+      "path": "quotations/tsv/3268_the_mysteries_of_udolpho_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/3268_the_mysteries_of_udolpho_brat.txt",
+      "size": 10514,
+      "gitBlobSha1": "3f364d5243ac8d3234217ab053eece2bed892d90",
+      "sha256": "0c4dce3f4ad9db0de16202bbd37898f547429d700442c6fefee4cf0d0835b567"
+    },
+    {
+      "path": "quotations/tsv/32_herland_brat.ann",
+      "size": 2118,
+      "gitBlobSha1": "f93307ec94d1e8015c9e200c948392de55299b3e",
+      "sha256": "02afbd7e02dde979e84d09c20246edff2dec7b503341fb126efddd1c1c07317d"
+    },
+    {
+      "path": "quotations/tsv/32_herland_brat.txt",
+      "size": 9426,
+      "gitBlobSha1": "30b1b73e7d472a083a918037a910e95266f65896",
+      "sha256": "4b3407e73d948dce8bd3bf483c6809ef82fb376f3faf6d2ced7f05d7766c81eb"
+    },
+    {
+      "path": "quotations/tsv/33_the_scarlet_letter_brat.ann",
+      "size": 2511,
+      "gitBlobSha1": "6d71531f6b2e701dc31ff44af84bb27c4108f146",
+      "sha256": "e7f763e441313f71dab20be178578ed36693becf9815b3b1b4091de618149890"
+    },
+    {
+      "path": "quotations/tsv/33_the_scarlet_letter_brat.txt",
+      "size": 11057,
+      "gitBlobSha1": "401d9f383f2e1f1a33b3e35123d942fd1a893e63",
+      "sha256": "f82a01814ab160e0ffef356b9d862d01d1906f9c3298e781259b812f74cde8c5"
+    },
+    {
+      "path": "quotations/tsv/3457_the_man_of_the_forest_brat.ann",
+      "size": 3387,
+      "gitBlobSha1": "7ad257edb0518f1550cd85f1ebfb1cd5dcf76a20",
+      "sha256": "7e6c53dcb661ccf9c01a9dd5a04fc01e9bc1aa38e6fa426d2fbf9ed0a935df79"
+    },
+    {
+      "path": "quotations/tsv/3457_the_man_of_the_forest_brat.txt",
+      "size": 9729,
+      "gitBlobSha1": "9e535ca279213e6c3cf8dbfbe18bad6a75720a18",
+      "sha256": "6548566ba55671c8878055403775d591d781aa035d9f7e73779ab48f1e2b3040"
+    },
+    {
+      "path": "quotations/tsv/345_dracula_brat.ann",
+      "size": 1482,
+      "gitBlobSha1": "0481912bb298472cee0d5cc8c696fa25295eb9fa",
+      "sha256": "625cdc0431da232ce344bf05c2fa4651277aee4255950faebbbc6147145d20bf"
+    },
+    {
+      "path": "quotations/tsv/345_dracula_brat.txt",
+      "size": 10554,
+      "gitBlobSha1": "f56913fcd37aaedba8b9f0486d2dac638bb81202",
+      "sha256": "072b11d12cdcc7855e8cb09d3ba57de38a51e721e480fe819a56ff61128fd194"
+    },
+    {
+      "path": "quotations/tsv/351_of_human_bondage_brat.ann",
+      "size": 4516,
+      "gitBlobSha1": "5e86f03d6c34ec90df7d7607b996dcfcf3a1acd5",
+      "sha256": "4941e017e5cc5b32e4877982026af5d9390d23568943b230bf9edaa47a1178b0"
+    },
+    {
+      "path": "quotations/tsv/351_of_human_bondage_brat.txt",
+      "size": 8931,
+      "gitBlobSha1": "6f7dbe3964fc863ff941ddfceb1cf435435162f6",
+      "sha256": "49e60690499c0f4db089e46f6553aa5ef741e7186f6f9a2d1dc02dcf3f767ecd"
+    },
+    {
+      "path": "quotations/tsv/367_country_of_the_pointed_firs_brat.ann",
+      "size": 1360,
+      "gitBlobSha1": "4fae26c4744605ab9275595f38c19f898e0567b8",
+      "sha256": "08cf18d61eda4fedc5c93dbbb18b4789bb2f60e7def3b7adc378f045a2deea33"
+    },
+    {
+      "path": "quotations/tsv/367_country_of_the_pointed_firs_brat.txt",
+      "size": 10624,
+      "gitBlobSha1": "f53f8bbc8fc8ba5d4e802d6cd61e93821d961729",
+      "sha256": "5823b48d7137f826631d1dcd5e75bbae95b2eb5da54960354475a26ff2a4db9f"
+    },
+    {
+      "path": "quotations/tsv/36_the_war_of_the_worlds_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/36_the_war_of_the_worlds_brat.txt",
+      "size": 10518,
+      "gitBlobSha1": "da1fa4dbb5f9770fed0aa1fa9e99452c0c9543fe",
+      "sha256": "858548678adb8b85cb8110990a4f5caf7e6a25e6617d6258337a26ccef47e958"
+    },
+    {
+      "path": "quotations/tsv/4051_lady_bridget_in_the_nevernever_land_a_story_of_australian_life_brat.ann",
+      "size": 298,
+      "gitBlobSha1": "66cee019503097835b75f8d3ec5d07fc79440e8f",
+      "sha256": "672b6c35af368f267c0cecb93755a36caa8f7bd4bb33992621bea21ed9bfb134"
+    },
+    {
+      "path": "quotations/tsv/4051_lady_bridget_in_the_nevernever_land_a_story_of_australian_life_brat.txt",
+      "size": 10951,
+      "gitBlobSha1": "1f31e300f418075bc759eabddf1a7cf92511325a",
+      "sha256": "c388073fb9c9ba92fdd5cfdf26c41290434558b51d5797fc9d5c28e04fbb7fb8"
+    },
+    {
+      "path": "quotations/tsv/41286_miss_marjoribanks_brat.ann",
+      "size": 868,
+      "gitBlobSha1": "87886f5a2c683db4f01a446bc3e8addf0b6cdf63",
+      "sha256": "c9a4896ff35e03bd675b7cd85250472cfb3d359ce66319398d838bbc2787ce6d"
+    },
+    {
+      "path": "quotations/tsv/41286_miss_marjoribanks_brat.txt",
+      "size": 13785,
+      "gitBlobSha1": "13273b93551a556a41585e57d9008eb1c624e97d",
+      "sha256": "132b73eacb59a2816c8e8f35f8c610e76d937429f0218f7a2a7165c6454a3b73"
+    },
+    {
+      "path": "quotations/tsv/41_the_legend_of_sleepy_hollow_brat.ann",
+      "size": 324,
+      "gitBlobSha1": "a463381ada0fd2e3a1ccde56ac5a138d787d29ce",
+      "sha256": "bc77e65f502e49c24f96355b14e5a082f975f9d848dca80ba04762ceeff89b82"
+    },
+    {
+      "path": "quotations/tsv/41_the_legend_of_sleepy_hollow_brat.txt",
+      "size": 11153,
+      "gitBlobSha1": "94542d0b2a83aeaa7550276b81cb4d7891ce7bea",
+      "sha256": "0ffe2114a464cb91691e3c32b384a3d165f843f6b937d6ad947bb2c3813da474"
+    },
+    {
+      "path": "quotations/tsv/4217_a_portrait_of_the_artist_as_a_young_man_brat.ann",
+      "size": 1498,
+      "gitBlobSha1": "991d159da14626621d49d6e51d98ea9949e193f6",
+      "sha256": "0f19867f4326666af88f3490f6263ae9a5cdeb0f5607adcef21b6971f9cf67e8"
+    },
+    {
+      "path": "quotations/tsv/4217_a_portrait_of_the_artist_as_a_young_man_brat.txt",
+      "size": 10109,
+      "gitBlobSha1": "fab9a7edf9843090e156aee88b9f5c519c5deba6",
+      "sha256": "56952f35b9630d9342061e483b1f1b2a1e38277a2c91b95d009274afc35086cb"
+    },
+    {
+      "path": "quotations/tsv/4276_north_and_south_brat.ann",
+      "size": 1408,
+      "gitBlobSha1": "e8afe7bfa9510802bb71cd0fbd9499a6ed8e1d55",
+      "sha256": "8c77f9e0145fa687b1157d4dabbd858d6efcff224a3858c5f3d8bd2b0adc02c7"
+    },
+    {
+      "path": "quotations/tsv/4276_north_and_south_brat.txt",
+      "size": 10081,
+      "gitBlobSha1": "ee5cf6a04067beaca5defad6a7465652caab4303",
+      "sha256": "f9b1f2a091970cec6afc189682596b22c3e1016ecbb1529537c38583045e4f5c"
+    },
+    {
+      "path": "quotations/tsv/4300_ulysses_brat.ann",
+      "size": 7080,
+      "gitBlobSha1": "9be7d08444199b3db5eb477cda9cf87cf32f6aaf",
+      "sha256": "2428474c6da1691beb6a849e7c6dc071eb9c3c5ace2dbbe2f021e44edaf24cb5"
+    },
+    {
+      "path": "quotations/tsv/4300_ulysses_brat.txt",
+      "size": 9799,
+      "gitBlobSha1": "1b7400791a5423392ff436092d6729f5e12ca36b",
+      "sha256": "5daab9367a31040d22ac11c4646c362d7198eb8e53c6620695f6f90bad505c99"
+    },
+    {
+      "path": "quotations/tsv/432_the_ambassadors_brat.ann",
+      "size": 2117,
+      "gitBlobSha1": "a363738207e05f5a1c09f710c1b6a9863e77234e",
+      "sha256": "2427b64abd4bdedeee3cecb4928a889814c57187c74cb5d97879403ca114c5f2"
+    },
+    {
+      "path": "quotations/tsv/432_the_ambassadors_brat.txt",
+      "size": 11403,
+      "gitBlobSha1": "374dcb0c2e03e4dd4f85c9fa395e94e0ce9ab9bd",
+      "sha256": "f0f632e9a9c4497611e63eeaa12cbd565a60e64ab8dfa9bffd32f863155a07a2"
+    },
+    {
+      "path": "quotations/tsv/434_the_circular_staircase_brat.ann",
+      "size": 929,
+      "gitBlobSha1": "0b14bbadfd78c4cd4b69fee5e20fa732000d0ed8",
+      "sha256": "50caeb104428ff85c74fa8cce0bc911fcb0f17e74326ec85c6dee93c617b6ae8"
+    },
+    {
+      "path": "quotations/tsv/434_the_circular_staircase_brat.txt",
+      "size": 10167,
+      "gitBlobSha1": "0e17854728ec0153e22ee451d788fae6c4803bae",
+      "sha256": "bdcfaace722edd8967279070a77f84ac4bed55fbb0a038557da218b511de4a51"
+    },
+    {
+      "path": "quotations/tsv/44_the_song_of_the_lark_brat.ann",
+      "size": 3244,
+      "gitBlobSha1": "37af766e81cf4f695c00371c9e722aa2f0ed093e",
+      "sha256": "0c1fa6baf88f732d02f9b966383166096394ce0fb99b2f64519629cca430c408"
+    },
+    {
+      "path": "quotations/tsv/44_the_song_of_the_lark_brat.txt",
+      "size": 9990,
+      "gitBlobSha1": "13a5ac0dd476825064e03492714deee4a52b82bb",
+      "sha256": "bb2cd8d0e32b703b99a5e58c1d49593c5f1bb4305441cbed118c93b9a9d18d36"
+    },
+    {
+      "path": "quotations/tsv/45_anne_of_green_gables_brat.ann",
+      "size": 2296,
+      "gitBlobSha1": "7e59703c7dd63ae66b9fdfbf052d0ee5db1a0ff0",
+      "sha256": "da71fbdc38ab290eeaaacdc3e2c3e83da1a17f8bacd254be0a8edfaeb9bd81d5"
+    },
+    {
+      "path": "quotations/tsv/45_anne_of_green_gables_brat.txt",
+      "size": 10079,
+      "gitBlobSha1": "3b605c35ab1bc2e311bbe64867f42cbddd691f71",
+      "sha256": "b794f082918cffda94a444fe8303bfbdc8aa5d391d2d4e26f57881cb308ad8bc"
+    },
+    {
+      "path": "quotations/tsv/472_the_house_behind_the_cedars_brat.ann",
+      "size": 2422,
+      "gitBlobSha1": "df66cf59fd51a9ffaca5b4157d89951d6108076c",
+      "sha256": "6273dd0467eda90ea90d9481bb2626c5f9f0d0abd9d92a54be03d1f9f88971ad"
+    },
+    {
+      "path": "quotations/tsv/472_the_house_behind_the_cedars_brat.txt",
+      "size": 10015,
+      "gitBlobSha1": "fb91da2fbfcedd91494e205f8307e3cd670a0e5e",
+      "sha256": "93e8410cad04a77a373a2b7ababac3be490c00d3f94b311f348d7680b44b9349"
+    },
+    {
+      "path": "quotations/tsv/502_desert_gold_brat.ann",
+      "size": 1826,
+      "gitBlobSha1": "7f3a0de52e08b145dd19ef29288e82edf15fbc4b",
+      "sha256": "dba60de1cad696812377d7fc97b122a343d3f05608ad12c09505e6143377b8c2"
+    },
+    {
+      "path": "quotations/tsv/502_desert_gold_brat.txt",
+      "size": 10012,
+      "gitBlobSha1": "2072d3b8ec26b6995f338af3890b58539f8b52b8",
+      "sha256": "162c8e14056b5fda1ab830ad8c1f0c6bc294e6b6656c88ab01a8a100c6a60214"
+    },
+    {
+      "path": "quotations/tsv/514_little_women_brat.ann",
+      "size": 6026,
+      "gitBlobSha1": "4f836f0c872dce691b12c11330fdfb31dc131c05",
+      "sha256": "ce8c24c748f5df793db184835ee32b84bbf7340e1942232111116a9d26341750"
+    },
+    {
+      "path": "quotations/tsv/514_little_women_brat.txt",
+      "size": 8949,
+      "gitBlobSha1": "7c3f6364050330dba96d21d549a22c723fcdf773",
+      "sha256": "faddb22c433b8b9444077bd6c8131e3eb0b06fb45a4480f0a24b68a8a56d6d9c"
+    },
+    {
+      "path": "quotations/tsv/521_the_life_and_adventures_of_robinson_crusoe_brat.ann",
+      "size": 218,
+      "gitBlobSha1": "1324cfa4243e7fcfab762027853fd81b758a4aaf",
+      "sha256": "d560185d5374528d7517c1579232c3d6577c34b344bed825db25e2294e6e60ec"
+    },
+    {
+      "path": "quotations/tsv/521_the_life_and_adventures_of_robinson_crusoe_brat.txt",
+      "size": 11009,
+      "gitBlobSha1": "61110c474795dcbe057be545cd08a94cb33d76c7",
+      "sha256": "02183a436eb235ea8dc23a2e7191309b426d56eb8acf3c1a7da84d0944469b10"
+    },
+    {
+      "path": "quotations/tsv/5230_the_invisible_man_a_grotesque_romance_brat.ann",
+      "size": 2979,
+      "gitBlobSha1": "26b7702fbd3eebaa45fed30993151577a592fea2",
+      "sha256": "ee784f12ff5880afe6526867dc52daa2b1b9b37b68346d6645a2b30883202c1c"
+    },
+    {
+      "path": "quotations/tsv/5230_the_invisible_man_a_grotesque_romance_brat.txt",
+      "size": 9457,
+      "gitBlobSha1": "0b848fe77e35fd03fc707da6455dd08503b70b88",
+      "sha256": "cc6900717317dd0097dacb3b192b973d530dd05d884cf232ed33d8e62a80a913"
+    },
+    {
+      "path": "quotations/tsv/5348_ragged_dick_or_street_life_in_new_york_with_the_bootblacks_brat.ann",
+      "size": 6140,
+      "gitBlobSha1": "79b5617b5231a58662abb920532a89ed77364e81",
+      "sha256": "7f2cfa7bf8e1f8d31e26350cdd9e87ae330fe612c1d6eb1e7531add95395bf9b"
+    },
+    {
+      "path": "quotations/tsv/5348_ragged_dick_or_street_life_in_new_york_with_the_bootblacks_brat.txt",
+      "size": 9588,
+      "gitBlobSha1": "2dc5bb81b0190fc94638b939a1482c9a24eb0b67",
+      "sha256": "11ed1b05c7bb4f7bb2a6f96e8dc1de910b23b7a0900d7b6dc83a109ff997d043"
+    },
+    {
+      "path": "quotations/tsv/541_the_age_of_innocence_brat.ann",
+      "size": 1000,
+      "gitBlobSha1": "49418d2b16fbd99fcd00421f1b20cf63aae3325a",
+      "sha256": "71ddac127b2c2aee1fdf18ad31ca4651b7947b527901642ff0a3cd74f878ddb0"
+    },
+    {
+      "path": "quotations/tsv/541_the_age_of_innocence_brat.txt",
+      "size": 10645,
+      "gitBlobSha1": "018933fd44dd3a6a2e7844a22024f3cebd49495d",
+      "sha256": "2dee83bcd4650d874a69090b1ba74e4fadf550ed32fe37d8249eca62ab02b776"
+    },
+    {
+      "path": "quotations/tsv/543_main_street_brat.ann",
+      "size": 2151,
+      "gitBlobSha1": "dcfddf65108c40be3f29a1d3e8abd984aaca3bdd",
+      "sha256": "375b11330cc2aa316e92e54b22bacca92ace2363a1dbb17b54ee2b13213609e9"
+    },
+    {
+      "path": "quotations/tsv/543_main_street_brat.txt",
+      "size": 10848,
+      "gitBlobSha1": "2a799617465ebe2c132055576d67c2a8c1ea5473",
+      "sha256": "e2f63a2be049a530716539cad6e1352027fb47b3352620c5128ca335fb8ac0b6"
+    },
+    {
+      "path": "quotations/tsv/550_silas_marner_brat.ann",
+      "size": 299,
+      "gitBlobSha1": "16fc8e63e9d6491a9baf4b2497bfc5b4c70dc2c8",
+      "sha256": "d4b984a5a4d800e27a79b4e065af4a9d542c63567208203f1af6edcf2b815f44"
+    },
+    {
+      "path": "quotations/tsv/550_silas_marner_brat.txt",
+      "size": 10289,
+      "gitBlobSha1": "d7e06fa5bc24593a796ac5c50ad0f2bd5f415d27",
+      "sha256": "d6f0861e318105ff3ce3b0842a4a3ad5998ee0a59d3e78585d879c1626a0170b"
+    },
+    {
+      "path": "quotations/tsv/599_vanity_fair_brat.ann",
+      "size": 2021,
+      "gitBlobSha1": "2cd5903b6ead7dc09ef19f07ac5d2d6fb2e213f4",
+      "sha256": "938b20f9fd1888e7fcab373387a1685d760dc0a4ef15631e8d76ccdd351c26ae"
+    },
+    {
+      "path": "quotations/tsv/599_vanity_fair_brat.txt",
+      "size": 10277,
+      "gitBlobSha1": "daaf4102e1c50668d8a1c1847e58a529bfd42159",
+      "sha256": "b6b166ba1a9a7324b499a4bdde77c5d12c71ac0d0449579a03969f8fc6ccb07a"
+    },
+    {
+      "path": "quotations/tsv/6053_evelina_or_the_history_of_a_young_ladys_entrance_into_the_world_brat.ann",
+      "size": 244,
+      "gitBlobSha1": "3ba84f583b612671fc615a1ab8c80618f55c4ee4",
+      "sha256": "7ccf29c983e962f352f890a602cab185b7e4b8a9bb47e0cd3d2db7f0d293570c"
+    },
+    {
+      "path": "quotations/tsv/6053_evelina_or_the_history_of_a_young_ladys_entrance_into_the_world_brat.txt",
+      "size": 10208,
+      "gitBlobSha1": "88fd401d1cf155ce7993947c11a380cd7b63cf57",
+      "sha256": "9ee9696b90730dc6ea97dba45193e62418b04e04c9c07ada6440d0c3ba971e0b"
+    },
+    {
+      "path": "quotations/tsv/60_the_scarlet_pimpernel_brat.ann",
+      "size": 1657,
+      "gitBlobSha1": "7eb5679ce6302a9e5a9589094fa7b8c6b370fbf5",
+      "sha256": "bd402fb785db324589f9a35b57f26275286facd1c7a3eb9e7cbf1c039bb60ce2"
+    },
+    {
+      "path": "quotations/tsv/60_the_scarlet_pimpernel_brat.txt",
+      "size": 10368,
+      "gitBlobSha1": "bc6b67ba792a8f715245e2df30f898bf1fdaedd5",
+      "sha256": "ca61c805a6a01b183eb8789ebbf92728563f9db9db03265c5349843a6458bcbd"
+    },
+    {
+      "path": "quotations/tsv/62_a_princess_of_mars_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/62_a_princess_of_mars_brat.txt",
+      "size": 10201,
+      "gitBlobSha1": "5f2792305fd79dbd85a76a7a1c8e7e2c2b47e41e",
+      "sha256": "aa317595e2554b4980a4493fa086de0b1a2c7f8da9224e0c7aeb181f863f786d"
+    },
+    {
+      "path": "quotations/tsv/6593_history_of_tom_jones_a_foundling_brat.ann",
+      "size": 145,
+      "gitBlobSha1": "9719aabcf91c342c1d51386b95b73301a8410188",
+      "sha256": "b3e39712a379d3a54f75d7189d729926687667f1f71b54449b3ef577e247fb4c"
+    },
+    {
+      "path": "quotations/tsv/6593_history_of_tom_jones_a_foundling_brat.txt",
+      "size": 10216,
+      "gitBlobSha1": "c3f94b63eeff2fffe579bb44c4b0367f3462616e",
+      "sha256": "a378fe3b789c28dc9a0c8d7c7c91bfd35c558492875d56cda7f8a76c1a5eebf4"
+    },
+    {
+      "path": "quotations/tsv/711_allan_quatermain_brat.ann",
+      "size": 6813,
+      "gitBlobSha1": "0eb315a41bbadeafef7bcdb471d584abafa7b74a",
+      "sha256": "4aaa9bed2d6f40f7bca1bdef290eb9ed70e95d552bfba88a84acfce916ce12a8"
+    },
+    {
+      "path": "quotations/tsv/711_allan_quatermain_brat.txt",
+      "size": 9033,
+      "gitBlobSha1": "ed050fdccd350d836c632bd7142fbe5491ae0891",
+      "sha256": "f2864da2d82b5f6e98a6e55dd35d4631f5a0baa18c2db8b51bad48d84b4cc676"
+    },
+    {
+      "path": "quotations/tsv/730_oliver_twist_brat.ann",
+      "size": 1744,
+      "gitBlobSha1": "1bd002fca3684051246d35c23fdbc4f32686aa27",
+      "sha256": "ab65d3d5d1d4a781d2a36cc832e445f62b9d939a11ac0948cfdb9e0d7f7b5590"
+    },
+    {
+      "path": "quotations/tsv/730_oliver_twist_brat.txt",
+      "size": 10457,
+      "gitBlobSha1": "743a5748480c848d5bff26dc18b5cfd1a72b487b",
+      "sha256": "8504bb450a318e9396ed41c1b22d3d965779b1442fa054616a143a19574ab230"
+    },
+    {
+      "path": "quotations/tsv/73_the_red_badge_of_courage_an_episode_of_the_american_civil_war_brat.ann",
+      "size": 2601,
+      "gitBlobSha1": "d345fed3d4afbee5d8a01d4a5d2b4967470d57e9",
+      "sha256": "9d2fda511f0bbc16e1132ed8f7e67799c09eb666432999a767c920e272bad6e1"
+    },
+    {
+      "path": "quotations/tsv/73_the_red_badge_of_courage_an_episode_of_the_american_civil_war_brat.txt",
+      "size": 9854,
+      "gitBlobSha1": "c7b0401f139305ff2cf2afcaa801ebd8c88b21b6",
+      "sha256": "f761a16e89f2fa440c7d9a13ce8b42bb6fc909e1d264cbbe7ffdae20a7d30bff"
+    },
+    {
+      "path": "quotations/tsv/74_the_adventures_of_tom_sawyer_brat.ann",
+      "size": 4715,
+      "gitBlobSha1": "973d39412b9f34f0e3bde84d233caa055194eb5e",
+      "sha256": "94ab7ac4495844d9a71a378e6de145b3520a1ddbd985617c7b990b1cd51068ed"
+    },
+    {
+      "path": "quotations/tsv/74_the_adventures_of_tom_sawyer_brat.txt",
+      "size": 8999,
+      "gitBlobSha1": "9bf26f144539d2dbcb78298baccacce99661d68b",
+      "sha256": "c822289627acc8f2812d7dd6cf6677de42254aec4a5dfffc84285dc51097101c"
+    },
+    {
+      "path": "quotations/tsv/766_david_copperfield_brat.ann",
+      "size": 902,
+      "gitBlobSha1": "70211a4d48c731f4a168c85d19aa67070ee47ffa",
+      "sha256": "2fbbac54b759cd753979091052d64117008a0e8e7b40eecc44990e2986f1c0aa"
+    },
+    {
+      "path": "quotations/tsv/766_david_copperfield_brat.txt",
+      "size": 9783,
+      "gitBlobSha1": "89463130d28ab01811ca7618ff7d07e5777df764",
+      "sha256": "3ead82effae9fd49028556bd3ebf643228c3463462f40df7c5b92b7141ffc862"
+    },
+    {
+      "path": "quotations/tsv/768_wuthering_heights_brat.ann",
+      "size": 1686,
+      "gitBlobSha1": "96c7ff11be68bdbe383bf81d502c565c8ae9042b",
+      "sha256": "1ab893a1eaec3ba1f7b7176258158f8889580a62a4ef6e0ce09a79e8c3e9db5b"
+    },
+    {
+      "path": "quotations/tsv/768_wuthering_heights_brat.txt",
+      "size": 10349,
+      "gitBlobSha1": "a905bfd6e37cb6337f0a348479d277b732d60ac4",
+      "sha256": "5073ba6c8d9a4ee6a6ffab278778b07b0748e2ff6835f99a61a7ab354fbce442"
+    },
+    {
+      "path": "quotations/tsv/76_adventures_of_huckleberry_finn_brat.ann",
+      "size": 780,
+      "gitBlobSha1": "8e7eea46b13aaf6741ebaf7e63f01a28bfdb472a",
+      "sha256": "368f13b5f47398d8fa68512a1f6498a334b6b2e07408a0e19761087de253893b"
+    },
+    {
+      "path": "quotations/tsv/76_adventures_of_huckleberry_finn_brat.txt",
+      "size": 9470,
+      "gitBlobSha1": "7550ad7863882cf907be29aa120822ed98f08bc7",
+      "sha256": "6c2bc59d41c4a7d48a181abb59e52716ce16605068110c607760449aed57dbf3"
+    },
+    {
+      "path": "quotations/tsv/77_the_house_of_the_seven_gables_brat.ann",
+      "size": 151,
+      "gitBlobSha1": "8f1968c7fae257f25bce50e35d835d9c9740c519",
+      "sha256": "04110865ddfe27269b60322a6b82517a3d63e28ed603b7f01f0bed24a0a45fd7"
+    },
+    {
+      "path": "quotations/tsv/77_the_house_of_the_seven_gables_brat.txt",
+      "size": 11178,
+      "gitBlobSha1": "f11e3aff3ed76e757529d3e6ac42579e24689569",
+      "sha256": "62a800548ddd5f84fa3888b90518c15005c86eb7502f9765fb10311816792221"
+    },
+    {
+      "path": "quotations/tsv/78_tarzan_of_the_apes_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/78_tarzan_of_the_apes_brat.txt",
+      "size": 10560,
+      "gitBlobSha1": "5afbf80b21f569dd61884958d44b109aae4dfc6b",
+      "sha256": "b19342d98c944eabadd7a3dc30fb6b559bd5dc04d8d4c77cfb10d327cfd512f7"
+    },
+    {
+      "path": "quotations/tsv/805_this_side_of_paradise_brat.ann",
+      "size": 2854,
+      "gitBlobSha1": "7ec42bba3e6c4afd24079df7cf726c1aae1606f0",
+      "sha256": "77dd0962b0d286640e147fb5ff05f921a9aef24ef016743bc45e54be460744a6"
+    },
+    {
+      "path": "quotations/tsv/805_this_side_of_paradise_brat.txt",
+      "size": 10295,
+      "gitBlobSha1": "3b87e1f7195bfd794763508cbcf9d08e447403f7",
+      "sha256": "3837df7000f41756e94c9d498316c3e032fbf605f8e8f22351b3024c3043e1aa"
+    },
+    {
+      "path": "quotations/tsv/829_gullivers_travels_into_several_remote_nations_of_the_world_brat.ann",
+      "size": 418,
+      "gitBlobSha1": "09ef287b1c8173773bdfa789a7185b9c9e371565",
+      "sha256": "7a874c73037d79fb8a73501f4c24bf32ee799b89ddaaf0f7d390274ad86e9bf5"
+    },
+    {
+      "path": "quotations/tsv/829_gullivers_travels_into_several_remote_nations_of_the_world_brat.txt",
+      "size": 16207,
+      "gitBlobSha1": "871bfeb6d77ff336c0b8671828de075464c1be0b",
+      "sha256": "5368c006ae732841916396df5674eba152797484dcbbb6c633e7bf97e7fe9164"
+    },
+    {
+      "path": "quotations/tsv/84_frankenstein_or_the_modern_prometheus_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/84_frankenstein_or_the_modern_prometheus_brat.txt",
+      "size": 12246,
+      "gitBlobSha1": "3e9265c9d0b6d7aed80b9cef3e1622b7e67f33d5",
+      "sha256": "a2e6d612683ed25c1b5d823d69d39f31f44f80d8d6b890a37311fefe4d5e4feb"
+    },
+    {
+      "path": "quotations/tsv/876_life_in_the_ironmills_or_the_korl_woman_brat.ann",
+      "size": 765,
+      "gitBlobSha1": "68334a9626f6576cb0bcce1507a1da78f99907ab",
+      "sha256": "ebee8e7e650d33a7279f5e17b6b577a74dfe3ee3d057e28d05d92e5054994322"
+    },
+    {
+      "path": "quotations/tsv/876_life_in_the_ironmills_or_the_korl_woman_brat.txt",
+      "size": 10232,
+      "gitBlobSha1": "ce462648b64cd714791e249d1bfcccfcfe419666",
+      "sha256": "ca884f5eb7108e21814fed0721482a853213260d6ccfe9c26bd7afae06a9b8e9"
+    },
+    {
+      "path": "quotations/tsv/8867_the_magnificent_ambersons_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/8867_the_magnificent_ambersons_brat.txt",
+      "size": 11114,
+      "gitBlobSha1": "d547eac21a3368d19d3488d9bfbf5a1ffe7adc8d",
+      "sha256": "554ad1997bff7306cb8ca1d94da3553fc76cbbd148ae6e1454b3da8fec7c7c90"
+    },
+    {
+      "path": "quotations/tsv/932_the_fall_of_the_house_of_usher_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/932_the_fall_of_the_house_of_usher_brat.txt",
+      "size": 11208,
+      "gitBlobSha1": "149800d3b337cec706de6f81a0498c7aa4f558ce",
+      "sha256": "114e0deeab02281c48f56f6d900a0696cacaaed269918ea2e51c5009f11edd57"
+    },
+    {
+      "path": "quotations/tsv/940_the_last_of_the_mohicans_a_narrative_of_1757_brat.ann",
+      "size": 0,
+      "gitBlobSha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "quotations/tsv/940_the_last_of_the_mohicans_a_narrative_of_1757_brat.txt",
+      "size": 12175,
+      "gitBlobSha1": "ac992aec31f6d9e00289fd15f9c8bc11fa58db7c",
+      "sha256": "70c8ca21802b344c342ced98fe20899d6d0d344df9bb7ab313b3552cef4de641"
+    },
+    {
+      "path": "quotations/tsv/95_the_prisoner_of_zenda_brat.ann",
+      "size": 4011,
+      "gitBlobSha1": "75a4f268b89732196b9c9abc12dc6e6a9be43cb6",
+      "sha256": "0d9c2c288a4a0360401e2d427ff485d51c82c1cf063474bb87396c88a2765938"
+    },
+    {
+      "path": "quotations/tsv/95_the_prisoner_of_zenda_brat.txt",
+      "size": 11095,
+      "gitBlobSha1": "1474fe0a9ae8d6a1e7e1da7e27495680465f08f8",
+      "sha256": "6c9e2a4aee4e5b1f69926339168126fb2c2769d95f148a9f830d7bba42228db0"
+    },
+    {
+      "path": "quotations/tsv/969_the_tenant_of_wildfell_hall_brat.ann",
+      "size": 5768,
+      "gitBlobSha1": "2576828b9b4915107e481dd9d4cda23d63064365",
+      "sha256": "7bf60f49d6e55b278a6b3b1a134eecb622fabb648383699105361fb996c74f0d"
+    },
+    {
+      "path": "quotations/tsv/969_the_tenant_of_wildfell_hall_brat.txt",
+      "size": 9863,
+      "gitBlobSha1": "7e9277f5bc2fc9b7a43a37de3d11e8a1958eb80c",
+      "sha256": "b7dac83c32e0c680fc560bc9ae4b9dc5e3aebbb33d0562a369711f9eeaf506ff"
+    },
+    {
+      "path": "quotations/tsv/974_the_secret_agent_a_simple_tale_brat.ann",
+      "size": 115,
+      "gitBlobSha1": "a2acd14bb754856f46d4b2b55e48e3d6f11a86be",
+      "sha256": "967af0361dabe70c0b56c8ce57c9ca5bf2061d735f08b1c3c7d647b2de28ca1e"
+    },
+    {
+      "path": "quotations/tsv/974_the_secret_agent_a_simple_tale_brat.txt",
+      "size": 13169,
+      "gitBlobSha1": "90341e3f3d739a7c1b7b23de29bdfa7b7f436182",
+      "sha256": "27db618abdf95dfcaaf673409102ce49f819617534b989aeea95e86a1610fe05"
+    },
+    {
+      "path": "quotations/tsv/9830_the_beautiful_and_damned_brat.ann",
+      "size": 199,
+      "gitBlobSha1": "a7c922e56a0701588310d56e8a6b44219ca22431",
+      "sha256": "668d9f7d436e435447decc413ff5e010c78c15e4b6b77a2b20d299f1c0690f51"
+    },
+    {
+      "path": "quotations/tsv/9830_the_beautiful_and_damned_brat.txt",
+      "size": 11022,
+      "gitBlobSha1": "c0f072b04af4dbfa8eb4bcd58538e34152bc7d50",
+      "sha256": "97582ac58d03328081cada3a5db2b18ac690aed4710c0820f70ece651280ddd8"
+    },
+    {
+      "path": "coref/conll/1023_bleak_house_brat.conll",
+      "size": 112515,
+      "gitBlobSha1": "6a6203c69f8bdcde24f465ae90727d5299fc5349",
+      "sha256": "2771286534c8886eabc5cbddbe3f1906b7a6e62f0495a5017a705bf4429c963a"
+    },
+    {
+      "path": "coref/conll/105_persuasion_brat.conll",
+      "size": 99215,
+      "gitBlobSha1": "ca224a9800b159afa441c93ae9af3f9e4e1bfec0",
+      "sha256": "cbf749eedd272f8bff3f5b6daece18319930696566ea16dad842a4c12ff14a64"
+    },
+    {
+      "path": "coref/conll/1064_the_masque_of_the_red_death_brat.conll",
+      "size": 136401,
+      "gitBlobSha1": "5265785cfc4247af4da21857c9cdc4f227990401",
+      "sha256": "961639e2a61a9e05bd7c2d25482f23bc0760ff05ff0f99853be55b80c64f7417"
+    },
+    {
+      "path": "coref/conll/110_tess_of_the_durbervilles_a_pure_woman_brat.conll",
+      "size": 147863,
+      "gitBlobSha1": "84da4e8e2fafd17bc60e555cf0f6bf57a5210987",
+      "sha256": "693a50aec48f3ba04fbabe9d2ebf4b54b6e98bea98d2339efd915667e48fc8cd"
+    },
+    {
+      "path": "coref/conll/11231_bartleby_the_scrivener_a_story_of_wallstreet_brat.conll",
+      "size": 218160,
+      "gitBlobSha1": "a2e485382a1ac5ae37fdba60422bad80b3873102",
+      "sha256": "8cfe084fda629afa7f436eef1f3c18ded3ef6f6b2e3e6f956e78db77bb3613a4"
+    },
+    {
+      "path": "coref/conll/113_the_secret_garden_brat.conll",
+      "size": 108830,
+      "gitBlobSha1": "e7698a4a66fdd8496e52f6d3fdad508d2b85f86e",
+      "sha256": "09155cef5a9eb001776aec33db40a56c997bca0d8dc56c182bc6c2794ddac202"
+    },
+    {
+      "path": "coref/conll/1155_the_secret_adversary_brat.conll",
+      "size": 121787,
+      "gitBlobSha1": "0064a73799e612336ee30c68283ef44e44c5a364",
+      "sha256": "a8a6d0d06ec7d0850825df8776c65bc0f508e5777adbb3793698fab9e3a0808b"
+    },
+    {
+      "path": "coref/conll/11_alices_adventures_in_wonderland_brat.conll",
+      "size": 142111,
+      "gitBlobSha1": "1dbd28d249ef93b28a60a54b819eede5a5d7588e",
+      "sha256": "3471151d70d4d0fb9bdfe4e5bfb9e80c87b16ae5613c084b4953eb2139e875ab"
+    },
+    {
+      "path": "coref/conll/1206_the_flying_u_ranch_brat.conll",
+      "size": 113363,
+      "gitBlobSha1": "8c2c155790a6897519a1ff4986688874ab4309ab",
+      "sha256": "8773ed38bdb7a7495602f71d5f76c81d3d98dc76eac584b66746da8539f5c021"
+    },
+    {
+      "path": "coref/conll/120_treasure_island_brat.conll",
+      "size": 115560,
+      "gitBlobSha1": "4e5a1527a3b27bd327a4a754be5eca18b951ad5d",
+      "sha256": "1ffeb220863c9a9e006dfdc2f2a21dff794aea8ff5739ce86d3361f997eed835"
+    },
+    {
+      "path": "coref/conll/1245_night_and_day_brat.conll",
+      "size": 114560,
+      "gitBlobSha1": "1e7965aad23151394d68ec990c1c9dd91fbc6625",
+      "sha256": "835608916cc4c936a5f0731376d8e0999da1f45b74ab923c4e8cddd67af87915"
+    },
+    {
+      "path": "coref/conll/1260_jane_eyre_an_autobiography_brat.conll",
+      "size": 130548,
+      "gitBlobSha1": "24ba174153d3569e3edcd8413abd0eedf560780d",
+      "sha256": "f53730c0170e99f20bd8760817e0ccc12f96e2f857a67db58dad9855fb661db2"
+    },
+    {
+      "path": "coref/conll/12677_personality_plus_some_experiences_of_emma_mcchesney_and_her_son_jock_brat.conll",
+      "size": 216283,
+      "gitBlobSha1": "88fe284c5c9b8f3f97e3a4d3820dc9a578117ab2",
+      "sha256": "94293de673f722017f1c7a92c15441b98229806142270fe1311623da7613d790"
+    },
+    {
+      "path": "coref/conll/1327_elizabeth_and_her_german_garden_brat.conll",
+      "size": 141667,
+      "gitBlobSha1": "299f75df5f7a5deea5a3c414579911bfcd1e3e3b",
+      "sha256": "4ead7958d200dbbceafaee8a6e157248a5a90b0d39cb01596ba997397c858750"
+    },
+    {
+      "path": "coref/conll/1342_pride_and_prejudice_brat.conll",
+      "size": 114884,
+      "gitBlobSha1": "f139e5264ae8d990c315950f6211e45e9328ce07",
+      "sha256": "3e3a8cbfb959420bb9179a1a12debd19bbcf6ea459aa02be337de610f3c24b85"
+    },
+    {
+      "path": "coref/conll/1400_great_expectations_brat.conll",
+      "size": 114218,
+      "gitBlobSha1": "05794ac87a5eb29b2c38ad3a1c00c5bbeffd8701",
+      "sha256": "6406f9f979397626d7efad85d47acef9d6b1d28c497b8dc1833fb450dcc9a2a9"
+    },
+    {
+      "path": "coref/conll/145_middlemarch_brat.conll",
+      "size": 97371,
+      "gitBlobSha1": "0c36ef8e5b24494165e5d37f15aeb7d3322abb44",
+      "sha256": "35bc7e08240c18fb181ac575c4f8a544628ce6a015171ca29e70ef7aa875e072"
+    },
+    {
+      "path": "coref/conll/15265_the_quest_of_the_silver_fleece_a_novel_brat.conll",
+      "size": 153404,
+      "gitBlobSha1": "1b4540f7ed0a452faeb52b2fb83a1ca9dafc2d3f",
+      "sha256": "36374b1bc4d8ccc6fc6a6ff30a8131c24e47085367b2b575ae3ca0b3b15f15f7"
+    },
+    {
+      "path": "coref/conll/155_the_moonstone_brat.conll",
+      "size": 102061,
+      "gitBlobSha1": "91e1aa06cb3ab62acfedf4bc6eb69ef4ba4d62cf",
+      "sha256": "b8e64341442a49b38f3fa2db2787b41b2d9c8c9e48bd2e9105524e425a4aa0f6"
+    },
+    {
+      "path": "coref/conll/158_emma_brat.conll",
+      "size": 85082,
+      "gitBlobSha1": "d6556effd712a39005cd74441b52e6caa00363d0",
+      "sha256": "0c1285dd247f4bad4be126166bcaa807553799959e9ea08ab77ef0646eb111da"
+    },
+    {
+      "path": "coref/conll/160_the_awakening_and_selected_short_stories_brat.conll",
+      "size": 156155,
+      "gitBlobSha1": "6935ed62dfd03e71a5823acc7822384ce8189f3b",
+      "sha256": "61bdf63f9709980aa2ebbea4d1d2f704d0cf5cad9cbdfe73c18e0895515c56e2"
+    },
+    {
+      "path": "coref/conll/16357_mary_a_fiction_brat.conll",
+      "size": 109114,
+      "gitBlobSha1": "2760bb33cf01b23e09bf9a7d6b942784c2bdff98",
+      "sha256": "c4d2eda60b050cb164c5c3a037615587a58b2c1dea1eedf49c395c89bb0cd13f"
+    },
+    {
+      "path": "coref/conll/1661_the_adventures_of_sherlock_holmes_brat.conll",
+      "size": 148327,
+      "gitBlobSha1": "c80142bb17c0f7027c0c741426d962d89ed13ecf",
+      "sha256": "66ba70ee858e685078b47e3c01c036b3a9410a27a9219057c881ca502e9ace59"
+    },
+    {
+      "path": "coref/conll/1695_the_man_who_was_thursday_a_nightmare_brat.conll",
+      "size": 153308,
+      "gitBlobSha1": "d605dd0b1de620fd74bee5ba0026df94820d47ae",
+      "sha256": "5f0e94fd452e564aafbaf1e2d153c074f3ce815d7154435d767510479c337f2e"
+    },
+    {
+      "path": "coref/conll/171_charlotte_temple_brat.conll",
+      "size": 109074,
+      "gitBlobSha1": "ae5c220cad685ba3ca9afb03e8e4672aa76f713d",
+      "sha256": "ee56736df030ca314ae4f953baf7cff7914d72ff56783e57e04cb15ebb04f79e"
+    },
+    {
+      "path": "coref/conll/174_the_picture_of_dorian_gray_brat.conll",
+      "size": 126658,
+      "gitBlobSha1": "287e2081d4da652688968958b42bf60701bae6e3",
+      "sha256": "fec99b4fb1383bc995ea54d73699376d5c61e51db4dedf459f5e016094c399eb"
+    },
+    {
+      "path": "coref/conll/18581_adrift_in_new_york_tom_and_florence_braving_the_world_brat.conll",
+      "size": 184677,
+      "gitBlobSha1": "6897d7f4586901babbcdc3d67398a8f36f0f2aef",
+      "sha256": "601f64dc079b40e38974b1a714d68f5ec507841769dd726b5d9c981e6ceafe34"
+    },
+    {
+      "path": "coref/conll/2005_piccadilly_jim_brat.conll",
+      "size": 108340,
+      "gitBlobSha1": "12796a7a2cf66c2541cfb2bdda4392b70e1c1b5f",
+      "sha256": "3ca2445074b39aa2b9f54944e9777a80ee917ab1c4803cd6c9a37fc9835b3082"
+    },
+    {
+      "path": "coref/conll/2084_the_way_of_all_flesh_brat.conll",
+      "size": 119372,
+      "gitBlobSha1": "92880404c273a56c4a954e597520ea242134d451",
+      "sha256": "364140de18334a5c3b1fcda12efc9ae35d15c522fab8f6c600f3db7fa8e36225"
+    },
+    {
+      "path": "coref/conll/208_daisy_miller_a_study_brat.conll",
+      "size": 114926,
+      "gitBlobSha1": "ad60a2026dd3f2bf3b2a9a62ed0ebc03cd8e96b4",
+      "sha256": "ee6cf3a21e7f62f84ae701b206f113393900cb14b6be21b94ee3b6e5acad7c30"
+    },
+    {
+      "path": "coref/conll/2095_clotelle_a_tale_of_the_southern_states_brat.conll",
+      "size": 154509,
+      "gitBlobSha1": "376b44410e8433f2616ffe73e203384207d21772",
+      "sha256": "f55555a5e3c9614ed50b75e3ad1bd77977c1b332fbcfe50233f66a1aceeabadb"
+    },
+    {
+      "path": "coref/conll/209_the_turn_of_the_screw_brat.conll",
+      "size": 116814,
+      "gitBlobSha1": "a79d3310d53336582d11cdd734eccb61aed3a456",
+      "sha256": "5e01a2caae65416bf97674088d43e1155517499926d89415fcf12ade608e95ae"
+    },
+    {
+      "path": "coref/conll/215_the_call_of_the_wild_brat.conll",
+      "size": 115483,
+      "gitBlobSha1": "2082299b6b139b466e81430aab77a367ced0359b",
+      "sha256": "a24b3ac3bced111cfc255b02c801f112ce565c052673d2473f5d268677a1cc9e"
+    },
+    {
+      "path": "coref/conll/2166_king_solomons_mines_brat.conll",
+      "size": 117978,
+      "gitBlobSha1": "ce0631741cbbec4609e06d8b7ba29bf178e7c894",
+      "sha256": "58ebd8e6894c7a346d6363682349825d64dacef0c889ccb91f1a9447fb24dd4f"
+    },
+    {
+      "path": "coref/conll/217_sons_and_lovers_brat.conll",
+      "size": 104547,
+      "gitBlobSha1": "2d516f369b783f2009f5268e678f66b49594e188",
+      "sha256": "63f52e18a0ccbfea542e0665a6da8293fe1f34164ac976dc00921d6e449b4333"
+    },
+    {
+      "path": "coref/conll/219_heart_of_darkness_brat.conll",
+      "size": 110557,
+      "gitBlobSha1": "b4f33bf105ee4592d611c1a3329e4a4522353f83",
+      "sha256": "cf97d8a10a67e4d302985e626be1e9613652f857c62453a708394de9ae69d924"
+    },
+    {
+      "path": "coref/conll/233_sister_carrie_a_novel_brat.conll",
+      "size": 119871,
+      "gitBlobSha1": "b9ac04c7fa55b98d34108da4ee4cead8e1670719",
+      "sha256": "9551ea854c85076e2cbacdf4f5623b86ad7c362312a5635fe5014ba9b1349984"
+    },
+    {
+      "path": "coref/conll/238_dear_enemy_brat.conll",
+      "size": 95400,
+      "gitBlobSha1": "87a9ab294e3fc1185f11498f0c3c5291a62e884c",
+      "sha256": "a6b8292f200f90fe96a99133697320475222dd139cbaa80e1160cbe3550699ec"
+    },
+    {
+      "path": "coref/conll/2489_moby_dick_brat.conll",
+      "size": 102688,
+      "gitBlobSha1": "5e599f90789aec42d663611259774eef03c095b8",
+      "sha256": "9ced0dfa7218e62fe2f601380f55e88ee5cddf5dde06fe43eca000e5270179b1"
+    },
+    {
+      "path": "coref/conll/24_o_pioneers_brat.conll",
+      "size": 94136,
+      "gitBlobSha1": "950ebe02478bd0885f9062cf68f1a2343eaed12b",
+      "sha256": "f791ec95faffe59172f71f00b7ef23a6dcdb11bfdfcc41f5f8b22d82e0472600"
+    },
+    {
+      "path": "coref/conll/2641_a_room_with_a_view_brat.conll",
+      "size": 112311,
+      "gitBlobSha1": "a22e77a014acdc16dc3cfe7ade7238af7a542380",
+      "sha256": "776f8f7be118b26bd0be48a43f5b32cdf53ab38fdeea821eed069019b64d62be"
+    },
+    {
+      "path": "coref/conll/271_black_beauty_brat.conll",
+      "size": 98414,
+      "gitBlobSha1": "b55fd8c58bcebd9595417eb31ca82796e9cb3878",
+      "sha256": "87d4dc7469517ed37d772fe66f8eaf3b43d1e088757d1dc4aacdbebe479845f0"
+    },
+    {
+      "path": "coref/conll/2775_the_good_soldier_brat.conll",
+      "size": 125593,
+      "gitBlobSha1": "16b06557afa40e64632e281de4b5a81425016ade",
+      "sha256": "8b455764dabc35c58a8786abe7fee3ef393eb4a8913086e1a6681fb9c6576710"
+    },
+    {
+      "path": "coref/conll/27_far_from_the_madding_crowd_brat.conll",
+      "size": 144402,
+      "gitBlobSha1": "7805baa7bb12fc738ddf8faf7160dad20f3e906c",
+      "sha256": "c3c0d1cc3da87b5a18d180f3d5ffafbf210dfd59d75609127b4270c863dae536"
+    },
+    {
+      "path": "coref/conll/2807_to_have_and_to_hold_brat.conll",
+      "size": 114093,
+      "gitBlobSha1": "7cd83d3772d6c2cba46f3bba43b55e7dd790f151",
+      "sha256": "88f41fd60b11eb578bb09ab68fa6b24e422e157fbe9a7b898ebd978675502990"
+    },
+    {
+      "path": "coref/conll/2814_dubliners_brat.conll",
+      "size": 94256,
+      "gitBlobSha1": "40ca0540c5fb1c5c3dadec723bf737ee31924b09",
+      "sha256": "adf476b60ae81acc48f5d953d4ef027224d62883439374cc4c18a6d00c6b2694"
+    },
+    {
+      "path": "coref/conll/2852_the_hound_of_the_baskervilles_brat.conll",
+      "size": 138996,
+      "gitBlobSha1": "1c29a50d8dd7024ba29fc69c259a938e41e03f6a",
+      "sha256": "158906bf6dd8abd8973557c7b27938635340d7e17ca16d72decd4f0e8992488c"
+    },
+    {
+      "path": "coref/conll/2891_howards_end_brat.conll",
+      "size": 98899,
+      "gitBlobSha1": "73c0f11313145af615567b482cb633ab6ffee1f5",
+      "sha256": "8b470bd2b43ce8e546d69941d83f946dcac4dcf50d22cc3dd0aa96439859abce"
+    },
+    {
+      "path": "coref/conll/3268_the_mysteries_of_udolpho_brat.conll",
+      "size": 125380,
+      "gitBlobSha1": "9df9b5cddc69a33379bf98ab227a4d34ff290299",
+      "sha256": "7180ce7f7a9dc63c1d46e4bac3a533fe37135fd6fd3f8ddb8537e6a1a90c36c9"
+    },
+    {
+      "path": "coref/conll/32_herland_brat.conll",
+      "size": 86049,
+      "gitBlobSha1": "eb2c3c363221856ce1ba0acae429dea658d399cd",
+      "sha256": "0e570ea2aad15dff274d4d17ead07872b0227be362b2b26b33b907389490482c"
+    },
+    {
+      "path": "coref/conll/33_the_scarlet_letter_brat.conll",
+      "size": 117760,
+      "gitBlobSha1": "3fdc53f279ce43b27658fdb5f330fb2cd9dc29a2",
+      "sha256": "57cda5aa46aacd7370063c125dc8d8197c3a3241642ef2ed75dc63d523d8d949"
+    },
+    {
+      "path": "coref/conll/3457_the_man_of_the_forest_brat.conll",
+      "size": 120002,
+      "gitBlobSha1": "f9d41027f63a5e24b440eb8c25ff6b034ec42a1a",
+      "sha256": "34fb522855de0e04e01703fcfe33fe6c4e1b539a0c7438e32d05fd442565ec03"
+    },
+    {
+      "path": "coref/conll/345_dracula_brat.conll",
+      "size": 99072,
+      "gitBlobSha1": "0db9df001b5f57d171daad4d226fe5b2f0c9089f",
+      "sha256": "cd40a2da589e75284fcd3c85f88cde600aedbdcdcfa766c8e7a147a8547fe9e8"
+    },
+    {
+      "path": "coref/conll/351_of_human_bondage_brat.conll",
+      "size": 105546,
+      "gitBlobSha1": "06b40b3314eabbe3b60130eddb52ca38bb0b25b7",
+      "sha256": "cae321668a26a031bcebed87dbfd5ba99affbcb90649cce8642e2255faf6968d"
+    },
+    {
+      "path": "coref/conll/367_country_of_the_pointed_firs_brat.conll",
+      "size": 132278,
+      "gitBlobSha1": "32c6f194b10b698c298d6312515fb6bc178ff5b4",
+      "sha256": "deccd207d67e5bd1b0d353e12aee9ae8c7bf5037a24d56f24dc4df38d6599d9a"
+    },
+    {
+      "path": "coref/conll/36_the_war_of_the_worlds_brat.conll",
+      "size": 115826,
+      "gitBlobSha1": "cca55b312bc1b099ecdf998139967d4124016a7e",
+      "sha256": "def37bf8c79b9562baa1d751ec660ffd3d0a8aa727b4adde94e16df93cd0f786"
+    },
+    {
+      "path": "coref/conll/4051_lady_bridget_in_the_nevernever_land_a_story_of_australian_life_brat.conll",
+      "size": 209803,
+      "gitBlobSha1": "141e8c85edd7d5f965a335635cdb510307289ce0",
+      "sha256": "3f3c08b31ba6ac0659d8f9badfccf2d48de3b6b20e7a3170421e0d57c50ee80b"
+    },
+    {
+      "path": "coref/conll/41286_miss_marjoribanks_brat.conll",
+      "size": 154667,
+      "gitBlobSha1": "5cc5c50dc14dad593cc285a1aec77762f094bf44",
+      "sha256": "f3683632175b731774c6ae989081e2fdb67d760cb874de2d448ec1bbb600070f"
+    },
+    {
+      "path": "coref/conll/41_the_legend_of_sleepy_hollow_brat.conll",
+      "size": 137965,
+      "gitBlobSha1": "074cbeebb89eb0b2f441415292eef534d36c118b",
+      "sha256": "3c098d0a1fd682bfec4889f2b0ce4a3d35c9e9b179e91c5cdfb166c84e40cf8b"
+    },
+    {
+      "path": "coref/conll/4217_a_portrait_of_the_artist_as_a_young_man_brat.conll",
+      "size": 164552,
+      "gitBlobSha1": "470ba1fbc863ce798b4d2d115b1c96155f655cdf",
+      "sha256": "4820deb04462a63e224748dd08c7d610da7ca9e081a59d770cf76e6c1761eff8"
+    },
+    {
+      "path": "coref/conll/4276_north_and_south_brat.conll",
+      "size": 107098,
+      "gitBlobSha1": "a096514ca78226b3cf54dc73440bcbf24b610c5a",
+      "sha256": "fdf1c12999c1fbd9f6a84d4046e5f7fed2b952670abfbe936329846c8ea2a5eb"
+    },
+    {
+      "path": "coref/conll/4300_ulysses_brat.conll",
+      "size": 91372,
+      "gitBlobSha1": "10fec251d727049c1388b0e8848f86b6698bb283",
+      "sha256": "a1424a9e91fac463ebcf9919ab6d847233b3467d02753412c1ae50684d729277"
+    },
+    {
+      "path": "coref/conll/432_the_ambassadors_brat.conll",
+      "size": 119284,
+      "gitBlobSha1": "d14460c998910d4361068de3cb1448f4bc6cd2a0",
+      "sha256": "d739b037f00370d24c491b533f344e4938690b11bff3bab433da4686358493c6"
+    },
+    {
+      "path": "coref/conll/434_the_circular_staircase_brat.conll",
+      "size": 122208,
+      "gitBlobSha1": "7a29f7329cb69583f408364b94fb04c9a8234e6b",
+      "sha256": "98a4038c6eda7c5f31135cee3fe5caf4891aa5d51edd605ca4bbe05f4aa7c7e5"
+    },
+    {
+      "path": "coref/conll/44_the_song_of_the_lark_brat.conll",
+      "size": 114899,
+      "gitBlobSha1": "abd2208ee2d0597500a72938b3495ed3c0350596",
+      "sha256": "fbcb0f9d9856566cefebd46b6da5fc6630381239e11bff7ce1a56763d63828e4"
+    },
+    {
+      "path": "coref/conll/45_anne_of_green_gables_brat.conll",
+      "size": 112948,
+      "gitBlobSha1": "8fffcfe30e00163410c785cdd08d37de2e3fd653",
+      "sha256": "57cf09fbb06cc7c4e80fd711b004c64610d6764e0a35c23e1231cf85f077d4e7"
+    },
+    {
+      "path": "coref/conll/472_the_house_behind_the_cedars_brat.conll",
+      "size": 129904,
+      "gitBlobSha1": "de0ccafcf5a7f6cb4b22cc0e70df96dbfd21efeb",
+      "sha256": "68bcd782f4396f3d5ba057b56361ea7d0fff0bb5ca0d6419d4204d7eff6a68b6"
+    },
+    {
+      "path": "coref/conll/502_desert_gold_brat.conll",
+      "size": 98551,
+      "gitBlobSha1": "5d95b5872c730a13b33c4bb547b7aeebad36f924",
+      "sha256": "602a75d7d3d7e83519d75657e86695c506d232196e17009859437515b64b87b7"
+    },
+    {
+      "path": "coref/conll/514_little_women_brat.conll",
+      "size": 97939,
+      "gitBlobSha1": "6b05b4d94d55a4738f33f16270ddc61be94fbbd3",
+      "sha256": "4ed8f191fbd9c17c8321c014b818dc50d1494a8da240bf2b63acbe560bac2019"
+    },
+    {
+      "path": "coref/conll/521_the_life_and_adventures_of_robinson_crusoe_brat.conll",
+      "size": 181254,
+      "gitBlobSha1": "09a4a08d494cccb48dcb1803e840d1f6946f0998",
+      "sha256": "a5b50dba8af16825847144eda371c9c4f92699c6ca2f52f908ed9abc52586220"
+    },
+    {
+      "path": "coref/conll/5230_the_invisible_man_a_grotesque_romance_brat.conll",
+      "size": 150797,
+      "gitBlobSha1": "b321c2e78f291c44e3c01ef855ad7a7b2a006792",
+      "sha256": "981bd31e2b2133f6bc0886435f95f383b12b22aca5eba3e5c32ffb9fa9a783e6"
+    },
+    {
+      "path": "coref/conll/5348_ragged_dick_or_street_life_in_new_york_with_the_bootblacks_brat.conll",
+      "size": 200674,
+      "gitBlobSha1": "b8b299aa5f3f1a357fab690a2a95b5924bc4aa9d",
+      "sha256": "6222bd539eb61476e17d3c037c2793258ab4749664e9ccc10ff7240ae42b8c23"
+    },
+    {
+      "path": "coref/conll/541_the_age_of_innocence_brat.conll",
+      "size": 115936,
+      "gitBlobSha1": "3f8aaec71a467e15d28302c28d5d9bfbd9a3f9cb",
+      "sha256": "9de5ed9744b93495059c1c701eb0a9f4d48b083982d2e42a3ca49c74494a8a78"
+    },
+    {
+      "path": "coref/conll/543_main_street_brat.conll",
+      "size": 101663,
+      "gitBlobSha1": "26756126c76ac705ed70053b93292e2afd62b0b3",
+      "sha256": "a85a7597e502a9f9443a5da10f9c1b13cd61259419069670d1877d123367179f"
+    },
+    {
+      "path": "coref/conll/550_silas_marner_brat.conll",
+      "size": 101579,
+      "gitBlobSha1": "641713648e098f4166b923805996ae01efee9398",
+      "sha256": "a38da59490ef358a07e1f2aac51a7e5fe4d3a2b281baa1ad5c7f23ad4f4f9484"
+    },
+    {
+      "path": "coref/conll/599_vanity_fair_brat.conll",
+      "size": 99153,
+      "gitBlobSha1": "7f4044f8202447d793dc7bf029b5e588b2fff55b",
+      "sha256": "fbeae712599782a99e92abc94b260291b7dc7a48ed052728bceb9ef3abaeb412"
+    },
+    {
+      "path": "coref/conll/6053_evelina_or_the_history_of_a_young_ladys_entrance_into_the_world_brat.conll",
+      "size": 203351,
+      "gitBlobSha1": "184cd3910119567a00c5ab1b72b2d2248812c938",
+      "sha256": "1ca2bf7d44ed60d74a23f77c47523d88b459e113501c3504d5d2e93adcb360d4"
+    },
+    {
+      "path": "coref/conll/60_the_scarlet_pimpernel_brat.conll",
+      "size": 116646,
+      "gitBlobSha1": "e5e8a779c6e982de822849e92b9331ee12d5e883",
+      "sha256": "601b734a4824feb0f8f12f62eb85a16130949fbc7c98542f45b27b6e1bfe36e8"
+    },
+    {
+      "path": "coref/conll/62_a_princess_of_mars_brat.conll",
+      "size": 110080,
+      "gitBlobSha1": "f2890cc0cd115f56c96c203c6dfcc90acdaa6086",
+      "sha256": "1768e67f22864fa5e5a11a2c88f03029a9fb594cbe6b5c75f06f6f37ae62e5c0"
+    },
+    {
+      "path": "coref/conll/6593_history_of_tom_jones_a_foundling_brat.conll",
+      "size": 143183,
+      "gitBlobSha1": "e79d4d9286b663bca2e24dbcdea9324f55ff54dc",
+      "sha256": "dbb1d20d9946ae1046a21f3af07b13d27f08c8b07308380a176565d80d9d9498"
+    },
+    {
+      "path": "coref/conll/711_allan_quatermain_brat.conll",
+      "size": 105304,
+      "gitBlobSha1": "928d781c5b6208a77c3a9d5c40767f1f9dd76887",
+      "sha256": "b09b044183397f0b6352326a38286849fb3501880ef7572af9fcbc771c302034"
+    },
+    {
+      "path": "coref/conll/730_oliver_twist_brat.conll",
+      "size": 101550,
+      "gitBlobSha1": "01c029baafb67dc727bef0b13acbc11597133afa",
+      "sha256": "f81bf99f86a3354a62208ca01015816d28a87acc171332d50cbcf784304c364c"
+    },
+    {
+      "path": "coref/conll/73_the_red_badge_of_courage_an_episode_of_the_american_civil_war_brat.conll",
+      "size": 198175,
+      "gitBlobSha1": "196533be395bc34293e5d0c59e3c2e6715deb5af",
+      "sha256": "34c534553a5cbdb9bd389d3388952cb829a4f0a6659f9d3aa6d39d4210964d84"
+    },
+    {
+      "path": "coref/conll/74_the_adventures_of_tom_sawyer_brat.conll",
+      "size": 127219,
+      "gitBlobSha1": "fb0154c46f8c735ca8b0a988c3bd71fb01f5ae18",
+      "sha256": "5e7e619c2c121093b33abb05a8e170a548566966556f0d2f9c0c9d6bc683eb76"
+    },
+    {
+      "path": "coref/conll/766_david_copperfield_brat.conll",
+      "size": 109419,
+      "gitBlobSha1": "31c340c062526637aa7530b7fdd1edddf824f08f",
+      "sha256": "46be22b4e55acea640d667e8fc78144347064e3f0d01197307f612b27d0a1055"
+    },
+    {
+      "path": "coref/conll/768_wuthering_heights_brat.conll",
+      "size": 110441,
+      "gitBlobSha1": "1e85e6c7ac88debaf56268eb90522cc93559acbd",
+      "sha256": "a9eb0f6d287e3bba26f208d8cc237297a37806ff10203e22878b8d4b081ca012"
+    },
+    {
+      "path": "coref/conll/76_adventures_of_huckleberry_finn_brat.conll",
+      "size": 141180,
+      "gitBlobSha1": "fa688346952d20248a9eb620dd71ff75b781fa16",
+      "sha256": "b8f9a888314dabc40df463ba384e4fae06a750b1e50500f0a82ff0b2be0fc1e7"
+    },
+    {
+      "path": "coref/conll/77_the_house_of_the_seven_gables_brat.conll",
+      "size": 140469,
+      "gitBlobSha1": "f4f379b5d4eac905770b01240590bc69d761af06",
+      "sha256": "74af63564e6e0a57b1e172e61e71b4d62bc9f0566d31bf7aec6e29a419ff7331"
+    },
+    {
+      "path": "coref/conll/78_tarzan_of_the_apes_brat.conll",
+      "size": 110917,
+      "gitBlobSha1": "09ce898c1d7ae4869b0b63ef3346520ace5e05b1",
+      "sha256": "c205041bd280d93e770b10c50e01086498186f68d325012c560f1488337c10f6"
+    },
+    {
+      "path": "coref/conll/805_this_side_of_paradise_brat.conll",
+      "size": 117022,
+      "gitBlobSha1": "6f14f8249e096bf4326bfab19efacd625ca66cb7",
+      "sha256": "dd50aaa08f8353d1aadc0d3b566b3799749ab5bfcf87d786975c42f41ebf999e"
+    },
+    {
+      "path": "coref/conll/829_gullivers_travels_into_several_remote_nations_of_the_world_brat.conll",
+      "size": 325383,
+      "gitBlobSha1": "6668f30042f2cf260ed83edd0062d106e4fd1a29",
+      "sha256": "886295009fb83ba0bb0de8d65e4af50f53eb9e28432b88b8a847191d5dc0b62c"
+    },
+    {
+      "path": "coref/conll/84_frankenstein_or_the_modern_prometheus_brat.conll",
+      "size": 175360,
+      "gitBlobSha1": "adc1affefe07b671afaedd7f9e4976a75ae81c5e",
+      "sha256": "47e63625d1a677ae048d1ebcc5180d13b475aae7aaea8d7f9c299fd449e5ca63"
+    },
+    {
+      "path": "coref/conll/876_life_in_the_ironmills_or_the_korl_woman_brat.conll",
+      "size": 164377,
+      "gitBlobSha1": "74818316a8993dd03ae6c0328b0f3626fe63d084",
+      "sha256": "e297ed6e9896e3ac05da246f1e700a585f22a4a17705d28c957f3954b072e7e9"
+    },
+    {
+      "path": "coref/conll/8867_the_magnificent_ambersons_brat.conll",
+      "size": 136255,
+      "gitBlobSha1": "ce5b00955abc0bb8d526d9dbb73d0ae796ca0e3c",
+      "sha256": "c8fd63628fde8613cdbfd5ee8d67e2e3812b6be899549174b7d5d7e8ee316cfd"
+    },
+    {
+      "path": "coref/conll/932_the_fall_of_the_house_of_usher_brat.conll",
+      "size": 146462,
+      "gitBlobSha1": "3388fbe3aa3a242fb9ce05335291f6873c0eca51",
+      "sha256": "989d28cf6ad6e432e0f86d6faecf8898d357265b0455685a175603d4aca176e8"
+    },
+    {
+      "path": "coref/conll/940_the_last_of_the_mohicans_a_narrative_of_1757_brat.conll",
+      "size": 184514,
+      "gitBlobSha1": "6d708174bd430d2469370d212cb14a1d338f7425",
+      "sha256": "d27427f9f6e8d2989a1eca75ac8ff1e27592915de7d395580a829e0ca05d34fc"
+    },
+    {
+      "path": "coref/conll/95_the_prisoner_of_zenda_brat.conll",
+      "size": 131748,
+      "gitBlobSha1": "79c54a44a9e58dc6af02b759e47ee986754e9641",
+      "sha256": "442caaa90f911d8ae17870407507d13c86b9cc73afe927e33291c5f81e56d710"
+    },
+    {
+      "path": "coref/conll/969_the_tenant_of_wildfell_hall_brat.conll",
+      "size": 131264,
+      "gitBlobSha1": "1393eaf334a73fe94fb9fe5dd6a4d11df2bddcf4",
+      "sha256": "bf1a1c08a1b6257c0aa720961a8c41aa61b19d27674377f8be140cd1279f8163"
+    },
+    {
+      "path": "coref/conll/974_the_secret_agent_a_simple_tale_brat.conll",
+      "size": 169213,
+      "gitBlobSha1": "38b5cd11f87e511b4435db01956b3cbba8e434c1",
+      "sha256": "ef8f014b48125a46dc173a057caac589f8a8eb3ee15e97af0c07c6d09d9b4add"
+    },
+    {
+      "path": "coref/conll/9830_the_beautiful_and_damned_brat.conll",
+      "size": 130041,
+      "gitBlobSha1": "566ac2c1b6d1f092b4ef82bb1869936fdd040874",
+      "sha256": "5c70c7a9af1bcd5e519eb687f195f336f8b1dc1b97bcda318265a4254c0d27db"
+    }
+  ],
+  "works": [
+    {
+      "id": "514",
+      "year": 1868,
+      "author": "Alcott, Louisa May",
+      "title": "Little Women"
+    },
+    {
+      "id": "18581",
+      "year": 1904,
+      "author": "Alger, Horatio, Jr.",
+      "title": "Adrift in New York: Tom and Florence Braving the World"
+    },
+    {
+      "id": "5348",
+      "year": 1868,
+      "author": "Alger, Horatio, Jr.",
+      "title": "Ragged Dick, Or, Street Life in New York with the Boot-Blacks"
+    },
+    {
+      "id": "158",
+      "year": 1815,
+      "author": "Austen, Jane",
+      "title": "Emma"
+    },
+    {
+      "id": "105",
+      "year": 1818,
+      "author": "Austen, Jane",
+      "title": "Persuasion"
+    },
+    {
+      "id": "1342",
+      "year": 1813,
+      "author": "Austen, Jane",
+      "title": "Pride and Prejudice"
+    },
+    {
+      "id": "1206",
+      "year": 1914,
+      "author": "Bower, B. M.",
+      "title": "The Flying U Ranch"
+    },
+    {
+      "id": "969",
+      "year": 1848,
+      "author": "Brontë, Anne",
+      "title": "The Tenant of Wildfell Hall"
+    },
+    {
+      "id": "1260",
+      "year": 1847,
+      "author": "Brontë, Charlotte",
+      "title": "Jane Eyre: An Autobiography"
+    },
+    {
+      "id": "768",
+      "year": 1847,
+      "author": "Brontë, Emily",
+      "title": "Wuthering Heights"
+    },
+    {
+      "id": "2095",
+      "year": 1853,
+      "author": "Brown, William Wells",
+      "title": "Clotelle: A Tale of the Southern States"
+    },
+    {
+      "id": "113",
+      "year": 1911,
+      "author": "Burnett, Frances Hodgson",
+      "title": "The Secret Garden"
+    },
+    {
+      "id": "6053",
+      "year": 1778,
+      "author": "Burney, Fanny",
+      "title": "Evelina, Or, the History of a Young Lady's Entrance into the World"
+    },
+    {
+      "id": "62",
+      "year": 1912,
+      "author": "Burroughs, Edgar Rice",
+      "title": "A Princess of Mars"
+    },
+    {
+      "id": "78",
+      "year": 1912,
+      "author": "Burroughs, Edgar Rice",
+      "title": "Tarzan of the Apes"
+    },
+    {
+      "id": "2084",
+      "year": 1903,
+      "author": "Butler, Samuel",
+      "title": "The Way of All Flesh"
+    },
+    {
+      "id": "11",
+      "year": 1865,
+      "author": "Carroll, Lewis",
+      "title": "Alice's Adventures in Wonderland"
+    },
+    {
+      "id": "24",
+      "year": 1913,
+      "author": "Cather, Willa",
+      "title": "O Pioneers!"
+    },
+    {
+      "id": "44",
+      "year": 1915,
+      "author": "Cather, Willa",
+      "title": "The Song of the Lark"
+    },
+    {
+      "id": "472",
+      "year": 1900,
+      "author": "Chesnutt, Charles W. (Charles Waddell)",
+      "title": "The House Behind the Cedars"
+    },
+    {
+      "id": "1695",
+      "year": 1908,
+      "author": "Chesterton, G. K. (Gilbert Keith)",
+      "title": "The Man Who Was Thursday: A Nightmare"
+    },
+    {
+      "id": "160",
+      "year": 1899,
+      "author": "Chopin, Kate",
+      "title": "The Awakening, and Selected Short Stories"
+    },
+    {
+      "id": "1155",
+      "year": 1922,
+      "author": "Christie, Agatha",
+      "title": "The Secret Adversary"
+    },
+    {
+      "id": "155",
+      "year": 1868,
+      "author": "Collins, Wilkie",
+      "title": "The Moonstone"
+    },
+    {
+      "id": "219",
+      "year": 1899,
+      "author": "Conrad, Joseph",
+      "title": "Heart of Darkness"
+    },
+    {
+      "id": "974",
+      "year": 1907,
+      "author": "Conrad, Joseph",
+      "title": "The Secret Agent: A Simple Tale"
+    },
+    {
+      "id": "940",
+      "year": 1826,
+      "author": "Cooper, James Fenimore",
+      "title": "The Last of the Mohicans; A narrative of 1757"
+    },
+    {
+      "id": "73",
+      "year": 1895,
+      "author": "Crane, Stephen",
+      "title": "The Red Badge of Courage: An Episode of the American Civil War"
+    },
+    {
+      "id": "876",
+      "year": 1861,
+      "author": "Davis, Rebecca Harding",
+      "title": "Life in the Iron-Mills; Or, The Korl Woman"
+    },
+    {
+      "id": "521",
+      "year": 1719,
+      "author": "Defoe, Daniel",
+      "title": "The Life and Adventures of Robinson Crusoe"
+    },
+    {
+      "id": "1023",
+      "year": 1852,
+      "author": "Dickens, Charles",
+      "title": "Bleak House"
+    },
+    {
+      "id": "766",
+      "year": 1849,
+      "author": "Dickens, Charles",
+      "title": "David Copperfield"
+    },
+    {
+      "id": "1400",
+      "year": 1861,
+      "author": "Dickens, Charles",
+      "title": "Great Expectations"
+    },
+    {
+      "id": "730",
+      "year": 1838,
+      "author": "Dickens, Charles",
+      "title": "Oliver Twist"
+    },
+    {
+      "id": "1661",
+      "year": 1892,
+      "author": "Doyle, Arthur Conan",
+      "title": "The Adventures of Sherlock Holmes"
+    },
+    {
+      "id": "2852",
+      "year": 1902,
+      "author": "Doyle, Arthur Conan",
+      "title": "The Hound of the Baskervilles"
+    },
+    {
+      "id": "233",
+      "year": 1900,
+      "author": "Dreiser, Theodore",
+      "title": "Sister Carrie: A Novel"
+    },
+    {
+      "id": "15265",
+      "year": 1911,
+      "author": "Du Bois, W. E. B. (William Edward Burghardt)",
+      "title": "The Quest of the Silver Fleece: A Novel"
+    },
+    {
+      "id": "145",
+      "year": 1871,
+      "author": "Eliot, George",
+      "title": "Middlemarch"
+    },
+    {
+      "id": "550",
+      "year": 1861,
+      "author": "Eliot, George",
+      "title": "Silas Marner"
+    },
+    {
+      "id": "12677",
+      "year": 1914,
+      "author": "Ferber, Edna",
+      "title": "Personality Plus: Some Experiences of Emma McChesney and Her Son, Jock"
+    },
+    {
+      "id": "6593",
+      "year": 1749,
+      "author": "Fielding, Henry",
+      "title": "History of Tom Jones, a Foundling"
+    },
+    {
+      "id": "9830",
+      "year": 1922,
+      "author": "Fitzgerald, F. Scott (Francis Scott)",
+      "title": "The Beautiful and Damned"
+    },
+    {
+      "id": "805",
+      "year": 1920,
+      "author": "Fitzgerald, F. Scott (Francis Scott)",
+      "title": "This Side of Paradise"
+    },
+    {
+      "id": "2775",
+      "year": 1915,
+      "author": "Ford, Ford Madox",
+      "title": "The Good Soldier"
+    },
+    {
+      "id": "2641",
+      "year": 1908,
+      "author": "Forster, E. M. (Edward Morgan)",
+      "title": "A Room with a View"
+    },
+    {
+      "id": "2891",
+      "year": 1910,
+      "author": "Forster, E. M. (Edward Morgan)",
+      "title": "Howards End"
+    },
+    {
+      "id": "4276",
+      "year": 1855,
+      "author": "Gaskell, Elizabeth Cleghorn",
+      "title": "North and South"
+    },
+    {
+      "id": "32",
+      "year": 1915,
+      "author": "Gilman, Charlotte Perkins",
+      "title": "Herland"
+    },
+    {
+      "id": "502",
+      "year": 1913,
+      "author": "Grey, Zane",
+      "title": "Desert Gold"
+    },
+    {
+      "id": "3457",
+      "year": 1919,
+      "author": "Grey, Zane",
+      "title": "The Man of the Forest"
+    },
+    {
+      "id": "711",
+      "year": 1887,
+      "author": "Haggard, H. Rider (Henry Rider)",
+      "title": "Allan Quatermain"
+    },
+    {
+      "id": "2166",
+      "year": 1885,
+      "author": "Haggard, H. Rider (Henry Rider)",
+      "title": "King Solomon's Mines"
+    },
+    {
+      "id": "27",
+      "year": 1874,
+      "author": "Hardy, Thomas",
+      "title": "Far from the Madding Crowd"
+    },
+    {
+      "id": "110",
+      "year": 1891,
+      "author": "Hardy, Thomas",
+      "title": "Tess of the d'Urbervilles: A Pure Woman"
+    },
+    {
+      "id": "77",
+      "year": 1851,
+      "author": "Hawthorne, Nathaniel",
+      "title": "The House of the Seven Gables"
+    },
+    {
+      "id": "33",
+      "year": 1850,
+      "author": "Hawthorne, Nathaniel",
+      "title": "The Scarlet Letter"
+    },
+    {
+      "id": "95",
+      "year": 1894,
+      "author": "Hope, Anthony",
+      "title": "The Prisoner of Zenda"
+    },
+    {
+      "id": "41",
+      "year": 1820,
+      "author": "Irving, Washington",
+      "title": "The Legend of Sleepy Hollow"
+    },
+    {
+      "id": "208",
+      "year": 1879,
+      "author": "James, Henry",
+      "title": "Daisy Miller: A Study"
+    },
+    {
+      "id": "432",
+      "year": 1903,
+      "author": "James, Henry",
+      "title": "The Ambassadors"
+    },
+    {
+      "id": "209",
+      "year": 1898,
+      "author": "James, Henry",
+      "title": "The Turn of the Screw"
+    },
+    {
+      "id": "367",
+      "year": 1896,
+      "author": "Jewett, Sarah Orne",
+      "title": "The Country of the Pointed Firs"
+    },
+    {
+      "id": "2807",
+      "year": 1899,
+      "author": "Johnston, Mary",
+      "title": "To Have and to Hold"
+    },
+    {
+      "id": "4217",
+      "year": 1916,
+      "author": "Joyce, James",
+      "title": "A Portrait of the Artist as a Young Man"
+    },
+    {
+      "id": "2814",
+      "year": 1914,
+      "author": "Joyce, James",
+      "title": "Dubliners"
+    },
+    {
+      "id": "4300",
+      "year": 1922,
+      "author": "Joyce, James",
+      "title": "Ulysses"
+    },
+    {
+      "id": "217",
+      "year": 1913,
+      "author": "Lawrence, D. H. (David Herbert)",
+      "title": "Sons and Lovers"
+    },
+    {
+      "id": "543",
+      "year": 1920,
+      "author": "Lewis, Sinclair",
+      "title": "Main Street"
+    },
+    {
+      "id": "215",
+      "year": 1903,
+      "author": "London, Jack",
+      "title": "The Call of the Wild"
+    },
+    {
+      "id": "351",
+      "year": 1915,
+      "author": "Maugham, W. Somerset (William Somerset)",
+      "title": "Of Human Bondage"
+    },
+    {
+      "id": "11231",
+      "year": 1853,
+      "author": "Melville, Herman",
+      "title": "Bartleby, the Scrivener: A Story of Wall-Street"
+    },
+    {
+      "id": "2489",
+      "year": 1851,
+      "author": "Melville, Herman",
+      "title": "Moby Dick; Or, The Whale"
+    },
+    {
+      "id": "45",
+      "year": 1908,
+      "author": "Montgomery, L. M. (Lucy Maud)",
+      "title": "Anne of Green Gables"
+    },
+    {
+      "id": "41286",
+      "year": 1866,
+      "author": "Oliphant, Mrs. (Margaret)",
+      "title": "Miss Marjoribanks"
+    },
+    {
+      "id": "60",
+      "year": 1905,
+      "author": "Orczy, Emmuska Orczy, Baroness",
+      "title": "The Scarlet Pimpernel"
+    },
+    {
+      "id": "932",
+      "year": 1839,
+      "author": "Poe, Edgar Allan",
+      "title": "The Fall of the House of Usher"
+    },
+    {
+      "id": "1064",
+      "year": 1842,
+      "author": "Poe, Edgar Allan",
+      "title": "The Masque of the Red Death"
+    },
+    {
+      "id": "4051",
+      "year": 1915,
+      "author": "Praed, Campbell, Mrs.",
+      "title": "Lady Bridget in the Never-Never Land: a story of Australian life"
+    },
+    {
+      "id": "3268",
+      "year": 1794,
+      "author": "Radcliffe, Ann Ward",
+      "title": "The Mysteries of Udolpho"
+    },
+    {
+      "id": "434",
+      "year": 1908,
+      "author": "Rinehart, Mary Roberts",
+      "title": "The Circular Staircase"
+    },
+    {
+      "id": "171",
+      "year": 1791,
+      "author": "Rowson, Mrs.",
+      "title": "Charlotte Temple"
+    },
+    {
+      "id": "271",
+      "year": 1877,
+      "author": "Sewell, Anna",
+      "title": "Black Beauty"
+    },
+    {
+      "id": "84",
+      "year": 1823,
+      "author": "Shelley, Mary Wollstonecraft",
+      "title": "Frankenstein; Or, The Modern Prometheus"
+    },
+    {
+      "id": "120",
+      "year": 1883,
+      "author": "Stevenson, Robert Louis",
+      "title": "Treasure Island"
+    },
+    {
+      "id": "345",
+      "year": 1897,
+      "author": "Stoker, Bram",
+      "title": "Dracula"
+    },
+    {
+      "id": "829",
+      "year": 1726,
+      "author": "Swift, Jonathan",
+      "title": "Gulliver's Travels into Several Remote Nations of the World"
+    },
+    {
+      "id": "8867",
+      "year": 1918,
+      "author": "Tarkington, Booth",
+      "title": "The Magnificent Ambersons"
+    },
+    {
+      "id": "599",
+      "year": 1848,
+      "author": "Thackeray, William Makepeace",
+      "title": "Vanity Fair"
+    },
+    {
+      "id": "76",
+      "year": 1884,
+      "author": "Twain, Mark",
+      "title": "Adventures of Huckleberry Finn"
+    },
+    {
+      "id": "74",
+      "year": 1876,
+      "author": "Twain, Mark",
+      "title": "The Adventures of Tom Sawyer"
+    },
+    {
+      "id": "1327",
+      "year": 1898,
+      "author": "Von Arnim, Elizabeth",
+      "title": "Elizabeth and Her German Garden"
+    },
+    {
+      "id": "238",
+      "year": 1915,
+      "author": "Webster, Jean",
+      "title": "Dear Enemy"
+    },
+    {
+      "id": "5230",
+      "year": 1897,
+      "author": "Wells, H. G. (Herbert George)",
+      "title": "The Invisible Man: A Grotesque Romance"
+    },
+    {
+      "id": "36",
+      "year": 1897,
+      "author": "Wells, H. G. (Herbert George)",
+      "title": "The War of the Worlds"
+    },
+    {
+      "id": "541",
+      "year": 1920,
+      "author": "Wharton, Edith",
+      "title": "The Age of Innocence"
+    },
+    {
+      "id": "174",
+      "year": 1890,
+      "author": "Wilde, Oscar",
+      "title": "The Picture of Dorian Gray"
+    },
+    {
+      "id": "2005",
+      "year": 1919,
+      "author": "Wodehouse, P. G. (Pelham Grenville)",
+      "title": "Piccadilly Jim"
+    },
+    {
+      "id": "16357",
+      "year": 1788,
+      "author": "Wollstonecraft, Mary",
+      "title": "Mary: A Fiction"
+    },
+    {
+      "id": "1245",
+      "year": 1919,
+      "author": "Woolf, Virginia",
+      "title": "Night and Day"
+    }
+  ],
+  "limits": {
+    "archiveBytes": 67108864,
+    "selectedBytes": 25165824,
+    "memberBytes": 524288
+  },
+  "archiveSha256": "1dc94ccf0ee6bcfb949f879d5786d15547b6295b9b3cd2ac727369cf771f3d20",
+  "preparationNote": "CoNLL identity clusters added before baseline prediction freeze; BRAT supplies mention typing/spans but not identity clusters. Existing source pins preserved."
+}

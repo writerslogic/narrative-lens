@@ -1,0 +1,76 @@
+{
+  "batch": "checked narrative-template fit and literal purpose units",
+  "files": [
+    {
+      "path": "src/structure/structure.rs",
+      "base_sha256": "d388dfd4b17d8932dfd80604b778990c454e07928194d2019e75b560c639e17d",
+      "sha256": "dc0e3857b9f5f78359faa3b289959ee95ee69ae2b9d2560084e5a6f93f9bc9ff"
+    },
+    {
+      "path": "tests/component_templates.rs",
+      "base_sha256": null,
+      "sha256": "c8096e157c5ae3c9b241b85c76e1f7f98a2ee6415c04997c632d0165885fb725"
+    }
+  ],
+  "api": "suggest_best_template_checked(Vec<f64>,Vec<String>)->Result<Option<String>>;existing validate_structure Result adds safeguards",
+  "result_fields": [
+    "availability",
+    "diagnostics",
+    "quality_assessed:false",
+    "scene_count"
+  ],
+  "fixes": [
+    "Finite unit tensions0..1;<=10000 scenes;zero orN purpose labels;4096-byte per-label4MiB aggregate budgets",
+    "Empty data has Unavailable fit and no best-template suggestion",
+    "Static unknown-template error context never echoes arbitrary supplied payloads",
+    "Normalized whole-word significant-purpose cues replace substring/generic-stopword collisions",
+    "Purpose normalization computed once per validation/selection instead of per beat/scenario",
+    "Existing D6 nonlinear percentage correction preserved;all fit results0..100,positions/confidence0..1"
+  ],
+  "defined_algorithm": "Fit uses0.5 positional +0.3 supplied significant-label cue +0.2 normalized tension;required beat weight2 vs optional1;lexical signals/thresholds uncalibrated;not verified dramatic identity or editorial quality",
+  "checks": {
+    "red": {
+      "failed": 5,
+      "log": "component-templates-red.log"
+    },
+    "focused": {
+      "passed": 8,
+      "log": "component-templates-tests.log"
+    },
+    "existing": {
+      "passed": 10,
+      "log": "component-templates-existing.log"
+    },
+    "integration": {
+      "passed_counts": [
+        "8",
+        "5"
+      ],
+      "log": "component-templates-integration.log"
+    },
+    "bindings_clippy": {
+      "passed": true,
+      "log": "component-templates-clippy.log"
+    }
+  },
+  "commands": [
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --test component_templates",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --lib structure::structure",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --test cross_cutting --test structure",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo clippy --locked --features bindings --lib --test component_templates -- -D warnings"
+  ],
+  "limits": [
+    "Classical template positions are configured references,not mandatory story requirements",
+    "Purpose cues are literal normalized labels,not negation-aware semantic beat inference",
+    "Legacy health_pct retains its name but measures defined fit;quality_assessed=false",
+    "Legacy best-template string empty on unavailable/invalid inputs;checked API distinguishes errors andNone"
+  ],
+  "readiness": {
+    "defined_fit_units_and_contract": "boundary/regression verified,confidence4",
+    "editorial_template_appropriateness": "U;not claimed"
+  },
+  "payload": {
+    "path": "component-templates-payload.tar.gz",
+    "sha256": "728336a656280500573ab587f1b04a54b7c9ffea4497cd0e3603ea897a9cbf20"
+  }
+}

@@ -1,0 +1,533 @@
+{
+  "date": "2026-10-28",
+  "authorization": "Close release blockers; one correctness/integrity agent and one cross-cutting engineering agent. No commit, push or publication.",
+  "baseline": "assessment.json (frozen pre-remediation audit; quality score not reassessed)",
+  "status": "local_release_gates_passed",
+  "agents": {
+    "critical": "release_critical",
+    "crosscutting": "release_crosscutting"
+  },
+  "findings": [
+    {
+      "id": "D1",
+      "status": "fixed",
+      "change": "UTF-8-aware NER split advancement; defined foreshadow count mismatch behavior; widened year arithmetic.",
+      "evidence": [
+        "tests/release_integrity.rs:public_text_analysis_handles_unicode_and_extreme_counts",
+        "remediation-fuzz.log"
+      ]
+    },
+    {
+      "id": "D2",
+      "status": "fixed",
+      "change": "Comparison completeness validates schema/configuration, omissions, candidate limits, unique selected coverage and assessed populations; selected unavailable/failed work cannot pass with empty deltas. Missing coverage yields unassessed findings. CLI strict coverage uses exact intentional-disable reasons, rejecting onnx_feature_disabled while preserving legitimate empty work and assessed deterministic fallback.",
+      "evidence": [
+        "tests/release_integrity.rs",
+        "tests/cli.rs",
+        "src/manuscript/comparison.rs",
+        "critical-coverage-followup.json",
+        "tests/node/manuscript.test.cjs"
+      ]
+    },
+    {
+      "id": "D3",
+      "status": "fixed",
+      "change": "One last-wins correction map, original surface counts, deterministic resolution and cluster-level full-name exclusions; NER and NLP share counted resolver.",
+      "evidence": [
+        "tests/release_integrity.rs"
+      ]
+    },
+    {
+      "id": "D4",
+      "status": "fixed_for_supported_patterns",
+      "change": "Source-ordered role-bearing events and one live-state reducer enforce current location, ownership, co-location and scoped constraints; explicit learning is not impossible knowledge. Unsupported proof modes abstain.",
+      "evidence": [
+        "src/continuity/world_state.rs",
+        "tests/release_integrity.rs",
+        "tests/manuscript_quality.rs"
+      ]
+    },
+    {
+      "id": "D5",
+      "status": "reproduced_defects_fixed",
+      "change": "Shared sentence/paragraph spans, Unicode source-coordinate matching, single silent-e correction, BOM-aware SARIF and baseline BOM metadata.",
+      "evidence": [
+        "tests/cross_cutting.rs",
+        "tests/cli.rs"
+      ],
+      "remaining": "Dale-Chall reduced resource and classic whole-passage SMOG remain documented approximations; general reference conformance unverified."
+    },
+    {
+      "id": "D6",
+      "status": "fixed",
+      "change": "Total ordering before truncation; coherent normalized causal scores, nonlinear percent health and pacing direction.",
+      "evidence": [
+        "tests/cross_cutting.rs",
+        "remediation-process-determinism.log"
+      ]
+    },
+    {
+      "id": "D7",
+      "status": "misleading_success_removed",
+      "change": "Reserved analyzers report unavailable; partial analyzers expose availability/diagnostics and unknown conventions; duplicate epistemic propositions no longer create artificial revelations.",
+      "evidence": [
+        "tests/cross_cutting.rs",
+        "README.md",
+        "docs/ARCHITECTURE.md"
+      ]
+    },
+    {
+      "id": "D8",
+      "status": "fabricated_verdicts_removed",
+      "change": "Unsupported inferred fulfillment remains unknown; caller boolean confirmation yields confirmedFulfilled without invented payoff scene or quality.",
+      "evidence": [
+        "tests/cross_cutting.rs:promise_ledger_preserves_unknown_resolution_and_location",
+        "tests/node/api.test.cjs"
+      ],
+      "remaining": "General fulfillment inference and author-confirmed payoff events with exact evidence remain strategic work."
+    },
+    {
+      "id": "D9",
+      "status": "fixed",
+      "change": "No process-global NER text memo; optional caller-owned bounded/clearable NerCache invalidates revisions and rejects mixed-generation batches.",
+      "evidence": [
+        "src/onnx/mod.rs",
+        "crosscutting-generation-followup.json"
+      ]
+    },
+    {
+      "id": "D10",
+      "status": "lifecycle_and_discovery_fixed",
+      "change": "Explicit roots, replaceable/retryable sessions, bounded files/bytes, shared telemetry-disabled ort environment, loading/disposal outside configuration locks.",
+      "evidence": [
+        "src/onnx/ort_backend.rs",
+        "src/onnx/tract_backend.rs",
+        "tests/onnx_runtime.rs"
+      ],
+      "remaining": "Model label semantics and manifests/digests are caller responsibilities under the documented fixed-label export contract. Real trained-model accuracy/native-WASM numerical parity remain unverified."
+    },
+    {
+      "id": "D11",
+      "status": "fixed_with_specific_maintenance_exception",
+      "change": "Locked ort/ort-sys rc15, webpki-root-certs1.0.10 and tokio1.53.3; Cargo.lock retained; cargo-deny is a CI/release prerequisite and unsound advisories denied.",
+      "evidence": [
+        "remediation-advisories.json",
+        "remediation-dependency-policy.log",
+        "remediation-policy-rejection.log",
+        "deny.toml"
+      ],
+      "exception": "Only RUSTSEC-2024-0436 (archived paste proc macro required by both tokenizer versions); informational, no patched release; unused exception denied. No vulnerability or unsoundness exception."
+    },
+    {
+      "id": "D12",
+      "status": "release_gates_implemented_local_package_verified",
+      "change": "Fresh root+platform tar installs without local binary fallback; CJS/ESM/typed consumer/manuscript smoke; four native target hosts and Node18/20/22/24/26 gate publication; binary and normalized text-payload hashes bind tested code to publishing.",
+      "evidence": [
+        "scripts/test_package.mjs",
+        "scripts/verify_tested_artifacts.mjs",
+        "tests/node/release.test.cjs",
+        ".github/workflows/release.yml",
+        "remediation-package.log"
+      ],
+      "remaining": "Only macOS arm64/Node26 executed locally; remote platform/Node matrix must pass before publication."
+    },
+    {
+      "id": "D13",
+      "status": "research_limit_retained",
+      "change": "Preserved frozen corpus/baselines, reran held-out regression and controls ablation; no editorial-accuracy claims.",
+      "evidence": [
+        "remediation-evaluation.json",
+        "docs/EVALUATION.md"
+      ],
+      "remaining": "Independent editorial annotation and trained-model semantic evaluation require external evidence."
+    },
+    {
+      "id": "D14",
+      "status": "integrity_fixed_optimization_deferred",
+      "change": "BM25 upserts remove stale postings and refresh document lengths/IDF with dense/scenes; zero query abstains; explicit corpus embedding limits and checked API.",
+      "evidence": [
+        "tests/cross_cutting.rs:edited_rare_terms_update_lexical_retrieval_with_dense_scenes",
+        "src/substrate/embedding.rs",
+        "remediation-performance-rust.json",
+        "remediation-performance-node.json"
+      ],
+      "remaining": "Dense cooccurrence allocation, full spelling scans and cumulative snapshot scaling remain unmeasured hotspots; no unsupported speedup claim."
+    },
+    {
+      "id": "D15",
+      "status": "fixed",
+      "change": "49 Node JSON outputs reference Rust-derived standalone declarations/schemas; recursive generic dependencies included; actual populated outputs validated; enum wire variants and old-tag rejection tested in strict TypeScript.",
+      "evidence": [
+        "examples/export_standalone_contracts.rs",
+        "standalone.generated.d.ts",
+        "docs/standalone.schema.json",
+        "scripts/verify_standalone_contracts.mjs",
+        "tests/node/types.test.mts"
+      ]
+    }
+  ],
+  "verification": {
+    "rust_default": {
+      "command": "cargo test --locked",
+      "passed": 653,
+      "failed": 0,
+      "log": "remediation-default-tests.log",
+      "suite_counts": [
+        574,
+        0,
+        6,
+        6,
+        8,
+        1,
+        1,
+        14,
+        19,
+        0,
+        1,
+        0,
+        17,
+        5,
+        1
+      ]
+    },
+    "rust_all-features": {
+      "command": "cargo test --locked --all-features",
+      "passed": 678,
+      "failed": 0,
+      "log": "remediation-all-features-tests.log",
+      "suite_counts": [
+        587,
+        2,
+        8,
+        6,
+        6,
+        8,
+        1,
+        1,
+        14,
+        19,
+        1,
+        1,
+        1,
+        17,
+        5,
+        1
+      ]
+    },
+    "core-msrv": {
+      "command": "cargo +1.89.0 check --locked --all-targets --features cli,node-api,bindings",
+      "result": "pass",
+      "log": "remediation-core-msrv.log"
+    },
+    "native-msrv": {
+      "command": "cargo +1.92.0 check --locked --all-targets --all-features",
+      "result": "pass",
+      "log": "remediation-native-msrv.log"
+    },
+    "wasm-msrv": {
+      "command": "cargo +1.91.0 check --locked --target wasm32-unknown-unknown --features onnx",
+      "result": "pass",
+      "log": "remediation-wasm-msrv.log"
+    },
+    "default-clippy": {
+      "command": "cargo clippy --locked --all-targets -- -D warnings",
+      "result": "pass",
+      "log": "remediation-default-clippy.log"
+    },
+    "all-features-clippy": {
+      "command": "cargo clippy --locked --all-targets --all-features -- -D warnings",
+      "result": "pass",
+      "log": "remediation-all-features-clippy.log"
+    },
+    "types": {
+      "command": "npm run test:types",
+      "result": "pass",
+      "log": "remediation-types.log"
+    },
+    "wire-contracts": {
+      "command": "npm run test:contracts",
+      "result": "pass",
+      "log": "remediation-wire-contracts.log"
+    },
+    "package": {
+      "command": "npm run test:package",
+      "result": "pass",
+      "log": "remediation-package.log",
+      "testedManifest": {
+        "target": "aarch64-apple-darwin",
+        "version": "0.1.0",
+        "nativeSha256": "cd56edf1439b2d360f5ca34007b60406576de3bc1d7bc2fd852ffc4d7ea21b58",
+        "payload": {
+          "index.js": "db47a0d465d4455a2a5816475cecf1478ae34a5ed95c2ad1a8b7c99411bf84e9",
+          "index.mjs": "1863773d203b4207d48e0d0695f24a3a6d61fe6a8b0d0d5e8e226bfda1e632ec",
+          "index.d.ts": "0f569b4185e108744c60570acb87b55d38ea220356792b1291b1e70b18fbf4c3",
+          "manuscript.d.ts": "f9f5623b3d677dd4b51c9af0d526b6187e4ff34dee6467fe233e976ec6dbfb42",
+          "manuscript.generated.d.ts": "dbb8dcef722caa982a68ed85863e61d870d16af895ff9e70e22dd106314d402e",
+          "standalone.generated.d.ts": "fcc06f76c9c0395af1752c1cd2ba97388aec0d86c83c51f15ad8475ccae0d038",
+          "README.md": "232819d1de673f0ab22356cd78697b7ab537425491bac0db887640498f2293d2",
+          "LICENSE": "a425e18c1281d472fac31bb45c20c9731a889b3ae82c82b7770fa7254db27838"
+        },
+        "archives": [
+          {
+            "filename": "narrative-lens-0.1.0.tgz",
+            "sha256": "8b838c954995fc5b74474d0982ff650935d732041efb9b7f2d20edf950cd47bb"
+          },
+          {
+            "filename": "narrative-lens-darwin-arm64-0.1.0.tgz",
+            "sha256": "0d4743a95c8930c6178e544f080c495bf8b88672de27911b2795b6d24ed7c885"
+          }
+        ]
+      }
+    },
+    "package-reuse": {
+      "command": "npm run test:package -- --archives target/package-smoke/aarch64-apple-darwin",
+      "result": "pass",
+      "log": "remediation-package-reuse.log"
+    },
+    "workflows": {
+      "command": "actionlint .github/workflows/ci.yml .github/workflows/release.yml .github/workflows/publish-crate.yml",
+      "result": "pass",
+      "log": "remediation-workflows.log"
+    },
+    "fixtures": {
+      "command": "uv run --no-project scripts/verify_fixtures.py",
+      "result": "pass",
+      "log": "remediation-fixtures.log"
+    },
+    "node-examples": {
+      "command": "npm run test:examples",
+      "result": "pass",
+      "log": "remediation-node-examples.log"
+    },
+    "rust-examples": {
+      "command": "cargo run --locked --example analyze_passage; cargo run --locked --example manuscript",
+      "result": "pass",
+      "log": "remediation-rust-examples.log"
+    },
+    "standalone-contract-check": {
+      "command": "cargo run --locked --features bindings --example export_standalone_contracts -- --check",
+      "result": "pass",
+      "log": "remediation-standalone-contract-check.log"
+    },
+    "manuscript-contract-check": {
+      "command": "cargo run --locked --features bindings --example export_contracts -- --check",
+      "result": "pass",
+      "log": "remediation-manuscript-contract-check.log"
+    },
+    "fuzz": {
+      "command": "cargo +nightly fuzz run text_analysis -- -max_total_time=30 -max_len=4096 -timeout=10",
+      "result": "pass",
+      "executions": 30232,
+      "seconds": 31,
+      "log": "remediation-fuzz.log"
+    },
+    "determinism": {
+      "result": "pass",
+      "freshProcesses": 100,
+      "surfaces": [
+        "voice",
+        "causality",
+        "world state",
+        "themes"
+      ],
+      "log": "remediation-process-determinism.log"
+    },
+    "dependency-policy": {
+      "command": "cargo deny --locked --all-features check --deny unsound",
+      "result": "pass",
+      "log": "remediation-dependency-policy.log"
+    },
+    "intentional-policy-rejection": {
+      "result": "pass",
+      "exitCode": 2,
+      "mechanism": "Temporary config bans existing serde; actual policy/lock unchanged.",
+      "log": "remediation-policy-rejection.log"
+    },
+    "advisories": {
+      "command": "cargo audit --json",
+      "vulnerabilities": 0,
+      "informational": [
+        "RUSTSEC-2024-0436"
+      ],
+      "databaseCommit": "99670cfc0bc574433034b75876a4b791ccaa2efb",
+      "evidence": "remediation-advisories.json"
+    },
+    "held-out": {
+      "command": "cargo run --locked --example evaluate_findings",
+      "truePositives": 14,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "unrated": 3,
+      "rawAblationFalsePositives": 9,
+      "evidence": "remediation-evaluation.json",
+      "limit": "Agent-authored cases; no independent editorial or trained-model accuracy inference."
+    },
+    "legacy-evaluation": {
+      "result": "unchanged",
+      "evidence": "remediation-evaluation-v1.json"
+    },
+    "performance": {
+      "fixture": "benchmark-novel-v2-xorshift32-20261027",
+      "scenes": 160,
+      "words": 104455,
+      "utf8Bytes": 571260,
+      "rustReleaseMediansMs": {
+        "full": 58.270375,
+        "singleSceneEdit": 12.587708,
+        "reorder": 0.454417
+      },
+      "rustFinalEqualsFresh": true,
+      "nodeReleaseMediansMs": {
+        "full": 59.965,
+        "singleSceneEdit": 14.13
+      },
+      "evidence": [
+        "remediation-performance-rust.json",
+        "remediation-performance-node.json"
+      ],
+      "limit": "Five samples per operation on Apple M4/macOS; no material speedup established, Node older records use debug profile.",
+      "phase": "Before final comparison-only coverage followup; benchmarked analysis paths unchanged. No claim about comparison latency."
+    },
+    "crate-file-list": {
+      "command": "cargo package --locked --allow-dirty --list",
+      "result": "pass",
+      "files": 183,
+      "auditArtifactsExcluded": true,
+      "evidence": "remediation-crate-files.txt"
+    },
+    "node": {
+      "command": "npm test",
+      "passed": 12,
+      "failed": 0,
+      "log": "remediation-node-tests.log"
+    },
+    "native-build": {
+      "command": "npm run build -- -- --locked",
+      "result": "pass",
+      "log": "remediation-node-build.log"
+    },
+    "crate-package": {
+      "command": "cargo package --locked --allow-dirty",
+      "result": "pass",
+      "files": 183,
+      "uncompressedMiB": 3.1,
+      "compressedKiB": 737.8,
+      "verification": "Extracted crate compiles successfully. --allow-dirty preserves pre-existing working changes; no publishing.",
+      "log": "remediation-crate-package.log"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "result": "pass",
+      "log": "remediation-diff-check.log"
+    },
+    "contracts": {
+      "standaloneAliasesValidated": 49,
+      "facadeRootsValidated": 4,
+      "typescript": "strict consumer and invalid legacy enum tags checked",
+      "scope": "Rust-derived schemas preserve serde variant shapes; populated Node output validates across every generated function alias."
+    }
+  },
+  "limitations": [
+    "No cross-platform runtime result is claimed before GitHub CI executes.",
+    "No re-scoring of overall quality or claim of general editorial/model accuracy.",
+    "Pre-existing working changes preserved; no original baseline file removed.",
+    "ts-rs emits parse notices for custom HashSet sorting serializers; those serializers change ordering only, and actual JSON validates against generated schemas. Notices are not suppressed."
+  ],
+  "source_sha256": {
+    ".github/workflows/ci.yml": "0de27ad06c0075f5e0017475b1e4474ecdd69af3165c437250f661542623f295",
+    ".github/workflows/publish-crate.yml": "d5bbdf30f90eb501ef3964dea096bb19f6fe0d09bba35fff10ee773db3b122a3",
+    ".github/workflows/release.yml": "8924bcdd2f026b6907db8cd9caf842f79c774788b733ab47912308a4922e5783",
+    ".gitignore": "d5b13a890b0f92d9aa5b86375e2e2661f21c338146c33e8ac4024f33cd21a9a6",
+    "CONTRIBUTING.md": "b70d9ec7712bc76968a3388d0386ef662eca23a96bb9a2d28768117dc689ff8b",
+    "Cargo.lock": "0ea96def393475ad8f12a2196250839a30e59e746ba2d5493b5166bdde314558",
+    "Cargo.toml": "ac6c14d8703980121e7e239b4cdec6536f48891f45cb68f8a268ecddbdc5257c",
+    "README.md": "232819d1de673f0ab22356cd78697b7ab537425491bac0db887640498f2293d2",
+    "SECURITY.md": "e4e91397b4a75dbd019b00bc0a1c91e341c99359863c4dee576f8ac7c4afdfef",
+    "deny.toml": "870dd69043703eea3a16e80fb5f33f088b2c7e6c19469bd638d940a4e7dd0cc6",
+    "docs/ARCHITECTURE.md": "2d8ddd3bc2caad7b49a4dca1a0e03f0f589c8fe6ab23ca0e6525005a78526c2e",
+    "docs/CLI.md": "147cda5691caed212efd9b935fc0199cc221554ab3b9ec3d5090c66e879fea58",
+    "docs/EVALUATION.md": "03cb8aca175eb3027ad36fc438b7447e9f9ddc02238fe5404d2f9ca1bf8ede2e",
+    "docs/INTEGRATION.md": "da3e94ef03e3048cd9867a8179a374f38613732bfa3f5304b971ecc6f0426116",
+    "docs/MANUSCRIPT.md": "4be883f26273610586bfb241a96d45469b93f6cfce59cd56992b339af7565d37",
+    "docs/evaluation-v2-current.json": "bafc17dce8f368b1a2ddadc6ec93bd1e767243edda7d4614f713f31d3d322e2f",
+    "docs/manuscript.schema.json": "3ffd31d251a1e6cd9d0f9987cd7e41f1c0903b9ba7cd592f91bca95090eee20d",
+    "docs/standalone.schema.json": "5e94577620481b6ef40e5d3b5cda7c682b3fb89f67190424cb551a3185049b12",
+    "examples/benchmark-manuscript.mjs": "038129a7f9263fa617b30387e5d56075a0e2cb6c9fbdf0b36d1d75b9ae1f62f3",
+    "examples/export_standalone_contracts.rs": "8ddd34912a406b2c503ad1b8d080c1f6814a98d3e5236dcea05464c5efd44f21",
+    "fuzz/fuzz_targets/text_analysis.rs": "760c5d0ec4137270f2e9b027a0667c3b350a392ebe58139d598ce24ba604554f",
+    "index.d.ts": "0f569b4185e108744c60570acb87b55d38ea220356792b1291b1e70b18fbf4c3",
+    "manuscript.generated.d.ts": "dbb8dcef722caa982a68ed85863e61d870d16af895ff9e70e22dd106314d402e",
+    "package.json": "6809ecc5e8bcb750d10683ff14ed1c7f84cdd813a4c2bdc79ac9c755dac403c2",
+    "scripts/release_artifacts.mjs": "a476c228b6ed5a45985c7c4b9dfab6e84417ecd10b4ba0c4fc20d18328a744a1",
+    "scripts/test_package.mjs": "369e3316b36826aa88b6d3d9ff5050893035f159a5f5e1ebc1cca145e89ef10b",
+    "scripts/validate_sarif.py": "17e476869b38d139de2f05d319ba41c76937dd796469cb3f1e6ac892b49b71a0",
+    "scripts/verify_standalone_contracts.mjs": "c13913f1e1f4eff784027e50216107eafbdf8f806efd4d420e6f7d5d18361725",
+    "scripts/verify_tested_artifacts.mjs": "e85747519106e1a8fa641b3eff5cccb67056116f028215ca075b32e6919bcd5d",
+    "src/bin/narrative-lens.rs": "901f38c9b1075b3661e440827d214ae5a3ce5132840161fa13b33131edd1b59a",
+    "src/continuity/anachronism.rs": "33067545d109c5b783a7f0bea8ef0f345845141bae3c83b41c357ff238562f5b",
+    "src/continuity/causal_engine.rs": "db0a412c240f0ca8fbc8d3286847c19869eaafec1f3d57754084db88a485b7d3",
+    "src/continuity/coreference.rs": "690107746b6f0d859ccff71630b813b73085f752ea2f8813991a86a321661e4e",
+    "src/continuity/entity.rs": "458d52fad4eaae028df2f6437b259b03b153c58f8bc5c32b621c91a5241b03d5",
+    "src/continuity/epistemic_engine.rs": "4986af931d9b2163fcdc5618d6bc3c5d1d62a904b2603e19a7b3489290010e56",
+    "src/continuity/gap_analysis.rs": "0ffbd45decb72502a67fc117463ac39743486dfc729050b3fe183eed944267c9",
+    "src/continuity/mental_model.rs": "67cf854567af7dfa5925024564d5c7bf8c3464aba6523cfc199f595b2914f78b",
+    "src/continuity/ner.rs": "ab5b545ae01652d6c8d76597b0baf3ce26b431c2c35a7aca3f8772e059e42942",
+    "src/continuity/timeline.rs": "b07f9c66bf0cb39634660a3467595a0bf87423c082c7a4111e4f6680c4bfe08d",
+    "src/continuity/world_state.rs": "1dc16054489e0fb3b215d3c66ebe5a875106bb27ef325f7c61f475309c1efb63",
+    "src/craft/dialogue.rs": "1f727ef897d622572e14fdc483de0ffa11a6968ae9f3e18593afface046b3c91",
+    "src/craft/dialogue_realism.rs": "eea3cd4d542a1c7719cd08f9424090eecc3b5d88ab6ae99581b97a6ef718e430",
+    "src/craft/emotion.rs": "452bc3d9ffb646800e7f4ccabdd6255906e1531115e3f6c8e740f2bb772a2277",
+    "src/craft/grammar.rs": "82bdbce178dfce3d8bb66b674ad482e407200f0a3044cb333d79d48f0eeed5ff",
+    "src/craft/lexical.rs": "2a589004d6d83c9f24186561753a19e05ecd44a0b309f10365787aad8ef6ea8e",
+    "src/craft/pacing.rs": "3c8a9295d4726c3dd2b07b41ec59896ecc8247f2fcfed22b3ad05a33d90755e0",
+    "src/craft/prose_quality.rs": "d7b240655932ea48be931e4bce108137bebd611261781d52f6888958c58ed3d6",
+    "src/craft/readability.rs": "c4aff42f26e9fbe96402b96614ef6318782cfc4f92e2a4ec57cf69f7994dfcdf",
+    "src/craft/subtext.rs": "7a0075da7a3a8e327c08bdf4dea20e041227af18f15e1047f982cf13266c5169",
+    "src/craft/syntax_tension.rs": "0b7bd22769d6872f7f9cbb9cd10370a790d09772169da5f346921cf25efbd07c",
+    "src/craft/voice.rs": "9880eb110c65cbded5d43775ad6009f45dff16eb9141e59f80449322e76b6c31",
+    "src/manuscript/comparison.rs": "89d34b8e4e93cb81bd66c2bd517249e363f9ebabd4515e90f7a4543d0312f6d6",
+    "src/napi_bindings/continuity.rs": "522a991d380db84a3d5e6005bce20d0b6c85b49bbc9043e617aff88e2c3440a0",
+    "src/napi_bindings/craft.rs": "170212be13f0e78265ad2c43c7ac4152d511145bb2a2ae92eafb9605584c51db",
+    "src/napi_bindings/structure_bindings.rs": "2f6d6c4fbd8083130a2b4671a76420b95a244e937045aea779ed34cf5af09257",
+    "src/napi_bindings/substrate.rs": "7e3781058224789a3973d7f6dfd97a0425fd3acc2889e1fbe20ee4547c7d9588",
+    "src/onnx/checked.rs": "b2bda09bfa9b974c36d915532b1bd5c18a1558cef0dbdc0d3ecfaf98a0bf0db2",
+    "src/onnx/mod.rs": "429e3eafdeb8784f5ac8a10f81d90d004cc9604f91d79bf5c43f5c6015239297",
+    "src/onnx/ort_backend.rs": "9c3ccf27582018bebfe969d9f1b8d455ec6f60e53067317cf575e23ea84ba3a3",
+    "src/onnx/tract_backend.rs": "d846e53dc100bdfdaf8ae50bb2a6a5ebcef88f0ba430ad6eb7d3202a2b26f58c",
+    "src/structure/foreshadow.rs": "99714233125bba4a6942e0018200d478cd3f844e1e4188d71eabe5eb14aaabfb",
+    "src/structure/genre.rs": "8a6b225d32b5de05cd052b70779728e69bc11728ddedc1e1831e8cd5fd2ca41c",
+    "src/structure/genre_compliance.rs": "36786b3ab24a5becaf9128bdef8a13b767c73105592d737d8a58fd040ae50a06",
+    "src/structure/narrative_entropy.rs": "88d46c9667af3a84994f1ce5dd37fee1741b2172ba48553f5a3d3e99e7c1e4d8",
+    "src/structure/opening_analysis.rs": "0c5ea62b60d879cfb3f46c058ecc54306b9dc70a7adfee6ef7d3bb6540e9d095",
+    "src/structure/promise_payoff.rs": "23b02cc0c59bc08b88811724ec61142f51694a270630fe95be45a8ffdfc0b9c2",
+    "src/structure/structure.rs": "d388dfd4b17d8932dfd80604b778990c454e07928194d2019e75b560c639e17d",
+    "src/structure/thematic_argument.rs": "7d390ac79df2e6a556b252f0a8c874a3b54a6c8391fa695f1b1a165aa2db3d3a",
+    "src/structure/theme.rs": "4ece0df5a8235ce07658bb450621664eaae5731ba1e4dde91226e2095c4a145d",
+    "src/substrate/common_types.rs": "e410eeb1e2b594999a01b98612fcc652b157bd3785f3b407ed4043cd17c512c5",
+    "src/substrate/confidence.rs": "063ad7a9a78db585b171867902dffaa96f3d2f380b5bc48e41e14597c306e618",
+    "src/substrate/embedding.rs": "9f28c0c6f1d8ddf65433a08f0234b6b6407d0f776effe76d421c60b2ecdabd74",
+    "src/substrate/explain.rs": "e2b4d07464de5dedb5deae96e1f5283a19f4f3a92e9997625577ac7673d59251",
+    "src/substrate/nli.rs": "728f2e645102033b69edff1e94183a7982155242493bcbf473fa4e736c395751",
+    "src/substrate/nlp.rs": "65364df255a73cf6253e887f68788392b45c1161357ebb52925801bc1b7bc187",
+    "src/substrate/sbert.rs": "e8992ee508d22cc576543ff1f1a8098b0634753de46fff404766ba119b6e340d",
+    "src/substrate/text.rs": "f2b47a0b5d3f99585320d7d9fc21f857faf7ebcb4778d75b49cbedc9f5acb2bb",
+    "src/substrate/utils.rs": "a14269d77eccc292d513a87fffa21eb8380cdce14b2ce874e97ed3f5b1c57b1b",
+    "src/substrate/word_stats.rs": "441fba4af6bfb73ab5ebaa99621bae41e0dd913c6e9f7d99d19a631fd4cbc3ce",
+    "standalone.generated.d.ts": "fcc06f76c9c0395af1752c1cd2ba97388aec0d86c83c51f15ad8475ccae0d038",
+    "tests/cli.rs": "bfecfb8c05bd83f9f191f57b30c756928bea567a331365a80350c0b5a992b681",
+    "tests/cross_cutting.rs": "79422c2fa0bee880977bf80c9d7fc034069ed7089d259ebb0c6b9c5bf2dcb7d2",
+    "tests/node/api.test.cjs": "c97cde09ac5e46ab4bebfb5e9cde71c65f518549b18467dcd33ab1ebf4e3b36d",
+    "tests/node/manuscript.test.cjs": "7759b988577933ec03cdf16b7ffb5ca1cf2b9de58d88c22573abf9485fe01618",
+    "tests/node/release.test.cjs": "b6c4377edb56401ab64836b7403a04b88be1a9b6e59a9493f097b22dd7e3bbd2",
+    "tests/node/types.test.mts": "0d75f004c87e34b8d7a074e72b48ea349d871f8a71d2b0824f8345157b42ef4c",
+    "tests/release_integrity.rs": "d77138cb03af7fcbe8c46beb4ecd1ece78d9948dc7d8ff73d7aee9f446dc18d1"
+  },
+  "release_readiness": "Verified code blockers addressed. Publication remains conditional on the four-target/five-Node-version release matrix; no remote execution or publication performed.",
+  "baseline_preservation": {
+    "originalFilesMissing": [],
+    "originalAssessmentUnchanged": true,
+    "committed": false,
+    "pushed": false,
+    "published": false
+  }
+}

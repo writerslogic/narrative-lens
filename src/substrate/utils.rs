@@ -52,11 +52,7 @@ pub fn round_to(v: f64, decimals: u32) -> f64 {
 /// Safe division that returns 0.0 when the denominator is zero.
 #[inline]
 pub fn safe_div(num: f64, den: f64) -> f64 {
-    if den == 0.0 {
-        0.0
-    } else {
-        num / den
-    }
+    if den == 0.0 { 0.0 } else { num / den }
 }
 
 /// Clamp a value to the unit interval [0.0, 1.0].
@@ -145,11 +141,7 @@ pub fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
         norm_b += y * y;
     }
     let denom = norm_a.sqrt() * norm_b.sqrt();
-    if denom == 0.0 {
-        0.0
-    } else {
-        dot / denom
-    }
+    if denom == 0.0 { 0.0 } else { dot / denom }
 }
 
 /// Cosine similarity between two `HashMap<String, f64>` frequency maps.
@@ -174,11 +166,7 @@ pub fn map_cosine_similarity(a: &HashMap<String, f64>, b: &HashMap<String, f64>)
     }
 
     let denom = mag_a.sqrt() * mag_b.sqrt();
-    if denom < 1e-10 {
-        0.0
-    } else {
-        dot / denom
-    }
+    if denom < 1e-10 { 0.0 } else { dot / denom }
 }
 
 /// Euclidean distance between two f64 slices. Returns 0.0 for empty or mismatched inputs.
@@ -328,39 +316,45 @@ pub fn split_sentences(text: &str) -> Vec<String> {
 /// "3.14", "U.S.A.", ellipses).
 pub fn sentence_spans(text: &str) -> Vec<(usize, usize)> {
     let mut spans = Vec::new();
-    let bytes = text.as_bytes();
-    let len = bytes.len();
     let mut start = 0;
-    let mut i = 0;
-
-    while i < len {
-        if matches!(bytes[i], b'.' | b'!' | b'?') {
-            // End of the punctuation cluster (e.g. "..." or "?!").
-            let mut j = i + 1;
-            while j < len && matches!(bytes[j], b'.' | b'!' | b'?') {
-                j += 1;
+    let mut chars = text.char_indices().peekable();
+    while let Some((position, ch)) = chars.next() {
+        if !matches!(ch, '.' | '!' | '?' | '\u{2026}') {
+            continue;
+        }
+        let mut end = position + ch.len_utf8();
+        while let Some(&(next, punctuation)) = chars.peek() {
+            if !matches!(punctuation, '.' | '!' | '?' | '\u{2026}') {
+                break;
             }
-            // Single period after a common abbreviation: not a boundary.
-            if bytes[i] == b'.' && j == i + 1 && is_abbreviation_before(text, i) {
-                i = j;
-                continue;
+            end = next + punctuation.len_utf8();
+            chars.next();
+        }
+        if ch == '.' && end == position + 1 && is_abbreviation_before(text, position) {
+            continue;
+        }
+        while let Some(&(next, closing)) = chars.peek() {
+            if !matches!(closing, '\"' | '\'' | '\u{2019}' | '\u{201d}' | ')' | ']') {
+                break;
             }
-            // Boundary only when followed by whitespace (or end of text).
-            if j >= len || bytes[j].is_ascii_whitespace() {
-                if let Some(span) = trimmed_span(text, start, j) {
-                    spans.push(span);
+            end = next + closing.len_utf8();
+            chars.next();
+        }
+        if chars.peek().is_none_or(|(_, next)| next.is_whitespace()) {
+            if let Some(span) = trimmed_span(text, start, end) {
+                spans.push(span);
+            }
+            while let Some(&(next, whitespace)) = chars.peek() {
+                if !whitespace.is_whitespace() {
+                    break;
                 }
-                while j < len && bytes[j].is_ascii_whitespace() {
-                    j += 1;
-                }
-                start = j;
+                end = next + whitespace.len_utf8();
+                chars.next();
             }
-            i = j;
-        } else {
-            i += 1;
+            start = end;
         }
     }
-    if let Some(span) = trimmed_span(text, start, len) {
+    if let Some(span) = trimmed_span(text, start, text.len()) {
         spans.push(span);
     }
     spans
@@ -374,11 +368,46 @@ fn trimmed_span(text: &str, start: usize, end: usize) -> Option<(usize, usize)> 
     let trail = seg.len() - seg.trim_end().len();
     let s = start + lead;
     let e = end - trail;
-    if s < e {
-        Some((s, e))
-    } else {
-        None
-    }
+    if s < e { Some((s, e)) } else { None }
+}
+
+/// Whether `word` is an honorific or title that precedes a personal name
+/// without being part of any name (`Mrs.`, `Sir`, `Colonel`). Case-insensitive;
+/// a trailing period is ignored.
+pub fn is_honorific(word: &str) -> bool {
+    const HONORIFICS: &[&str] = &[
+        "mr",
+        "mrs",
+        "miss",
+        "ms",
+        "mme",
+        "mlle",
+        "dr",
+        "sir",
+        "lady",
+        "lord",
+        "madam",
+        "madame",
+        "monsieur",
+        "colonel",
+        "captain",
+        "major",
+        "general",
+        "sergeant",
+        "professor",
+        "aunt",
+        "uncle",
+        "king",
+        "queen",
+        "prince",
+        "princess",
+        "judge",
+        "reverend",
+        "rev",
+        "st",
+        "saint",
+    ];
+    HONORIFICS.contains(&word.trim_end_matches('.').to_lowercase().as_str())
 }
 
 /// Check if the character before position `dot_pos` ends a common abbreviation.
@@ -386,7 +415,7 @@ fn is_abbreviation_before(text: &str, dot_pos: usize) -> bool {
     static ABBREVIATIONS: &[&str] = &[
         "Mr", "Mrs", "Ms", "Dr", "Prof", "Sr", "Jr", "St", "Ave", "Blvd", "vs", "etc", "approx",
         "dept", "est", "vol", "Gen", "Gov", "Sgt", "Cpl", "Pvt", "Lt", "Col", "Capt", "Maj", "Rev",
-        "Hon",
+        "Hon", "Inc", "Ltd", "Corp", "Vol", "e.g", "i.e", "a.m", "p.m", "U.S.A", "U.S", "U.K",
     ];
     // Find the word immediately before the dot. `rfind` returns the *start*
     // byte of the delimiter char, so advance to the next char boundary rather
@@ -399,7 +428,21 @@ fn is_abbreviation_before(text: &str, dot_pos: usize) -> bool {
         .map(|p| crate::substrate::text::ceil_char_boundary(before, p + 1))
         .unwrap_or(0);
     let word = &before[word_start..];
-    ABBREVIATIONS.contains(&word)
+    let sentence_final_abbreviation = ["a.m", "p.m", "U.S", "U.K", "U.S.A"]
+        .iter()
+        .any(|abbreviation| word.eq_ignore_ascii_case(abbreviation));
+    if sentence_final_abbreviation
+        && text[dot_pos + 1..]
+            .trim_start()
+            .chars()
+            .next()
+            .is_some_and(char::is_uppercase)
+    {
+        return false;
+    }
+    ABBREVIATIONS
+        .iter()
+        .any(|abbreviation| word.eq_ignore_ascii_case(abbreviation))
 }
 
 // ===========================================================================
@@ -1055,4 +1098,14 @@ mod tests {
         assert_eq!(format!("{}", Genre::SciFi), "sci-fi");
         assert_eq!(format!("{}", Genre::WomensFiction), "women's fiction");
     }
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AnalysisAvailability {
+    Complete,
+    Partial,
+    #[default]
+    Unavailable,
 }

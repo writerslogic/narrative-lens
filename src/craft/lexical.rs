@@ -7,7 +7,7 @@
 //! uses ranks, not the incomparable cosine/BM25 score magnitudes) and so needs
 //! no per-corpus threshold tuning.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 
 /// BM25 term-frequency saturation.
 const K1: f64 = 1.5;
@@ -21,8 +21,8 @@ pub const RRF_K: f64 = 60.0;
 pub struct Bm25Index {
     ids: Vec<String>,
     /// term → postings of `(unit position, term frequency)`.
-    postings: HashMap<String, Vec<(usize, u32)>>,
-    doc_len: Vec<u32>,
+    postings: HashMap<String, Vec<(usize, usize)>>,
+    doc_len: Vec<usize>,
     avgdl: f64,
 }
 
@@ -34,11 +34,11 @@ impl Bm25Index {
         let stop = crate::substrate::text::stopwords();
         let mut ids = Vec::with_capacity(units.len());
         let mut doc_len = Vec::with_capacity(units.len());
-        let mut postings: HashMap<String, Vec<(usize, u32)>> = HashMap::new();
+        let mut postings: HashMap<String, Vec<(usize, usize)>> = HashMap::new();
         for (pos, (id, text)) in units.iter().enumerate() {
             ids.push(id.clone());
-            let mut tf: HashMap<String, u32> = HashMap::new();
-            let mut len = 0u32;
+            let mut tf: HashMap<String, usize> = HashMap::new();
+            let mut len = 0usize;
             for tok in crate::substrate::text::content_tokens(text, stop) {
                 *tf.entry(tok).or_insert(0) += 1;
                 len += 1;
@@ -62,6 +62,39 @@ impl Bm25Index {
         }
     }
 
+    pub fn update_document(&mut self, id: &str, text: &str) {
+        let position = self
+            .ids
+            .iter()
+            .position(|candidate| candidate == id)
+            .unwrap_or_else(|| {
+                self.ids.push(id.to_owned());
+                self.doc_len.push(0);
+                self.ids.len() - 1
+            });
+        let mut frequencies = HashMap::<String, usize>::new();
+        let mut length = 0;
+        for token in
+            crate::substrate::text::content_tokens(text, crate::substrate::text::stopwords())
+        {
+            *frequencies.entry(token).or_default() += 1;
+            length += 1;
+        }
+        self.postings.retain(|_, postings| {
+            postings.retain(|(document, _)| *document != position);
+            !postings.is_empty()
+        });
+        for (term, frequency) in frequencies {
+            self.postings
+                .entry(term)
+                .or_default()
+                .push((position, frequency));
+        }
+        self.doc_len[position] = length;
+        self.avgdl =
+            self.doc_len.iter().map(|&value| value as f64).sum::<f64>() / self.ids.len() as f64;
+    }
+
     pub fn is_empty(&self) -> bool {
         self.ids.is_empty()
     }
@@ -75,7 +108,7 @@ impl Bm25Index {
         let stop = crate::substrate::text::stopwords();
         let n = self.ids.len() as f64;
         let mut scores = vec![0.0f64; self.ids.len()];
-        let terms: HashSet<String> = crate::substrate::text::content_tokens(query, stop)
+        let terms: BTreeSet<String> = crate::substrate::text::content_tokens(query, stop)
             .into_iter()
             .collect();
         for term in terms {
@@ -98,7 +131,7 @@ impl Bm25Index {
             .filter(|(_, s)| **s > 0.0)
             .map(|(i, s)| (self.ids[i].clone(), *s))
             .collect();
-        crate::substrate::utils::sort_by_score_desc(&mut hits);
+        hits.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
         hits.truncate(limit);
         hits
     }
@@ -112,16 +145,42 @@ pub fn reciprocal_rank_fusion(
     k: f64,
     limit: usize,
 ) -> Vec<(String, f64)> {
+    reciprocal_rank_fusion_checked(rankings, k, limit).unwrap_or_default()
+}
+
+pub fn reciprocal_rank_fusion_checked(
+    rankings: &[Vec<String>],
+    k: f64,
+    limit: usize,
+) -> crate::Result<Vec<(String, f64)>> {
+    if !k.is_finite() || k < 0.0 || rankings.len() > 10_000 {
+        return Err(crate::Error::InvalidInput(
+            "RRF requires finite nonnegative k and at most10000 rankings".into(),
+        ));
+    }
+    let mut entries = 0usize;
+    for ranking in rankings {
+        entries = entries
+            .checked_add(ranking.len())
+            .filter(|count| *count <= 100_000)
+            .ok_or_else(|| crate::Error::InvalidInput("RRF exceeds100000 ranked entries".into()))?;
+        for id in ranking {
+            crate::manuscript::config::validate_id(id)?;
+        }
+    }
     let mut fused: HashMap<String, f64> = HashMap::new();
     for ranking in rankings {
-        for (rank, id) in ranking.iter().enumerate() {
-            *fused.entry(id.clone()).or_insert(0.0) += 1.0 / (k + (rank as f64 + 1.0));
+        let mut seen = std::collections::HashSet::new();
+        for id in ranking {
+            if seen.insert(id) {
+                *fused.entry(id.clone()).or_insert(0.0) += 1.0 / (k + seen.len() as f64);
+            }
         }
     }
     let mut out: Vec<(String, f64)> = fused.into_iter().collect();
-    crate::substrate::utils::sort_by_score_desc(&mut out);
+    out.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
     out.truncate(limit);
-    out
+    Ok(out)
 }
 
 #[cfg(test)]

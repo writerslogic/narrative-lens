@@ -1,0 +1,1406 @@
+{
+  "version": "synthetic-fiction-v1",
+  "annotationOrigin": "OpenAI Codex agent-authored original fiction and engineering labels, 2026-10-27; no human editorial review; not extracted from published work",
+  "license": "Apache-2.0",
+  "splitPolicy": "Scene families assigned before facade implementation; calibration may guide controls, held_out is a fixed regression set. Related synthetic templates are not statistically independent.",
+  "cases": [
+    {
+      "id": "calibration-grammar-1",
+      "split": "calibration",
+      "analyzer": "grammar",
+      "genre": "fantasy",
+      "scenes": [
+        "Mara saw saw the door."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Accidental duplicated verb.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "de8b5aac213eec2cedc6ce504e55dd7576046dccb660db928691cf6b895e2fa6"
+      }
+    },
+    {
+      "id": "calibration-grammar-2",
+      "split": "calibration",
+      "analyzer": "grammar",
+      "genre": "thriller",
+      "scenes": [
+        "Mara saw the door."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Clean short sentence.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "36bf56c04911bd072b5a2baeaaab58189463df7e372b66eb0368f36941fbcf55"
+      }
+    },
+    {
+      "id": "calibration-grammar-3",
+      "split": "calibration",
+      "analyzer": "grammar",
+      "genre": "romance",
+      "scenes": [
+        "Never never leave me, she whispered."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [
+        "repetition"
+      ],
+      "expected": false,
+      "rationale": "Deliberate repetition for emphasis.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "0186dde01a9ed5b5b82668a95a05788d72f8b87e241eabf5ab377c2446d78d3f"
+      }
+    },
+    {
+      "id": "calibration-grammar-4",
+      "split": "calibration",
+      "analyzer": "grammar",
+      "genre": "literary",
+      "scenes": [
+        "The  bell rang."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Accidental extra interior space.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "ed4df59d2eeb6384d69a76ce3ae4fa0b2394eb295b6f07b67faddc8b3cfacb7b"
+      }
+    },
+    {
+      "id": "calibration-readability-1",
+      "split": "calibration",
+      "analyzer": "readability",
+      "genre": "fantasy",
+      "scenes": [
+        "The institutionalization of interplanetary communication necessitated comprehensive reconsideration of constitutional responsibilities, while representatives deliberated upon contradictory interpretations of extraterrestrial obligations and philosophical uncertainties. The institutionalization of interplanetary communication necessitated comprehensive reconsideration of constitutional responsibilities, while representatives deliberated upon contradictory interpretations of extraterrestrial obligations and philosophical uncertainties. The institutionalization of interplanetary communication necessitated comprehensive reconsideration of constitutional responsibilities, while representatives deliberated upon contradictory interpretations of extraterrestrial obligations and philosophical uncertainties. The institutionalization of interplanetary communication necessitated comprehensive reconsideration of constitutional responsibilities, while representatives deliberated upon contradictory interpretations of extraterrestrial obligations and philosophical uncertainties. The institutionalization of interplanetary communication necessitated comprehensive reconsideration of constitutional responsibilities, while representatives deliberated upon contradictory interpretations of extraterrestrial obligations and philosophical uncertainties. "
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Sustained excessive complexity for the specified genre.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "8a84b5fbc0a0af7dae26a124e03e42b3a98e286de1b9cb589fd73a553dcae52f"
+      }
+    },
+    {
+      "id": "calibration-readability-2",
+      "split": "calibration",
+      "analyzer": "readability",
+      "genre": "thriller",
+      "scenes": [
+        "Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. "
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Accessible narration.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "716a23b26e318f7ccf6baab9ebde3c81cc6dde6e62f42d67fc5ae06d958063ee"
+      }
+    },
+    {
+      "id": "calibration-readability-3",
+      "split": "calibration",
+      "analyzer": "readability",
+      "genre": "romance",
+      "scenes": [
+        "The institutionalization of interplanetary communication necessitated comprehensive reconsideration of constitutional responsibilities, while representatives deliberated upon contradictory interpretations of extraterrestrial obligations and philosophical uncertainties. The institutionalization of interplanetary communication necessitated comprehensive reconsideration of constitutional responsibilities, while representatives deliberated upon contradictory interpretations of extraterrestrial obligations and philosophical uncertainties. The institutionalization of interplanetary communication necessitated comprehensive reconsideration of constitutional responsibilities, while representatives deliberated upon contradictory interpretations of extraterrestrial obligations and philosophical uncertainties. The institutionalization of interplanetary communication necessitated comprehensive reconsideration of constitutional responsibilities, while representatives deliberated upon contradictory interpretations of extraterrestrial obligations and philosophical uncertainties. The institutionalization of interplanetary communication necessitated comprehensive reconsideration of constitutional responsibilities, while representatives deliberated upon contradictory interpretations of extraterrestrial obligations and philosophical uncertainties. "
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [
+        "complex_prose"
+      ],
+      "expected": false,
+      "rationale": "Deliberately dense institutional narrator.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "8a84b5fbc0a0af7dae26a124e03e42b3a98e286de1b9cb589fd73a553dcae52f"
+      }
+    },
+    {
+      "id": "calibration-readability-4",
+      "split": "calibration",
+      "analyzer": "readability",
+      "genre": "literary",
+      "scenes": [
+        "Interplanetary institutionalization."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Too little evidence for an aggregate complexity judgment.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "ffe800ad6db1a5669eb19cddd436d3d0a7be0177eb24bc0cdc5fda1ff6543612"
+      }
+    },
+    {
+      "id": "calibration-pacing-1",
+      "split": "calibration",
+      "analyzer": "pacing",
+      "genre": "fantasy",
+      "scenes": [
+        "Mara followed the path past the lake and through the trees and over the hill and down to the field where the grass bent under the wind and the clouds moved across the sky and the birds called from the branches and the light fell on the water and the road turned toward the town and the river shone beside the old stone bridge and the gate stood open by the house and she kept walking until the last light faded behind the hills and the first stars came out above the dark fields and the bell rang in the tower as the ferry left the far bank."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "One extended sentence obscures an otherwise ordinary journey.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "3c25f8d3a42a5e4d3e2534040775b60a19c0a99c697b080ba4ce70a2144e36a9"
+      }
+    },
+    {
+      "id": "calibration-pacing-2",
+      "split": "calibration",
+      "analyzer": "pacing",
+      "genre": "thriller",
+      "scenes": [
+        "Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. Mara went down to the lake. She saw a bird on the bank. The wind was cool and the sky was clear. "
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Short varied scene sentences.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "716a23b26e318f7ccf6baab9ebde3c81cc6dde6e62f42d67fc5ae06d958063ee"
+      }
+    },
+    {
+      "id": "calibration-pacing-3",
+      "split": "calibration",
+      "analyzer": "pacing",
+      "genre": "romance",
+      "scenes": [
+        "Mara followed the path past the lake and through the trees and over the hill and down to the field where the grass bent under the wind and the clouds moved across the sky and the birds called from the branches and the light fell on the water and the road turned toward the town and the river shone beside the old stone bridge and the gate stood open by the house and she kept walking until the last light faded behind the hills and the first stars came out above the dark fields and the bell rang in the tower as the ferry left the far bank."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [
+        "long_sentences"
+      ],
+      "expected": false,
+      "rationale": "An intentional breathless journey in one sentence.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "3c25f8d3a42a5e4d3e2534040775b60a19c0a99c697b080ba4ce70a2144e36a9"
+      }
+    },
+    {
+      "id": "calibration-pacing-4",
+      "split": "calibration",
+      "analyzer": "pacing",
+      "genre": "literary",
+      "scenes": [
+        "The path wound through the field and over the hill."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Insufficient sample for a pacing flag.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "243cc721805a7381a861b3f474b2ae03fdec101ee07b60f20d1af424735d0e1b"
+      }
+    },
+    {
+      "id": "calibration-structure-1",
+      "split": "calibration",
+      "analyzer": "structure",
+      "genre": "fantasy",
+      "scenes": [
+        "The bell rang.",
+        "The bell rang.",
+        "The bell rang."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Repeated uneventful scenes lack a conventional three-act arc.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "4d503e70d58162b3d9f553debb4901db6c633fe6ae39adbddafb262bf1da85dc"
+      }
+    },
+    {
+      "id": "calibration-structure-2",
+      "split": "calibration",
+      "analyzer": "structure",
+      "genre": "thriller",
+      "scenes": [
+        "The king died.",
+        "Mara searched for the killer.",
+        "Mara caught the killer."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "setup inciting incident",
+        "confrontation midpoint",
+        "climax resolution"
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "A setup, investigation, and resolution.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "8a736a876e5619d327c18ce16867b26f80fa508414829bcb582c9cde7976f8c1"
+      }
+    },
+    {
+      "id": "calibration-structure-3",
+      "split": "calibration",
+      "analyzer": "structure",
+      "genre": "romance",
+      "scenes": [
+        "The bell rang.",
+        "The bell rang.",
+        "The bell rang."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        "",
+        ""
+      ],
+      "intentions": [
+        "nonlinear"
+      ],
+      "expected": false,
+      "rationale": "Intentionally cyclical structure without conventional beats.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "4d503e70d58162b3d9f553debb4901db6c633fe6ae39adbddafb262bf1da85dc"
+      }
+    },
+    {
+      "id": "calibration-structure-4",
+      "split": "calibration",
+      "analyzer": "structure",
+      "genre": "literary",
+      "scenes": [
+        "The child left home.",
+        "She crossed the sea.",
+        "She came home changed."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "setup inciting incident",
+        "confrontation midpoint",
+        "climax resolution"
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "A complete departure and return arc.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "b8599b4c9209ffe12696131df141695b0172476103ebc06f4cbeb078742a49e4"
+      }
+    },
+    {
+      "id": "calibration-continuity-1",
+      "split": "calibration",
+      "analyzer": "continuity",
+      "genre": "fantasy",
+      "scenes": [
+        "Mara was in the cellar. Someone locked the door.",
+        "Mara entered the garden."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Unexplained move from a locked location.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "233cf53a150eeb9a4cf77f29694708ce609f22f8e64fcd024d1b9373e630e4fe"
+      }
+    },
+    {
+      "id": "calibration-continuity-2",
+      "split": "calibration",
+      "analyzer": "continuity",
+      "genre": "thriller",
+      "scenes": [
+        "Mara was in the cellar.",
+        "Mara entered the garden."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Ordinary movement without a constraint.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "b3202a1020149044a8e9143da027b82fdd038fb2a78575fda8247c1119a63d76"
+      }
+    },
+    {
+      "id": "calibration-continuity-3",
+      "split": "calibration",
+      "analyzer": "continuity",
+      "genre": "romance",
+      "scenes": [
+        "Mara was in the cellar. Someone locked the door.",
+        "Mara entered the garden."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [
+        "supernatural"
+      ],
+      "expected": false,
+      "rationale": "Author specifies supernatural movement.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "233cf53a150eeb9a4cf77f29694708ce609f22f8e64fcd024d1b9373e630e4fe"
+      }
+    },
+    {
+      "id": "calibration-continuity-4",
+      "split": "calibration",
+      "analyzer": "continuity",
+      "genre": "literary",
+      "scenes": [
+        "Mara was in the cellar. Someone locked the door.",
+        "Mara escaped from the cellar. Mara entered the garden."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "An explicit escape explains the movement.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "5477f4e990348c46ebff8b5539146f9a7dc17f4f218037ec55046a8f5a74c184"
+      }
+    },
+    {
+      "id": "held_out-grammar-1",
+      "split": "held_out",
+      "analyzer": "grammar",
+      "genre": "sci-fi",
+      "scenes": [
+        "Zoë heard heard the bell."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Accidental duplicated verb.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "4c8e51eaa75be81432b272ca4f16133ac09087c667698540f7189af8c68ec384"
+      }
+    },
+    {
+      "id": "held_out-grammar-2",
+      "split": "held_out",
+      "analyzer": "grammar",
+      "genre": "mystery",
+      "scenes": [
+        "Zoë heard the bell."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Clean short sentence.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "37fc17a9c019ac4befd1aaf9a738e806f31b2c16e325be3ce6c69af0c6a501b8"
+      }
+    },
+    {
+      "id": "held_out-grammar-3",
+      "split": "held_out",
+      "analyzer": "grammar",
+      "genre": "horror",
+      "scenes": [
+        "Away away, the ghost cried."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [
+        "repetition"
+      ],
+      "expected": false,
+      "rationale": "Deliberate repetition for emphasis.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "10386fac57acf711ed484cd9a58312ccb62914b7337a5ea732b61aa18c308298"
+      }
+    },
+    {
+      "id": "held_out-grammar-4",
+      "split": "held_out",
+      "analyzer": "grammar",
+      "genre": "historical fiction",
+      "scenes": [
+        "A  ship vanished."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Accidental extra interior space.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "78f1374ce621b6535f8b2080208ef49434e7d118bd6074d75ab52f4f5ee2720a"
+      }
+    },
+    {
+      "id": "held_out-readability-1",
+      "split": "held_out",
+      "analyzer": "readability",
+      "genre": "sci-fi",
+      "scenes": [
+        "The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. "
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Sustained excessive complexity for the specified genre.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "6bf8f4e0e0b91d0d3584279859f0bcb9b2f719933500f285b58025579ec4373e"
+      }
+    },
+    {
+      "id": "held_out-readability-2",
+      "split": "held_out",
+      "analyzer": "readability",
+      "genre": "mystery",
+      "scenes": [
+        "The rain stopped before dawn. Nell put on her coat and left the house. A boat moved past the dock. She raised her hand and called to the man at the wheel. The rain stopped before dawn. Nell put on her coat and left the house. A boat moved past the dock. She raised her hand and called to the man at the wheel. The rain stopped before dawn. Nell put on her coat and left the house. A boat moved past the dock. She raised her hand and called to the man at the wheel. The rain stopped before dawn. Nell put on her coat and left the house. A boat moved past the dock. She raised her hand and called to the man at the wheel. The rain stopped before dawn. Nell put on her coat and left the house. A boat moved past the dock. She raised her hand and called to the man at the wheel. "
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Accessible narration.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "1059f86096dfb460ba45f1a5ed4cf875d3a7b46e1efa899a92822a54cca1c798"
+      }
+    },
+    {
+      "id": "held_out-readability-3",
+      "split": "held_out",
+      "analyzer": "readability",
+      "genre": "horror",
+      "scenes": [
+        "The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. The bureaucratic reconstruction of extraterrestrial civilization required unprecedented diplomatic negotiations, whereas institutional representatives contemplated irreversible environmental deterioration and incompatible philosophical interpretations of intergenerational responsibility. "
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [
+        "complex_prose"
+      ],
+      "expected": false,
+      "rationale": "Deliberately dense institutional narrator.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "6bf8f4e0e0b91d0d3584279859f0bcb9b2f719933500f285b58025579ec4373e"
+      }
+    },
+    {
+      "id": "held_out-readability-4",
+      "split": "held_out",
+      "analyzer": "readability",
+      "genre": "historical fiction",
+      "scenes": [
+        "Improbable metamorphosis."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Too little evidence for an aggregate complexity judgment.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "c31162c1762cb711d7678256c8ded592d81a148b26d8b8edbe329dee4082b089"
+      }
+    },
+    {
+      "id": "held_out-pacing-1",
+      "split": "held_out",
+      "analyzer": "pacing",
+      "genre": "sci-fi",
+      "scenes": [
+        "Nell ran along the quay past the ropes and the crates and the boats that rocked on the tide and the men who called from the deck and the boy who held the lamp by the gate and the dog that slept beneath the cart and the rain that streamed from the roofs and the bell that rang through the mist and the lights that shone from the far bank and the road that led to the house where her sister waited by the fire with a letter in her hand and a cup of tea on the table beside the old brass clock that had stopped at the hour when the last boat left the port."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "One extended sentence obscures an otherwise ordinary journey.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "fb14d409e66cd40181398f39bad2a6f2da969ec8f3df86408ab3781546213ffb"
+      }
+    },
+    {
+      "id": "held_out-pacing-2",
+      "split": "held_out",
+      "analyzer": "pacing",
+      "genre": "mystery",
+      "scenes": [
+        "Nell read the letter twice. Her sister watched the fire. A log fell and threw a spark onto the rug. Nell put her foot on it and stood to leave. Nell read the letter twice. Her sister watched the fire. A log fell and threw a spark onto the rug. Nell put her foot on it and stood to leave. Nell read the letter twice. Her sister watched the fire. A log fell and threw a spark onto the rug. Nell put her foot on it and stood to leave. Nell read the letter twice. Her sister watched the fire. A log fell and threw a spark onto the rug. Nell put her foot on it and stood to leave. Nell read the letter twice. Her sister watched the fire. A log fell and threw a spark onto the rug. Nell put her foot on it and stood to leave. "
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Short varied scene sentences.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "ded0066c20046a20db64de319d6f9f3a94ed3faf587f92f16ba061cc98e906aa"
+      }
+    },
+    {
+      "id": "held_out-pacing-3",
+      "split": "held_out",
+      "analyzer": "pacing",
+      "genre": "horror",
+      "scenes": [
+        "Nell ran along the quay past the ropes and the crates and the boats that rocked on the tide and the men who called from the deck and the boy who held the lamp by the gate and the dog that slept beneath the cart and the rain that streamed from the roofs and the bell that rang through the mist and the lights that shone from the far bank and the road that led to the house where her sister waited by the fire with a letter in her hand and a cup of tea on the table beside the old brass clock that had stopped at the hour when the last boat left the port."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [
+        "long_sentences"
+      ],
+      "expected": false,
+      "rationale": "An intentional breathless journey in one sentence.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "fb14d409e66cd40181398f39bad2a6f2da969ec8f3df86408ab3781546213ffb"
+      }
+    },
+    {
+      "id": "held_out-pacing-4",
+      "split": "held_out",
+      "analyzer": "pacing",
+      "genre": "historical fiction",
+      "scenes": [
+        "Nell walked beside the quiet river and watched the last boat leave."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Insufficient sample for a pacing flag.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "50321abbb4450447e101403b60c488109964b87e6d8e1bd9f88d27ccc9f8bfde"
+      }
+    },
+    {
+      "id": "held_out-structure-1",
+      "split": "held_out",
+      "analyzer": "structure",
+      "genre": "sci-fi",
+      "scenes": [
+        "The watch stopped.",
+        "The watch stopped.",
+        "The watch stopped."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Repeated uneventful scenes lack a conventional three-act arc.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "2d0d06590132f9a7ec57e906fefb9bbc75f2acbda1b98f8b4f3fafa9598c5d35"
+      }
+    },
+    {
+      "id": "held_out-structure-2",
+      "split": "held_out",
+      "analyzer": "structure",
+      "genre": "mystery",
+      "scenes": [
+        "The ship vanished.",
+        "Nell traced its last route.",
+        "Nell brought the ship home."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "setup inciting incident",
+        "confrontation midpoint",
+        "climax resolution"
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "A setup, investigation, and resolution.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "e50bba6cff33a12cc7d0855c5468c96a5615dc8ad85d9f950f7b4de4eb9f80d6"
+      }
+    },
+    {
+      "id": "held_out-structure-3",
+      "split": "held_out",
+      "analyzer": "structure",
+      "genre": "horror",
+      "scenes": [
+        "The tide turned.",
+        "The tide turned.",
+        "The tide turned."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        "",
+        ""
+      ],
+      "intentions": [
+        "nonlinear"
+      ],
+      "expected": false,
+      "rationale": "Intentionally cyclical structure without conventional beats.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "f0271243223b96ce5c60884392b5462e631949a6c077f85802ebe92a5c3c3ceb"
+      }
+    },
+    {
+      "id": "held_out-structure-4",
+      "split": "held_out",
+      "analyzer": "structure",
+      "genre": "historical fiction",
+      "scenes": [
+        "Nell left port.",
+        "She sailed north.",
+        "She returned with a new name."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "setup inciting incident",
+        "confrontation midpoint",
+        "climax resolution"
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "A complete departure and return arc.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "e38306104c696ffa2fb103a486590cf5c98cee3da3842b390f0362fe45b252c1"
+      }
+    },
+    {
+      "id": "held_out-continuity-1",
+      "split": "held_out",
+      "analyzer": "continuity",
+      "genre": "sci-fi",
+      "scenes": [
+        "Zoë was in the cellar. Someone locked the door.",
+        "Zoë entered the garden."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Unexplained move from a locked location.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "7e03b80934c76179462e6b17c55f40e8c9997dc05c135f74e55dc83180e148f5"
+      }
+    },
+    {
+      "id": "held_out-continuity-2",
+      "split": "held_out",
+      "analyzer": "continuity",
+      "genre": "mystery",
+      "scenes": [
+        "Zoë was in the cellar.",
+        "Zoë entered the garden."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Ordinary movement without a constraint.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "f508bb884035d7389322251970858701d1cfd6dffb3a583750e389124b2d3b33"
+      }
+    },
+    {
+      "id": "held_out-continuity-3",
+      "split": "held_out",
+      "analyzer": "continuity",
+      "genre": "horror",
+      "scenes": [
+        "Zoë was in the cellar. Someone locked the door.",
+        "Zoë entered the garden."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [
+        "supernatural"
+      ],
+      "expected": false,
+      "rationale": "Author specifies supernatural movement.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "7e03b80934c76179462e6b17c55f40e8c9997dc05c135f74e55dc83180e148f5"
+      }
+    },
+    {
+      "id": "held_out-continuity-4",
+      "split": "held_out",
+      "analyzer": "continuity",
+      "genre": "historical fiction",
+      "scenes": [
+        "Zoë was in the cellar. Someone locked the door.",
+        "Zoë escaped from the cellar. Zoë entered the garden."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "An explicit escape explains the movement.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "cb175a1ef0d9ac31f3bbb08e54fc6f383006e255bfdaa3790896fc9229f37af2"
+      }
+    },
+    {
+      "id": "calibration-grammar-5",
+      "split": "calibration",
+      "analyzer": "grammar",
+      "genre": "fantasy",
+      "scenes": [
+        "Mara saw a qwick bird."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "dictionary": [],
+      "expected": true,
+      "rationale": "A misspelled common word.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "6907a0e793ff40be720e5dbdd5beb741647893f45d130cfb0ee928e3838b42aa"
+      }
+    },
+    {
+      "id": "calibration-grammar-6",
+      "split": "calibration",
+      "analyzer": "grammar",
+      "genre": "fantasy",
+      "scenes": [
+        "The wyrmlet followed Mara."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "dictionary": [
+        "wyrmlet"
+      ],
+      "expected": false,
+      "rationale": "Author dictionary recognizes an invented species.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "b54427182fe022e14e3f047f6ccf78be7b2e5a20748cb2b3b33ff5a2f8851283"
+      }
+    },
+    {
+      "id": "calibration-grammar-7",
+      "split": "calibration",
+      "analyzer": "grammar",
+      "genre": "fantasy",
+      "scenes": [
+        "We be waitin for you."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [
+        "dialect"
+      ],
+      "dictionary": [],
+      "expected": false,
+      "rationale": "Deliberate dialect spelling.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "8ccca7b372d1633ea483152216f378b0c42fa68db251e83fdeadcc2c62584777"
+      }
+    },
+    {
+      "id": "calibration-continuity-5",
+      "split": "calibration",
+      "analyzer": "continuity",
+      "genre": "fantasy",
+      "scenes": [
+        "Mara had blue eyes.",
+        "Mara had brown eyes."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Unexplained change in a stable physical attribute.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "37cebb75455a5c48b1fd1aec45d1158b92edb2503a792e3a7544d3d5527b5ae5"
+      }
+    },
+    {
+      "id": "calibration-continuity-6",
+      "split": "calibration",
+      "analyzer": "continuity",
+      "genre": "fantasy",
+      "scenes": [
+        "Mara had green eyes.",
+        "Mara had green eyes."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Consistent attribute repeated across scenes.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "14ff750491bffdfa48ad3590bdf358b968af2d0422a7e65788dca1a23b038628"
+      }
+    },
+    {
+      "id": "calibration-continuity-7",
+      "split": "calibration",
+      "analyzer": "continuity",
+      "genre": "fantasy",
+      "scenes": [
+        "Mara had blue eyes.",
+        "Mara had amber eyes."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [
+        "supernatural"
+      ],
+      "expected": false,
+      "rationale": "Intentional magical transformation.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "5ee6fa3ec433a42f2b12a8a877978bff621c70ae0d4475d9ea58333e3ab5efa3"
+      }
+    },
+    {
+      "id": "calibration-continuity-8",
+      "split": "calibration",
+      "analyzer": "continuity",
+      "genre": "fantasy",
+      "scenes": [
+        "The key was on the desk.",
+        "The key was on the shelf."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Object changes location without an observed transfer.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "e11d062f8ecfc4a338ffdb7de330317c547fc14e9d57f4f4d1a875171fb97783"
+      }
+    },
+    {
+      "id": "calibration-continuity-9",
+      "split": "calibration",
+      "analyzer": "continuity",
+      "genre": "fantasy",
+      "scenes": [
+        "The key was on the desk.",
+        "Mara carried the key to the shelf.",
+        "The key was on the shelf."
+      ],
+      "characters": [
+        "Mara"
+      ],
+      "purposes": [
+        "",
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Explicit transfer explains the object location.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "1f2b7456bb8158766464ee97011b1da08dd2e41fdcedef6c425786609f0b6630"
+      }
+    },
+    {
+      "id": "held_out-grammar-5",
+      "split": "held_out",
+      "analyzer": "grammar",
+      "genre": "sci-fi",
+      "scenes": [
+        "Zoë read the writen note."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "dictionary": [],
+      "expected": true,
+      "rationale": "A misspelled common word.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "db8ceaaec21f5a5785f5bd95fdf204e2292026b7d47dd492ee4d4deb5d8c4350"
+      }
+    },
+    {
+      "id": "held_out-grammar-6",
+      "split": "held_out",
+      "analyzer": "grammar",
+      "genre": "sci-fi",
+      "scenes": [
+        "The starlingkin greeted Zoë."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [],
+      "dictionary": [
+        "starlingkin"
+      ],
+      "expected": false,
+      "rationale": "Author dictionary recognizes an invented species.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "d65b13ee76396812448a74c8eb0f6495cafef89b2a4542081a7b358295d54d83"
+      }
+    },
+    {
+      "id": "held_out-grammar-7",
+      "split": "held_out",
+      "analyzer": "grammar",
+      "genre": "sci-fi",
+      "scenes": [
+        "Keep walkin till the moon is high."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        ""
+      ],
+      "intentions": [
+        "dialect"
+      ],
+      "dictionary": [],
+      "expected": false,
+      "rationale": "Deliberate dialect spelling.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "676709a3e4d334e5b0d610140b5837ad1a5b89ae35e0959f51ae5302c015d916"
+      }
+    },
+    {
+      "id": "held_out-continuity-5",
+      "split": "held_out",
+      "analyzer": "continuity",
+      "genre": "sci-fi",
+      "scenes": [
+        "Zoë had blue eyes.",
+        "Zoë had brown eyes."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Unexplained change in a stable physical attribute.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "9e3e68f3a7f0beb15e2251420cf5d0ec431d9aab5f4647f64f8bd660e658ecfe"
+      }
+    },
+    {
+      "id": "held_out-continuity-6",
+      "split": "held_out",
+      "analyzer": "continuity",
+      "genre": "sci-fi",
+      "scenes": [
+        "Zoë had green eyes.",
+        "Zoë had green eyes."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Consistent attribute repeated across scenes.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "2b27f000550f67058576017b4418d485662918b56e4f866f31a1726b53e8e398"
+      }
+    },
+    {
+      "id": "held_out-continuity-7",
+      "split": "held_out",
+      "analyzer": "continuity",
+      "genre": "sci-fi",
+      "scenes": [
+        "Zoë had blue eyes.",
+        "Zoë had amber eyes."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [
+        "supernatural"
+      ],
+      "expected": false,
+      "rationale": "Intentional magical transformation.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "0592ff05d6b9e5c89d4370d6d739ec74a110736c895b06d30ba35faf287fb1b9"
+      }
+    },
+    {
+      "id": "held_out-continuity-8",
+      "split": "held_out",
+      "analyzer": "continuity",
+      "genre": "sci-fi",
+      "scenes": [
+        "The book was in the cabin.",
+        "The book was on the bridge."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": true,
+      "rationale": "Object changes location without an observed transfer.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "8311c443d186f71b16b488a90bfc1ac41d92ff64b9d896a9e8f39f4a2c8ec09f"
+      }
+    },
+    {
+      "id": "held_out-continuity-9",
+      "split": "held_out",
+      "analyzer": "continuity",
+      "genre": "sci-fi",
+      "scenes": [
+        "The book was in the cabin.",
+        "Zoë moved the book.",
+        "The book was on the bridge."
+      ],
+      "characters": [
+        "Zoë"
+      ],
+      "purposes": [
+        "",
+        "",
+        ""
+      ],
+      "intentions": [],
+      "expected": false,
+      "rationale": "Explicit transfer explains the object location.",
+      "provenance": {
+        "source": "original synthetic fiction authored for this repository by OpenAI Codex",
+        "annotation": "agent-authored engineering judgment; no human editorial review",
+        "textSha256": "238a9c319500c830eb8ed4bc810c374423a535b1130c5babc80ef8e371c09335"
+      }
+    }
+  ]
+}

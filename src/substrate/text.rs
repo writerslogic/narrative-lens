@@ -292,26 +292,6 @@ fn common_overrides() -> &'static HashMap<&'static str, usize> {
     })
 }
 
-fn sentence_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| {
-        Regex::new(concat!(
-            r"(?x)",
-            // abbreviations with periods -- match and skip
-            r"(?:(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|Inc|Ltd|Corp|vs|etc|Vol|Gen|Sgt|Capt|Col|Maj|Rev|Ave|Blvd)\.)",
-            r"|",
-            // two-part abbreviations
-            r"(?:(?:e\.g|i\.e|a\.m|p\.m|U\.S|U\.K)\.)",
-            r"|",
-            // decimal numbers
-            r"(?:\d+\.\d+)",
-            r"|",
-            // actual sentence boundaries (captured)
-            r"([.!?\x{2026}][.!?\x{2026}]*)",
-        )).expect("invalid sentence regex")
-    })
-}
-
 fn dialogue_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
@@ -333,9 +313,9 @@ fn dialogue_regex() -> &'static Regex {
     })
 }
 
-fn word_split_regex() -> &'static Regex {
+pub(crate) fn word_split_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"[^\w']+").expect("invalid word split regex"))
+    RE.get_or_init(|| Regex::new(r"[^\w'‘’]+").expect("invalid word split regex"))
 }
 
 /// Passive-voice regex: a `be`-form auxiliary followed by an `-ed`/`-en` participle.
@@ -787,14 +767,6 @@ pub fn count_syllables(word: &str) -> usize {
         }
     }
 
-    // Silent-e suffix patterns
-    for suffix in &["ake", "ine", "ore", "ure", "ise"] {
-        if alpha.ends_with(suffix) && len > 3 {
-            adjustment -= 1;
-            break;
-        }
-    }
-
     count += adjustment;
     std::cmp::max(count, 1) as usize
 }
@@ -806,20 +778,7 @@ pub fn count_syllables(word: &str) -> usize {
 /// Accurate sentence counter. Handles abbreviations, decimal numbers,
 /// ellipses, Unicode ellipsis, and combined punctuation like "?!".
 pub fn count_sentences(text: &str) -> usize {
-    let trimmed = text.trim();
-    if trimmed.is_empty() {
-        return 0;
-    }
-
-    let re = sentence_regex();
-    let mut count = 0;
-    for caps in re.captures_iter(trimmed) {
-        if caps.get(1).is_some() {
-            count += 1;
-        }
-    }
-
-    std::cmp::max(count, 1)
+    crate::substrate::utils::sentence_spans(text).len()
 }
 
 // ---------------------------------------------------------------------------
@@ -851,12 +810,23 @@ pub fn estimate_dialogue_tokens(text: &str) -> usize {
 /// Fast word tokenizer. Splits on whitespace/punctuation, preserves internal
 /// apostrophes, lowercases all tokens, filters empties.
 pub fn tokenize_words(text: &str) -> Vec<String> {
-    let re = word_split_regex();
-    re.split(text)
-        .filter(|s| !s.is_empty())
-        .map(|s| s.trim_matches('\'').to_lowercase())
-        .filter(|s| !s.is_empty())
-        .collect()
+    word_slices(text).map(normalize_word).collect()
+}
+
+pub(crate) fn word_slices(text: &str) -> impl Iterator<Item = &str> {
+    word_split_regex()
+        .split(text)
+        .map(|word| word.trim_matches(['\'', '‘', '’']))
+        .filter(|word| !word.is_empty())
+}
+
+pub(crate) fn normalize_word(word: &str) -> String {
+    let lower = word.trim_matches(['\'', '‘', '’']).to_lowercase();
+    if lower.contains(['‘', '’']) {
+        lower.replace(['‘', '’'], "'")
+    } else {
+        lower
+    }
 }
 
 pub fn stopwords() -> &'static std::collections::HashSet<&'static str> {
@@ -1665,25 +1635,15 @@ pub fn split_sentences(text: &str) -> Vec<&str> {
 /// UTF-16 is the offset unit editors use for edit ranges, so a returned span
 /// can be navigated to directly.
 pub fn paragraph_spans(text: &str) -> Vec<(String, u32, u32)> {
-    // 1. Byte spans of the trimmed, non-empty blocks (same boundaries the
-    //    string-only segmenter produces).
-    let mut byte_spans: Vec<(usize, usize)> = Vec::new();
-    let mut texts: Vec<String> = Vec::new();
-    let mut byte = 0usize;
-    for piece in text.split("\n\n") {
-        let piece_start = byte;
-        // Advance past this piece and its "\n\n" separator; the overshoot on the
-        // final piece is never read.
-        byte += piece.len() + 2;
-        let trimmed = piece.trim();
-        if trimmed.is_empty() {
-            continue;
-        }
-        let lead = piece.len() - piece.trim_start().len();
-        let start = piece_start + lead;
-        byte_spans.push((start, start + trimmed.len()));
-        texts.push(trimmed.to_string());
-    }
+    let paragraphs = split_paragraphs(text);
+    let byte_spans: Vec<(usize, usize)> = paragraphs
+        .iter()
+        .map(|piece| {
+            let start = piece.as_ptr() as usize - text.as_ptr() as usize;
+            (start, start + piece.len())
+        })
+        .collect();
+    let mut texts: Vec<String> = paragraphs.into_iter().map(str::to_owned).collect();
     // 2. Map byte offsets to UTF-16 offsets in one forward pass (spans are
     //    ascending and non-overlapping).
     let mut result = Vec::with_capacity(byte_spans.len());
@@ -2455,33 +2415,41 @@ mod tests {
     #[test]
     fn test_show_dont_tell_advanced_narrative_distance() {
         let issues = detect_show_dont_tell("She felt that something was wrong.", 0);
-        assert!(issues
-            .iter()
-            .any(|i| i.issue_type == "show_dont_tell_narrative_distance"));
+        assert!(
+            issues
+                .iter()
+                .any(|i| i.issue_type == "show_dont_tell_narrative_distance")
+        );
     }
 
     #[test]
     fn test_show_dont_tell_advanced_editorial() {
         let issues = detect_show_dont_tell("It was clear that he would not return.", 0);
-        assert!(issues
-            .iter()
-            .any(|i| i.issue_type == "show_dont_tell_editorial"));
+        assert!(
+            issues
+                .iter()
+                .any(|i| i.issue_type == "show_dont_tell_editorial")
+        );
     }
 
     #[test]
     fn test_show_dont_tell_advanced_filter_word() {
         let issues = detect_show_dont_tell("She could see the flames rising.", 0);
-        assert!(issues
-            .iter()
-            .any(|i| i.issue_type == "show_dont_tell_filter_word"));
+        assert!(
+            issues
+                .iter()
+                .any(|i| i.issue_type == "show_dont_tell_filter_word")
+        );
     }
 
     #[test]
     fn test_show_dont_tell_advanced_diluted() {
         let issues = detect_show_dont_tell("He started to run toward the exit.", 0);
-        assert!(issues
-            .iter()
-            .any(|i| i.issue_type == "show_dont_tell_diluted_action"));
+        assert!(
+            issues
+                .iter()
+                .any(|i| i.issue_type == "show_dont_tell_diluted_action")
+        );
     }
 
     #[test]

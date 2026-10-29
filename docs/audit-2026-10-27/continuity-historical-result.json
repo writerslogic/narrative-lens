@@ -1,0 +1,64 @@
+{
+  "status": "frozen",
+  "files": [
+    {
+      "path": "src/continuity/anachronism.rs",
+      "sha256": "20b202d11f57661851aa153c9e626ee93e519b4a75d5e1e72c869463b5b9b083"
+    },
+    {
+      "path": "tests/component_continuity_historical.rs",
+      "sha256": "181947f4d3087e49aeacb6b55e6ce4aa0cfc950546c58a067a855064809aa6fa"
+    }
+  ],
+  "checks": [
+    {
+      "command": "cargo test --locked --features bindings --test component_continuity_historical",
+      "passed": 7,
+      "log": "continuity-historical-tests.log"
+    },
+    {
+      "command": "cargo test --locked --features bindings --lib continuity::anachronism::tests",
+      "passed": 22,
+      "log": "continuity-historical-unit.log"
+    },
+    {
+      "command": "cargo clippy --locked --features bindings --lib --test component_continuity_historical -- -D warnings",
+      "exit": 0,
+      "log": "continuity-historical-clippy.log"
+    }
+  ],
+  "api": [
+    "analyze_scene_checked -> Result<AnachronismAnalysisResult>",
+    "analyze_historical_catalogue -> Result<HistoricalAnalysisResult>"
+  ],
+  "fixes": [
+    "Legacy whole-token phrases prevent substring collisions; unverified polysemous/slang/period senses explicitly abstain",
+    "Referenced caller catalogue retains date basis/context/source reference; ambiguous unconfirmed senses have null date_conflict",
+    "Sparse token trie supports original Unicode byte/UTF16 ranges, overlapping phrases and whitespace; bounded matching avoids per-entry manuscript rescans",
+    "Exact source usage annotations validate atomically; stale/subword/duplicate references reject; integer-date arithmetic safe at i32/u32 extremes"
+  ],
+  "bounds": {
+    "entries": 10000,
+    "usages": 10000,
+    "candidates": 10000,
+    "source_tokens": 250000,
+    "term_bytes": 128,
+    "term_tokens": 32,
+    "matched_quote_bytes": 4096,
+    "metadata_bytes": 4194304
+  },
+  "sources": [
+    {
+      "title": "Oxford University Press, OED Guide: overview",
+      "url": "https://www.oupjapan.co.jp/sites/default/files/contents/dictionaries/oed/help/guide/overview.html",
+      "use": "Quotation evidence records earliest recorded occurrence and development of senses, not proof of first actual use."
+    }
+  ],
+  "limits": [
+    "No historical dates/citations invented; engine tests use explicitly synthetic author constraints and attestation records",
+    "Caller references/senses/date assertions are preserved but not independently verified; first attestation is not first use",
+    "Source annotation confirms declared sense/location, not quotation entailment or storyworld use",
+    "Automatic builtin historical dates remain unverified; literal catalogue precision is not historical semantic accuracy",
+    "No temporal inference or calendar conversion; target/tolerance arithmetic uses supplied integer years"
+  ]
+}

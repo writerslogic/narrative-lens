@@ -6,15 +6,18 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 
-use log::debug;
-use regex::Regex;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
+mod extraction;
+pub use extraction::{
+    DialogueAttributionMode, DialogueExtractionOptions, DialogueExtractionResult, DialogueKind,
+    LocatedDialogueLine, extract_dialogue_checked,
+};
+pub(crate) use extraction::{QuotationScopes, quotation_scopes};
 
 // ---------------------------------------------------------------------------
 // Constants & compiled patterns
 // ---------------------------------------------------------------------------
-
-const WINDOW: usize = 80;
 
 fn speech_verbs() -> &'static HashSet<&'static str> {
     static INST: OnceLock<HashSet<&str>> = OnceLock::new();
@@ -61,68 +64,12 @@ fn speech_verbs() -> &'static HashSet<&'static str> {
     })
 }
 
-fn verb_alternation() -> &'static str {
-    static INST: OnceLock<String> = OnceLock::new();
-    INST.get_or_init(|| {
-        speech_verbs()
-            .iter()
-            .map(|v| regex::escape(v))
-            .collect::<Vec<_>>()
-            .join("|")
-    })
-}
-
-/// Curly double, straight double, curly single quote patterns.
-fn quote_patterns() -> &'static [Regex; 3] {
-    static INST: OnceLock<[Regex; 3]> = OnceLock::new();
-    INST.get_or_init(|| {
-        [
-            Regex::new(r"\u{201c}((?:[^\u{201d}]|\n)*?)\u{201d}").unwrap(),
-            Regex::new(r#""((?:[^"]|\n)*?)""#).unwrap(),
-            Regex::new(r"\u{2018}((?:[^\u{2019}]|\n)*?)\u{2019}").unwrap(),
-        ]
-    })
-}
-
-/// "verb NAME" pattern (generic fallback).
-fn tag_before_re() -> &'static Regex {
-    static INST: OnceLock<Regex> = OnceLock::new();
-    INST.get_or_init(|| {
-        let pat = format!(
-            r"\b({})\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)",
-            verb_alternation()
-        );
-        Regex::new(&pat).unwrap()
-    })
-}
-
-/// "NAME verb" pattern (generic fallback).
-fn tag_after_re() -> &'static Regex {
-    static INST: OnceLock<Regex> = OnceLock::new();
-    INST.get_or_init(|| {
-        let pat = format!(
-            r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+({})\b",
-            verb_alternation()
-        );
-        Regex::new(&pat).unwrap()
-    })
-}
-
-/// Indirect speech pattern: "Name told/informed/... him/her/them that ..."
-fn indirect_speech_re() -> &'static Regex {
-    static INST: OnceLock<Regex> = OnceLock::new();
-    INST.get_or_init(|| {
-        Regex::new(
-            r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:told|informed|explained|mentioned|reminded|assured|convinced|warned)\s+(?:him|her|them|me|us)\b"
-        ).unwrap()
-    })
-}
-
 // ---------------------------------------------------------------------------
 // Result types
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DialogueLine {
     pub scene_id: usize,
@@ -136,6 +83,7 @@ pub struct DialogueLine {
     pub tag_verb: Option<String>,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct DialogueCharacterStats {
@@ -148,6 +96,7 @@ pub struct DialogueCharacterStats {
 }
 
 /// Voice profile for measuring how distinctive a character's speech patterns are.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct VoiceProfile {
@@ -161,6 +110,7 @@ pub struct VoiceProfile {
 }
 
 /// A pair of characters whose voice profiles are too similar.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SameSoundingPair {
@@ -170,6 +120,7 @@ pub struct SameSoundingPair {
 }
 
 /// Directed edge in the conversation flow graph.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConversationEdge {
@@ -179,6 +130,7 @@ pub struct ConversationEdge {
 }
 
 /// A detected monologue (5+ consecutive lines from one speaker).
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Monologue {
@@ -188,6 +140,7 @@ pub struct Monologue {
 }
 
 /// Conversation flow analysis results.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ConversationFlow {
@@ -197,6 +150,7 @@ pub struct ConversationFlow {
     pub monologues: Vec<Monologue>,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct DialogueAnalysis {
@@ -217,12 +171,49 @@ pub struct DialogueAnalysis {
 // ---------------------------------------------------------------------------
 
 static CONTRACTIONS: &[&str] = &[
-    "don't", "doesn't", "didn't", "won't", "wouldn't", "can't", "couldn't",
-    "shouldn't", "isn't", "aren't", "wasn't", "weren't", "haven't", "hasn't",
-    "hadn't", "i'm", "i've", "i'll", "i'd", "you're", "you've", "you'll",
-    "you'd", "he's", "she's", "it's", "we're", "we've", "we'll", "we'd",
-    "they're", "they've", "they'll", "they'd", "that's", "there's", "here's",
-    "what's", "who's", "how's", "let's", "that'll", "there'll",
+    "don't",
+    "doesn't",
+    "didn't",
+    "won't",
+    "wouldn't",
+    "can't",
+    "couldn't",
+    "shouldn't",
+    "isn't",
+    "aren't",
+    "wasn't",
+    "weren't",
+    "haven't",
+    "hasn't",
+    "hadn't",
+    "i'm",
+    "i've",
+    "i'll",
+    "i'd",
+    "you're",
+    "you've",
+    "you'll",
+    "you'd",
+    "he's",
+    "she's",
+    "it's",
+    "we're",
+    "we've",
+    "we'll",
+    "we'd",
+    "they're",
+    "they've",
+    "they'll",
+    "they'd",
+    "that's",
+    "there's",
+    "here's",
+    "what's",
+    "who's",
+    "how's",
+    "let's",
+    "that'll",
+    "there'll",
 ];
 
 // ---------------------------------------------------------------------------
@@ -235,61 +226,21 @@ pub fn extract_dialogue(
     scene_id: usize,
     known_characters: &[String],
 ) -> Vec<DialogueLine> {
-    if scene_text.is_empty() {
-        return Vec::new();
-    }
-    debug!(
-        "[dialogue] extract_dialogue scene={} — text_len={}, known_chars={}",
-        scene_id,
-        scene_text.len(),
-        known_characters.len()
-    );
-
-    // Detect indirect speech before processing quotes
-    let mut indirect_lines = detect_indirect_speech(scene_text, scene_id, known_characters);
-
-    let raw_quotes = find_quotes(scene_text);
-    if raw_quotes.is_empty() && indirect_lines.is_empty() {
-        return Vec::new();
-    }
-
-    let mut results = Vec::new();
-    let mut prev_speaker: Option<String> = None;
-    let mut scene_speakers: Vec<String> = Vec::new();
-
-    for (quote_text, start, end) in &raw_quotes {
-        let (speaker, confidence, method, tag_verb) = attribute_quote(
-            scene_text,
-            quote_text,
-            *start,
-            *end,
-            known_characters,
-            prev_speaker.as_deref(),
-            &scene_speakers,
-        );
-
-        results.push(DialogueLine {
-            scene_id,
-            quote: quote_text.clone(),
-            speaker: speaker.clone(),
-            confidence,
-            method,
-            tag_verb,
-        });
-
-        if speaker != "Unknown" {
-            prev_speaker = Some(speaker.clone());
-            if !scene_speakers.contains(&speaker) {
-                scene_speakers.push(speaker);
-                if scene_speakers.len() > 3 {
-                    scene_speakers.remove(0);
-                }
-            }
+    let options = DialogueExtractionOptions {
+        attribution: DialogueAttributionMode::ConservativeHeuristic,
+        include_indirect: true,
+    };
+    match extract_dialogue_checked(scene_text, scene_id, known_characters, &options) {
+        Ok(result) => result
+            .lines
+            .into_iter()
+            .map(|located| located.line)
+            .collect(),
+        Err(_) => {
+            log::warn!("dialogue extraction unavailable: invalid input or resource limit");
+            Vec::new()
         }
     }
-
-    results.append(&mut indirect_lines);
-    results
 }
 
 /// Analyze dialogue patterns across all extracted dialogue lines.
@@ -375,16 +326,20 @@ pub fn analyze_dialogue_patterns(
 
     let most_talkative = per_character
         .iter()
-        .max_by_key(|(_, v)| v.line_count)
+        .max_by(|(name_a, a), (name_b, b)| {
+            a.line_count
+                .cmp(&b.line_count)
+                .then_with(|| name_b.cmp(name_a))
+        })
         .map(|(c, _)| c.clone())
         .unwrap_or_default();
 
     let most_verbose = per_character
         .iter()
-        .max_by(|(_, a), (_, b)| {
+        .max_by(|(name_a, a), (name_b, b)| {
             a.avg_line_length
-                .partial_cmp(&b.avg_line_length)
-                .unwrap_or(std::cmp::Ordering::Equal)
+                .total_cmp(&b.avg_line_length)
+                .then_with(|| name_b.cmp(name_a))
         })
         .map(|(c, _)| c.clone())
         .unwrap_or_default();
@@ -410,200 +365,6 @@ pub fn analyze_dialogue_patterns(
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-/// Find all quoted text spans, deduplicated by position.
-fn find_quotes(text: &str) -> Vec<(String, usize, usize)> {
-    let mut found: HashMap<(usize, usize), (String, usize, usize)> = HashMap::new();
-
-    for pat in quote_patterns() {
-        for caps in pat.captures_iter(text) {
-            if let Some(full) = caps.get(0) {
-                let key = (full.start(), full.end());
-                if !found.contains_key(&key)
-                    && let Some(content_match) = caps.get(1) {
-                        let content = content_match.as_str().trim();
-                        if !content.is_empty() {
-                            found.insert(key, (content.to_string(), full.start(), full.end()));
-                        }
-                    }
-            }
-        }
-    }
-
-    let mut result: Vec<(String, usize, usize)> = found.into_values().collect();
-    result.sort_by_key(|(_, start, _)| *start);
-    result
-}
-
-/// Extract the first speech verb found in a text window.
-fn extract_verb_from_window(text: &str) -> Option<String> {
-    let verb_re = speech_verb_re();
-    verb_re
-        .find(text)
-        .map(|m| m.as_str().to_lowercase())
-}
-
-/// Attribute a single quote to a speaker.
-/// Returns (speaker, confidence, method, tag_verb).
-fn attribute_quote(
-    scene_text: &str,
-    _quote: &str,
-    start: usize,
-    end: usize,
-    known_characters: &[String],
-    prev_speaker: Option<&str>,
-    prev_recent: &[String],
-) -> (String, f64, String, Option<String>) {
-    // 1. Explicit tag: limit to same paragraph
-    let after_raw = crate::substrate::common_types::safe_substr(scene_text, end, end + WINDOW);
-    let after_text = after_raw.split('\n').next().unwrap_or("");
-    let before_start = start.saturating_sub(WINDOW);
-    let before_raw = crate::substrate::common_types::safe_substr(scene_text, before_start, start);
-    let before_text = before_raw.rsplit('\n').next().unwrap_or("");
-
-    if let Some(speaker) = match_speech_tag(after_text, known_characters) {
-        let verb = extract_verb_from_window(after_text);
-        return (speaker, 0.95, "explicit_tag".into(), verb);
-    }
-    if let Some(speaker) = match_speech_tag(before_text, known_characters) {
-        let verb = extract_verb_from_window(before_text);
-        return (speaker, 0.90, "explicit_tag".into(), verb);
-    }
-
-    // 2. Proximity: character name in adjacent text
-    let context = format!("{} {}", before_text, after_text);
-    if let Some(speaker) = match_proximity(&context, known_characters) {
-        return (speaker, 0.65, "proximity".into(), None);
-    }
-
-    // 3. Continuation: same speaker if line break before quote
-    if let Some(prev) = prev_speaker
-        && start > 0 {
-            let pre_start = start.saturating_sub(3);
-            let preceding = crate::substrate::common_types::safe_substr(scene_text, pre_start, start).trim();
-            if preceding.ends_with('\n') || preceding.is_empty() {
-                return (prev.to_string(), 0.50, "continuation".into(), None);
-            }
-        }
-
-    // 4. Alternation pattern (uses up to 3 recent speakers)
-    if let Some(prev) = prev_speaker
-        && prev_recent.len() >= 2
-            && let Some(other) = prev_recent.iter().rev().find(|s| s.as_str() != prev) {
-                return (other.clone(), 0.45, "pattern".into(), None);
-            }
-
-    ("Unknown".into(), 0.0, "pattern".into(), None)
-}
-
-/// Detect indirect speech patterns and attribute them to speakers.
-fn detect_indirect_speech(
-    scene_text: &str,
-    scene_id: usize,
-    known_characters: &[String],
-) -> Vec<DialogueLine> {
-    let mut results = Vec::new();
-    let re = indirect_speech_re();
-    for caps in re.captures_iter(scene_text) {
-        if let (Some(name_match), Some(full)) = (caps.get(1), caps.get(0)) {
-            let name = name_match.as_str();
-            if let Some(resolved) = resolve_name(name, known_characters) {
-                results.push(DialogueLine {
-                    scene_id,
-                    quote: full.as_str().to_string(),
-                    speaker: resolved,
-                    confidence: 0.80,
-                    method: "indirect_speech".into(),
-                    tag_verb: None,
-                });
-            }
-        }
-    }
-    results
-}
-
-fn speech_verb_re() -> &'static Regex {
-    static INST: OnceLock<Regex> = OnceLock::new();
-    INST.get_or_init(|| {
-        let pat = format!(r"\b(?:{})\b", verb_alternation());
-        Regex::new(&pat).unwrap()
-    })
-}
-
-fn match_speech_tag(text: &str, known_characters: &[String]) -> Option<String> {
-    let verb_re = speech_verb_re();
-
-    // Check known character names near speech verbs using string matching
-    // instead of compiling a regex per character per call.
-    let text_lower = text.to_lowercase();
-    for char_name in known_characters {
-        let name_lower = char_name.to_lowercase();
-        // Check if character name appears in the text (case-insensitive word boundary check)
-        if let Some(name_pos) = text_lower.find(&name_lower) {
-            let name_end = name_pos + name_lower.len();
-            // Verify word boundaries
-            let at_word_start =
-                name_pos == 0 || !text.as_bytes()[name_pos - 1].is_ascii_alphanumeric();
-            let at_word_end =
-                name_end >= text.len() || !text.as_bytes()[name_end].is_ascii_alphanumeric();
-            if at_word_start && at_word_end {
-                // Check if a speech verb appears nearby in the text
-                if verb_re.is_match(text) {
-                    return Some(char_name.clone());
-                }
-            }
-        }
-    }
-
-    // Fallback to generic regex
-    for caps in tag_before_re().captures_iter(text) {
-        if let Some(name) = caps.get(2)
-            && let Some(resolved) = resolve_name(name.as_str(), known_characters) {
-                return Some(resolved);
-            }
-    }
-    for caps in tag_after_re().captures_iter(text) {
-        if let Some(name) = caps.get(1)
-            && let Some(resolved) = resolve_name(name.as_str(), known_characters) {
-                return Some(resolved);
-            }
-    }
-
-    None
-}
-
-fn match_proximity(text: &str, known_characters: &[String]) -> Option<String> {
-    let text_lower = text.to_lowercase();
-    for char_name in known_characters {
-        let name_lower = char_name.to_lowercase();
-        if let Some(pos) = text_lower.find(&name_lower) {
-            let end = pos + name_lower.len();
-            let at_start = pos == 0 || !text.as_bytes()[pos - 1].is_ascii_alphanumeric();
-            let at_end = end >= text.len() || !text.as_bytes()[end].is_ascii_alphanumeric();
-            if at_start && at_end {
-                return Some(char_name.clone());
-            }
-        }
-    }
-    None
-}
-
-fn resolve_name(name: &str, known_characters: &[String]) -> Option<String> {
-    let name_lower = name.to_lowercase();
-    for char_name in known_characters {
-        if char_name.to_lowercase() == name_lower {
-            return Some(char_name.clone());
-        }
-        // Check if name matches first name of a known character
-        let parts: Vec<&str> = char_name.split_whitespace().collect();
-        if let Some(first) = parts.first()
-            && first.to_lowercase() == name_lower
-        {
-            return Some(char_name.clone());
-        }
-    }
-    None
-}
 
 fn compute_voice_profiles(
     all_dialogue: &[DialogueLine],
@@ -904,13 +665,14 @@ fn analyze_conversation_flow(all_dialogue: &[DialogueLine]) -> ConversationFlow 
         }
     }
     if let Some((prev, scene, count)) = run_speaker
-        && count >= 5 {
-            monologues.push(Monologue {
-                speaker: prev.to_string(),
-                line_count: count,
-                scene_id: scene,
-            });
-        }
+        && count >= 5
+    {
+        monologues.push(Monologue {
+            speaker: prev.to_string(),
+            line_count: count,
+            scene_id: scene,
+        });
+    }
 
     let mut dominators_vec: Vec<String> = dominators.into_iter().collect();
     dominators_vec.sort();
@@ -1149,14 +911,16 @@ mod tests {
         let flow = &analysis.conversation_flow;
         assert!(!flow.edges.is_empty());
         // Alice -> Bob and Bob -> Alice edges should exist
-        assert!(flow
-            .edges
-            .iter()
-            .any(|e| e.from == "Alice" && e.to == "Bob"));
-        assert!(flow
-            .edges
-            .iter()
-            .any(|e| e.from == "Bob" && e.to == "Alice"));
+        assert!(
+            flow.edges
+                .iter()
+                .any(|e| e.from == "Alice" && e.to == "Bob")
+        );
+        assert!(
+            flow.edges
+                .iter()
+                .any(|e| e.from == "Bob" && e.to == "Alice")
+        );
     }
 
     #[test]
@@ -1184,10 +948,12 @@ mod tests {
 
         let known = chars(&["Alice", "Bob"]);
         let analysis = analyze_dialogue_patterns(&lines, &known);
-        assert!(analysis
-            .conversation_flow
-            .dominators
-            .contains(&"Alice".to_string()));
+        assert!(
+            analysis
+                .conversation_flow
+                .dominators
+                .contains(&"Alice".to_string())
+        );
     }
 
     #[test]

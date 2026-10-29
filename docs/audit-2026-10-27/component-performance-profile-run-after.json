@@ -1,0 +1,201 @@
+{
+  "details": {
+    "crossBlockCosineMean": -0.027340317951609433,
+    "dim": 100,
+    "documents": 320,
+    "inputBytes": 220000,
+    "neighborPreview": [
+      [
+        "lexemebaaa",
+        0.9910572072824236
+      ],
+      [
+        "lexemefbaa",
+        0.9843357827271259
+      ],
+      [
+        "lexemecaaa",
+        0.9663103200486944
+      ]
+    ],
+    "tokens": 20000,
+    "vectorFingerprint": "f231462b91d7bcbe",
+    "vocab": 2500,
+    "withinBlockCosineMean": 0.5546812462514787
+  },
+  "medianMs": 71.96604099999999,
+  "memoryScope": "Rust allocator requested live bytes above pre-call live allocation; excludes caller corpus, allocator metadata, stack, binary, OS RSS, non-Rust allocations; includes construction intermediates and retained output",
+  "method": "spelling: cold first call then warmed samples of 20 queries; embeddings: identical generated corpus per sample after one tiny initialization warmup; no model runtime",
+  "mode": "embedding",
+  "profile": "release; default features; one process; allocation accounting enabled; compilation excluded",
+  "samples": [
+    {
+      "allocationCalls": 51646,
+      "ms": 73.858625,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 69.57545900000001,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 68.30054200000001,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 67.74825,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 67.650042,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 67.75904100000001,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 67.801,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 67.57945799999999,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 157.326708,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 73.87725,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 73.525167,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 74.78949999999999,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 73.145958,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 75.167333,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 74.66637499999999,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 74.628667,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 72.006125,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 71.81625,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 71.96604099999999,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 72.407958,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 70.56775,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 69.217583,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 69.402833,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 68.302125,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    }
+  ]
+}

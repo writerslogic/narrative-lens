@@ -1,0 +1,274 @@
+{
+  "scope": "Substantive D14 sparse embedding construction and indexed spelling suggestions",
+  "worktree": "/Volumes/A/.codex-worktrees/narrative-lens-release-crosscutting",
+  "files": [
+    {
+      "path": "src/substrate/embedding.rs",
+      "parent_base_sha256": "9f28c0c6f1d8ddf65433a08f0234b6b6407d0f776effe76d421c60b2ecdabd74",
+      "sha256": "18a18c72c60eaa94aba29114421685434ede77db5e592c93ecf1198d1a1835f2"
+    },
+    {
+      "path": "src/substrate/wordfreq.rs",
+      "parent_base_sha256": "5ef623308947a584598157e12ba9f24ce2afc62a7f34224972166aef52787174",
+      "sha256": "ea2be2e0b8c0114fa6fc66a7e1ae252f1f1cf2a7749f3370ab06d5dc2ba4bf1b"
+    },
+    {
+      "path": "examples/component_performance.rs",
+      "parent_base_sha256": null,
+      "sha256": "7f6ba7087f094b88e11b9a24fa6c1a34906856d380b9e60ab3278899abf2ddcd"
+    }
+  ],
+  "host": "Apple M4 arm64;32 GiB RAM",
+  "toolchain": "1.96.0 (ac68faa20 2026-05-25)",
+  "profile": "release; default features; tracked allocator enabled; compilation excluded; sequential processes",
+  "performance": [
+    {
+      "mode": "spelling",
+      "vocab": null,
+      "dim": null,
+      "median_ms_before": 11.909915999999999,
+      "median_ms_after": 0.1805,
+      "speed_ratio": 65.98291412742383,
+      "peak_requested_additional_bytes_before": 13024,
+      "peak_requested_additional_bytes_after": 4464,
+      "peak_reduction_percent": 65.72481572481573,
+      "queries_per_sample": 20,
+      "repetitions": 7,
+      "cold_first_lookup_before": {
+        "allocationCalls": 11917,
+        "ms": 1.141208,
+        "peakAdditionalRequestedBytes": 768,
+        "retainedAdditionalRequestedBytes": 540,
+        "totalRequestedBytes": 582100
+      },
+      "cold_first_lookup_after": {
+        "allocationCalls": 39,
+        "ms": 1.350792,
+        "peakAdditionalRequestedBytes": 2097152,
+        "retainedAdditionalRequestedBytes": 1092636,
+        "totalRequestedBytes": 5288084
+      },
+      "output_length_checksum_matches": true
+    },
+    {
+      "mode": "embedding",
+      "vocab": 128,
+      "dim": 64,
+      "median_ms_before": 1.339917,
+      "median_ms_after": 1.346625,
+      "speed_ratio": 0.9950186577554999,
+      "peak_requested_additional_bytes_before": 458368,
+      "peak_requested_additional_bytes_after": 416760,
+      "peak_reduction_percent": 9.077422507679422,
+      "repetitions": 5,
+      "vector_fingerprint_matches": true,
+      "within_block_cosine_mean_before": 0.11734740198039885,
+      "within_block_cosine_mean_after": 0.11734740198039885,
+      "cross_block_cosine_mean_before": 7.140145654471673e-18,
+      "cross_block_cosine_mean_after": 7.140145654471673e-18
+    },
+    {
+      "mode": "embedding",
+      "vocab": 512,
+      "dim": 100,
+      "median_ms_before": 12.258583,
+      "median_ms_after": 13.363334,
+      "speed_ratio": 0.9173296873370074,
+      "peak_requested_additional_bytes_before": 5323280,
+      "peak_requested_additional_bytes_after": 2442880,
+      "peak_reduction_percent": 54.10949640071535,
+      "repetitions": 5,
+      "vector_fingerprint_matches": false,
+      "within_block_cosine_mean_before": 0.2474020934307951,
+      "within_block_cosine_mean_after": 0.24740193935465252,
+      "cross_block_cosine_mean_before": 0.002907226877619323,
+      "cross_block_cosine_mean_after": 0.0028875982545656354
+    },
+    {
+      "mode": "embedding",
+      "vocab": 1000,
+      "dim": 100,
+      "median_ms_before": 37.90645799999999,
+      "median_ms_after": 27.073625,
+      "speed_ratio": 1.4001249555609931,
+      "peak_requested_additional_bytes_before": 16501248,
+      "peak_requested_additional_bytes_after": 4773552,
+      "peak_reduction_percent": 71.07156985944336,
+      "repetitions": 5,
+      "vector_fingerprint_matches": false,
+      "within_block_cosine_mean_before": 0.39349806080241584,
+      "within_block_cosine_mean_after": 0.39350351540774814,
+      "cross_block_cosine_mean_before": -0.0014741304603976624,
+      "cross_block_cosine_mean_after": -0.0014897180387118988
+    },
+    {
+      "mode": "embedding",
+      "vocab": 2500,
+      "dim": 100,
+      "median_ms_before": 208.660333,
+      "median_ms_after": 71.35475,
+      "speed_ratio": 2.9242668918327093,
+      "peak_requested_additional_bytes_before": 101231336,
+      "peak_requested_additional_bytes_after": 11945240,
+      "peak_reduction_percent": 88.20005694679362,
+      "repetitions": 5,
+      "vector_fingerprint_matches": false,
+      "within_block_cosine_mean_before": 0.5546791127198302,
+      "within_block_cosine_mean_after": 0.5546812462514787,
+      "cross_block_cosine_mean_before": -0.027345264526042568,
+      "cross_block_cosine_mean_after": -0.027340317951609433
+    },
+    {
+      "mode": "embedding",
+      "vocab": 4096,
+      "dim": 100,
+      "median_ms_before": 632.1566250000001,
+      "median_ms_after": 120.34504199999999,
+      "speed_ratio": 5.252868040878661,
+      "peak_requested_additional_bytes_before": 270454800,
+      "peak_requested_additional_bytes_after": 19536768,
+      "peak_reduction_percent": 92.77632787438048,
+      "repetitions": 5,
+      "vector_fingerprint_matches": false,
+      "within_block_cosine_mean_before": 0.6161155490271908,
+      "within_block_cosine_mean_after": 0.6161409537431345,
+      "cross_block_cosine_mean_before": -0.00507770009327615,
+      "cross_block_cosine_mean_after": -0.00493178863471542
+    },
+    {
+      "mode": "embedding-mixed",
+      "vocab": 1000,
+      "dim": 100,
+      "median_ms_before": 40.008458,
+      "median_ms_after": 39.908917,
+      "speed_ratio": 1.0024942044906906,
+      "peak_requested_additional_bytes_before": 16501248,
+      "peak_requested_additional_bytes_after": 5457200,
+      "peak_reduction_percent": 66.92856200937044,
+      "repetitions": 5,
+      "vector_fingerprint_matches": false,
+      "within_block_cosine_mean_before": 0.48569300373202434,
+      "within_block_cosine_mean_after": 0.4857867484680126,
+      "cross_block_cosine_mean_before": -0.01258612818841877,
+      "cross_block_cosine_mean_after": -0.012756699593539755
+    },
+    {
+      "mode": "embedding-mixed",
+      "vocab": 2500,
+      "dim": 100,
+      "median_ms_before": 215.520667,
+      "median_ms_after": 100.11475,
+      "speed_ratio": 2.152736404975291,
+      "peak_requested_additional_bytes_before": 101231336,
+      "peak_requested_additional_bytes_after": 13657208,
+      "peak_reduction_percent": 86.50891261575369,
+      "repetitions": 5,
+      "vector_fingerprint_matches": false,
+      "within_block_cosine_mean_before": 0.7686048994381456,
+      "within_block_cosine_mean_after": 0.7686119674228751,
+      "cross_block_cosine_mean_before": 0.0006924873730992229,
+      "cross_block_cosine_mean_after": 0.000734639660991923
+    }
+  ],
+  "memory_scope": "Rust allocator requested live bytes above pre-call live allocation; excludes caller corpus, allocator metadata, stack, binary, OS RSS, non-Rust allocations; includes construction intermediates and retained output",
+  "profiles": [
+    {
+      "phase": "before",
+      "method": "macOS sample: one second, one-millisecond interval; separate profiling run excluded from timing medians",
+      "main_thread_samples": 836,
+      "sampled_physical_footprint": "113.8M",
+      "top_self_sample_entries": [
+        "matrixmultiply::dgemm_kernel::kernel_target_neon::hceb863579bca6cca  (in component_performance)        573",
+        "        matrixmultiply::gemm::gemm_loop::h1dc66359136b61d9  (in component_performance)        53",
+        "        narrative_lens::substrate::embedding::CorpusEmbedding::train_checked::h002dbb990b51e69c  (in component_performance)        50",
+        "        nalgebra::linalg::householder::clear_column_unchecked::h340bc61c5b07a0a6  (in component_performance)        40",
+        "        _$LT$alloc..vec..Vec$LT$T$GT$$u20$as$u20$alloc..vec..spec_from_iter_nested..SpecFromIterNested$LT$T$C$I$GT$$GT$::from_iter::h203ff18fe447a027  (in component_performance)        33"
+      ],
+      "raw_log": "docs/audit-2026-10-27/component-performance-profile-before.txt"
+    },
+    {
+      "phase": "after",
+      "method": "macOS sample: one second, one-millisecond interval; separate profiling run excluded from timing medians",
+      "main_thread_samples": 773,
+      "sampled_physical_footprint": "20.0M",
+      "top_self_sample_entries": [
+        "nalgebra::linalg::householder::clear_column_unchecked::h340bc61c5b07a0a6  (in component_performance)        271",
+        "        nalgebra::geometry::reflection::Reflection$LT$T$C$D$C$S$GT$::reflect_with_sign::h3a202a11024c3674  (in component_performance)        211",
+        "        narrative_lens::substrate::embedding::PpmiMatrix::multiply::h84d33a0abd599533  (in component_performance)        90",
+        "        nalgebra::geometry::reflection::Reflection$LT$T$C$D$C$S$GT$::reflect_rows_with_sign::h47cfbf866789e617  (in component_performance)        51",
+        "        narrative_lens::substrate::embedding::CorpusEmbedding::train_checked::h002dbb990b51e69c  (in component_performance)        19"
+      ],
+      "raw_log": "docs/audit-2026-10-27/component-performance-profile-after.txt"
+    }
+  ],
+  "checks": [
+    {
+      "command": "cargo test --locked --lib substrate::embedding",
+      "passed": 18,
+      "log": "docs/audit-2026-10-27/component-performance-embedding-tests.log"
+    },
+    {
+      "command": "cargo test --locked --lib substrate::wordfreq",
+      "passed": 8,
+      "log": "docs/audit-2026-10-27/component-performance-spelling-tests.log"
+    },
+    {
+      "command": "cargo test --locked --lib craft::grammar",
+      "passed": 2,
+      "log": "docs/audit-2026-10-27/component-performance-grammar-tests.log"
+    },
+    {
+      "command": "cargo clippy --locked --lib --example component_performance -- -D warnings",
+      "result": "pass",
+      "log": "docs/audit-2026-10-27/component-performance-clippy.log"
+    },
+    {
+      "command": "rustfmt --edition 2024 --check src/substrate/embedding.rs src/substrate/wordfreq.rs examples/component_performance.rs",
+      "result": "pass"
+    }
+  ],
+  "algorithm_changes": [
+    "Spelling: lazily shared compact character trie over eligible lexicon; first-character filter preserved; banded radius-two Levenshtein traversal reuses depth rows; exact distance/frequency/lexical ranking.",
+    "Embedding: accumulate observed counts sparsely with dense fallback at quarter occupancy; deterministic sorted CSR PPMI avoids dense vocabulary-square matrices for sparse truncated problems.",
+    "Large-space randomized factorization applies both M transpose and M with reorthogonalization; previous assumption that smoothed PPMI is symmetric was false. Fixed deterministic Rademacher projection; thin dense QR/SVD retained.",
+    "Small spaces and full-rank requests preserve the exact dense factorization path; 128-vocabulary model vectors match baseline bit for bit.",
+    "Drop token sequences before factorization to shorten peak ownership. No dependencies, public APIs, serialization contracts or caps changed."
+  ],
+  "regressions": [
+    "Exact spelling parity against previous full-scan oracle on real misspellings, output limits, Unicode, insertion/deletion/substitution/transposition dictionary mutations, radius/length boundaries and frequency/lexical ties.",
+    "Sparse PPMI and forward/transpose products match dense equations with isolated zero rows and asymmetric smoothed marginals.",
+    "Adaptive sparse-to-dense promotion verified at threshold-1, threshold, threshold+1 with repeated counts.",
+    "Nonsymmetric nilpotent rank-six case verifies transpose power steps, top singular values and relative reconstructed Gram residual <1e-10 against exact dense SVD.",
+    "Large sparse corpus reproduces all vectors exactly on repeated training and preserves separated topic neighbors/cosines.",
+    "Document edit/addition preserves learned word vectors and atomically refreshes dense/scene/lexical retrieval."
+  ],
+  "limits": [
+    "Synthetic bounded corpora and one machine; no claim about natural-language retrieval quality outside regression fixtures, all platforms or generic embedding models.",
+    "512-vocabulary dim100 build is about9% slower; 1000 mixed-context timing is approximately unchanged, despite lower memory. Reorthogonalization intentionally adds numerical stability cost.",
+    "First spelling call builds a shared index: about1.09MB retained requested bytes and2MiB peak extra; subsequent lookup timings exclude this one-time construction.",
+    "Sparse solver remains approximate for large truncated spaces and may reorder neighbors versus the previous mathematically incorrect symmetric power iteration; same-build determinism is verified, cross-platform bitwise equality is not claimed.",
+    "Dense fallback remains for high occupancy, small vocabularies and near-full-rank requests; no universal subquadratic bound is claimed.",
+    "Tracked memory is logical Rust allocation, not full process RSS; short sample physical footprints are supplementary observations only.",
+    "Root owns final integrated feature/platform gates; tests here use isolated existing worktree with root-synced target source/Cargo files."
+  ],
+  "sources": [
+    {
+      "url": "https://users.oden.utexas.edu/~pgm/Pubs/2010_HMT_random_review.pdf",
+      "supports": "Halko et al., section4.5 Algorithm4.4: alternating matrix/transpose multiplication with QR reorthogonalization; deterministic projection differs from Gaussian theorem assumptions."
+    },
+    {
+      "url": "https://aclanthology.org/Q15-1016/",
+      "supports": "Levy et al.2015 context-distribution smoothing/count-based embedding approach; no reproduced frontier quality claim."
+    }
+  ],
+  "raw_evidence": [
+    "docs/audit-2026-10-27/component-performance-before.json",
+    "docs/audit-2026-10-27/component-performance-after.json"
+  ],
+  "excluded_root_owned_sync": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "examples/export_standalone_contracts.rs"
+  ],
+  "status": "Frozen for parent integration; no commits or pushes"
+}

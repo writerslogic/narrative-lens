@@ -14,6 +14,8 @@ pub mod onnx;
 #[cfg(feature = "node-api")]
 mod napi_bindings;
 
+pub mod manuscript;
+
 pub mod error;
 pub mod types;
 

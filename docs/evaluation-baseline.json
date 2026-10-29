@@ -1,0 +1,337 @@
+{
+  "annotationOrigin": "OpenAI Codex agent-authored original fiction and engineering labels, 2026-10-27; no human editorial review; not extracted from published work",
+  "corpusVersion": "synthetic-fiction-v1",
+  "metrics": {
+    "calibration/continuity": {
+      "brierScore": 0.36888888888888893,
+      "cases": 9,
+      "falseNegatives": 2,
+      "falsePositiveRate": 0.3333333333333333,
+      "falsePositives": 2,
+      "precision": 0.3333333333333333,
+      "recall": 0.3333333333333333,
+      "reliability": [
+        {
+          "count": 6,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.3333333333333333
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 3,
+          "meanConfidence": 0.8000000000000002,
+          "observedPositiveRate": 0.3333333333333333
+        }
+      ],
+      "trueNegatives": 4,
+      "truePositives": 1
+    },
+    "calibration/grammar": {
+      "brierScore": 0.20000000000000004,
+      "cases": 7,
+      "falseNegatives": 0,
+      "falsePositiveRate": 0.5,
+      "falsePositives": 2,
+      "precision": 0.6,
+      "recall": 1.0,
+      "reliability": [
+        {
+          "count": 2,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 5,
+          "meanConfidence": 0.8,
+          "observedPositiveRate": 0.6
+        }
+      ],
+      "trueNegatives": 2,
+      "truePositives": 3
+    },
+    "calibration/pacing": {
+      "brierScore": 0.17000000000000004,
+      "cases": 4,
+      "falseNegatives": 0,
+      "falsePositiveRate": 0.3333333333333333,
+      "falsePositives": 1,
+      "precision": 0.5,
+      "recall": 1.0,
+      "reliability": [
+        {
+          "count": 2,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 2,
+          "meanConfidence": 0.8,
+          "observedPositiveRate": 0.5
+        }
+      ],
+      "trueNegatives": 2,
+      "truePositives": 1
+    },
+    "calibration/readability": {
+      "brierScore": 0.17000000000000004,
+      "cases": 4,
+      "falseNegatives": 0,
+      "falsePositiveRate": 0.3333333333333333,
+      "falsePositives": 1,
+      "precision": 0.5,
+      "recall": 1.0,
+      "reliability": [
+        {
+          "count": 2,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 2,
+          "meanConfidence": 0.8,
+          "observedPositiveRate": 0.5
+        }
+      ],
+      "trueNegatives": 2,
+      "truePositives": 1
+    },
+    "calibration/structure": {
+      "brierScore": 0.17000000000000004,
+      "cases": 4,
+      "falseNegatives": 0,
+      "falsePositiveRate": 0.3333333333333333,
+      "falsePositives": 1,
+      "precision": 0.5,
+      "recall": 1.0,
+      "reliability": [
+        {
+          "count": 2,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 2,
+          "meanConfidence": 0.8,
+          "observedPositiveRate": 0.5
+        }
+      ],
+      "trueNegatives": 2,
+      "truePositives": 1
+    },
+    "held_out/continuity": {
+      "brierScore": 0.36888888888888893,
+      "cases": 9,
+      "falseNegatives": 2,
+      "falsePositiveRate": 0.3333333333333333,
+      "falsePositives": 2,
+      "precision": 0.3333333333333333,
+      "recall": 0.3333333333333333,
+      "reliability": [
+        {
+          "count": 6,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.3333333333333333
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 3,
+          "meanConfidence": 0.8000000000000002,
+          "observedPositiveRate": 0.3333333333333333
+        }
+      ],
+      "trueNegatives": 4,
+      "truePositives": 1
+    },
+    "held_out/grammar": {
+      "brierScore": 0.20000000000000004,
+      "cases": 7,
+      "falseNegatives": 0,
+      "falsePositiveRate": 0.5,
+      "falsePositives": 2,
+      "precision": 0.6,
+      "recall": 1.0,
+      "reliability": [
+        {
+          "count": 2,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 5,
+          "meanConfidence": 0.8,
+          "observedPositiveRate": 0.6
+        }
+      ],
+      "trueNegatives": 2,
+      "truePositives": 3
+    },
+    "held_out/pacing": {
+      "brierScore": 0.17000000000000004,
+      "cases": 4,
+      "falseNegatives": 0,
+      "falsePositiveRate": 0.3333333333333333,
+      "falsePositives": 1,
+      "precision": 0.5,
+      "recall": 1.0,
+      "reliability": [
+        {
+          "count": 2,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 2,
+          "meanConfidence": 0.8,
+          "observedPositiveRate": 0.5
+        }
+      ],
+      "trueNegatives": 2,
+      "truePositives": 1
+    },
+    "held_out/readability": {
+      "brierScore": 0.17000000000000004,
+      "cases": 4,
+      "falseNegatives": 0,
+      "falsePositiveRate": 0.3333333333333333,
+      "falsePositives": 1,
+      "precision": 0.5,
+      "recall": 1.0,
+      "reliability": [
+        {
+          "count": 2,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 2,
+          "meanConfidence": 0.8,
+          "observedPositiveRate": 0.5
+        }
+      ],
+      "trueNegatives": 2,
+      "truePositives": 1
+    },
+    "held_out/structure": {
+      "brierScore": 0.17000000000000004,
+      "cases": 4,
+      "falseNegatives": 0,
+      "falsePositiveRate": 0.3333333333333333,
+      "falsePositives": 1,
+      "precision": 0.5,
+      "recall": 1.0,
+      "reliability": [
+        {
+          "count": 2,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 0,
+          "meanConfidence": 0.0,
+          "observedPositiveRate": 0.0
+        },
+        {
+          "count": 2,
+          "meanConfidence": 0.8,
+          "observedPositiveRate": 0.5
+        }
+      ],
+      "trueNegatives": 2,
+      "truePositives": 1
+    }
+  },
+  "mode": "legacy"
+}

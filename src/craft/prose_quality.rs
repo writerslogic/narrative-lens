@@ -8,6 +8,7 @@ use log::debug;
 use serde::Serialize;
 
 /// A prose quality issue found in a scene.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProseExample {
@@ -32,7 +33,10 @@ fn truncate(s: &str, max: usize) -> String {
     if s.len() <= max {
         s.to_string()
     } else {
-        format!("{}...", &s[..crate::substrate::text::floor_char_boundary(s, max)])
+        format!(
+            "{}...",
+            &s[..crate::substrate::text::floor_char_boundary(s, max)]
+        )
     }
 }
 
@@ -82,7 +86,10 @@ struct ClicheMatcher {
 fn cliche_matcher() -> &'static ClicheMatcher {
     static INST: OnceLock<ClicheMatcher> = OnceLock::new();
     INST.get_or_init(|| {
-        let automaton = AhoCorasick::new(CLICHE_PHRASES).expect("cliche automaton");
+        let automaton = AhoCorasick::builder()
+            .ascii_case_insensitive(true)
+            .build(CLICHE_PHRASES)
+            .expect("cliche automaton");
         ClicheMatcher { automaton }
     })
 }
@@ -360,14 +367,15 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
         }
 
         // Cliche detection (whole scene)
-        let lower_scene = scene_text.to_lowercase();
-        for mat in cliche.automaton.find_iter(&lower_scene) {
+        for mat in cliche.automaton.find_iter(scene_text) {
             if examples.len() >= MAX_PROSE_EXAMPLES {
                 break;
             }
-            let matched = &lower_scene[mat.start()..mat.end()];
-            let ctx_start =
-                crate::substrate::text::floor_char_boundary(scene_text, mat.start().saturating_sub(20));
+            let matched = &scene_text[mat.start()..mat.end()];
+            let ctx_start = crate::substrate::text::floor_char_boundary(
+                scene_text,
+                mat.start().saturating_sub(20),
+            );
             let ctx_end = crate::substrate::text::ceil_char_boundary(
                 scene_text,
                 (mat.end() + 20).min(scene_text.len()),
@@ -596,18 +604,22 @@ mod tests {
     fn test_floating_head_dialogue() {
         let text = "\"Hello,\" she said.\n\"Hi there.\"\n\"How are you?\"\n\"Fine.\"\n\"Good.\"\n\"Great.\"".to_string();
         let results = collect_prose_examples(&[text]);
-        assert!(results
-            .iter()
-            .any(|p| p.issue_type == "floating_head_dialogue"));
+        assert!(
+            results
+                .iter()
+                .any(|p| p.issue_type == "floating_head_dialogue")
+        );
     }
 
     #[test]
     fn test_no_floating_head_with_beats() {
         let text = "\"Hello,\" she said.\nHe shifted his weight.\n\"Hi there.\"\nShe smiled.\n\"How are you?\"".to_string();
         let results = collect_prose_examples(&[text]);
-        assert!(!results
-            .iter()
-            .any(|p| p.issue_type == "floating_head_dialogue"));
+        assert!(
+            !results
+                .iter()
+                .any(|p| p.issue_type == "floating_head_dialogue")
+        );
     }
 
     #[test]

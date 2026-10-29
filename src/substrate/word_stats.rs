@@ -21,6 +21,7 @@ use serde::{Deserialize, Serialize};
 /// One word and how many times it occurs in the analyzed text. `Eq` is sound
 /// here (only a `String` and a `usize`; no floats), unlike float-carrying
 /// payloads elsewhere.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WordCount {
@@ -42,22 +43,14 @@ pub struct WordCount {
 /// literally: `0` yields an empty result; callers are expected to clamp
 /// `limit` to a sane range before calling.
 ///
-/// **Tokenization:** this standalone entry point splits on any non-alphanumeric
-/// character, which is dependency-free and good enough for unit tests. A
-/// caller that already has tokens can instead tokenize with
-/// [`crate::substrate::text::tokenize_words`] (which preserves internal
-/// apostrophes and matches the crate's other word counts) and call
-/// [`word_frequencies_from_words`] directly, so both paths share the one
-/// counting/ranking core below and can't diverge.
+/// Uses the canonical word boundaries, including internal apostrophes. Both
+/// entrypoints normalize case and typographic apostrophes before counting.
 pub fn word_frequencies(
     text: &str,
     limit: usize,
     is_stopword: impl Fn(&str) -> bool,
 ) -> Vec<WordCount> {
-    let words = text
-        .split(|c: char| !c.is_alphanumeric())
-        .filter(|s| !s.is_empty())
-        .map(str::to_lowercase);
+    let words = crate::substrate::text::word_slices(text).map(str::to_owned);
     word_frequencies_from_words(words, limit, is_stopword)
 }
 
@@ -80,7 +73,7 @@ pub fn word_frequencies_from_words(
 
     let mut counts: HashMap<String, usize> = HashMap::new();
     for word in words {
-        let word = word.to_lowercase();
+        let word = crate::substrate::text::normalize_word(&word);
         // Single-character tokens (and stopwords) carry no repetition signal a
         // writer would act on, so they never enter the tally. Count chars, not
         // bytes, so a one-glyph multibyte token is still treated as single-char.

@@ -1,0 +1,13 @@
+{
+  "source": "/Volumes/A/narrative-lens",
+  "files": {
+    "Cargo.toml": "ac6c14d8703980121e7e239b4cdec6536f48891f45cb68f8a268ecddbdc5257c",
+    "Cargo.lock": "0ea96def393475ad8f12a2196250839a30e59e746ba2d5493b5166bdde314558",
+    "src/onnx/checked.rs": "b2bda09bfa9b974c36d915532b1bd5c18a1558cef0dbdc0d3ecfaf98a0bf0db2",
+    "src/onnx/decode.rs": "e208b0343d898d709aa4498dec78fa8deff58ac3c4ba2f709b57197b37bdcde0",
+    "src/onnx/mod.rs": "429e3eafdeb8784f5ac8a10f81d90d004cc9604f91d79bf5c43f5c6015239297",
+    "src/onnx/model.rs": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "src/onnx/ort_backend.rs": "9c3ccf27582018bebfe969d9f1b8d455ec6f60e53067317cf575e23ea84ba3a3",
+    "src/onnx/tract_backend.rs": "d846e53dc100bdfdaf8ae50bb2a6a5ebcef88f0ba430ad6eb7d3202a2b26f58c"
+  }
+}

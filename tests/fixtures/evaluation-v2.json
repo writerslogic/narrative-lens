@@ -1,0 +1,2075 @@
+{
+  "version": "finding-level-fiction-v2.1",
+  "annotationOrigin": "OpenAI Codex agent-authored original fiction and annotations; no human editorial review",
+  "splitPolicy": "Nonempty complete passage texts are disjoint across splits; empty input appears in both as an unscored boundary case. Related synthetic templates remain. These are engineering cases, not independent editorial samples. Calibration may only use calibration labels.",
+  "cases": [
+    {
+      "id": "c-mechanics-mixed",
+      "split": "calibration",
+      "family": "c-copyedit-two-actions",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-copyedit-two-actions",
+      "manuscript": {
+        "documentId": "c-mechanics-mixed",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Zoë saw saw the sealed door. A  bell rang beyond the harbor.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-GRAMMAR-REPETITION",
+          "sceneId": "opening",
+          "quote": "saw",
+          "occurrence": 1,
+          "related": [],
+          "range": {
+            "byteStart": 9,
+            "byteEnd": 12,
+            "utf16Start": 8,
+            "utf16End": 11
+          }
+        },
+        {
+          "ruleId": "NL-GRAMMAR-WHITESPACE",
+          "sceneId": "opening",
+          "quote": " ",
+          "occurrence": 7,
+          "related": [],
+          "range": {
+            "byteStart": 32,
+            "byteEnd": 33,
+            "utf16Start": 31,
+            "utf16End": 32
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "91fc8e59f4d13d9969dd222f02ed374fe30f16d5963e525039669c6d1a4a60d7"
+    },
+    {
+      "id": "c-duplicates",
+      "split": "calibration",
+      "family": "c-different-repetition-contexts",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-different-repetition-contexts",
+      "manuscript": {
+        "documentId": "c-duplicates",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Zoë heard heard the bell. The child heard heard the sea.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-GRAMMAR-REPETITION",
+          "sceneId": "opening",
+          "quote": "heard",
+          "occurrence": 1,
+          "related": [],
+          "range": {
+            "byteStart": 11,
+            "byteEnd": 16,
+            "utf16Start": 10,
+            "utf16End": 15
+          }
+        },
+        {
+          "ruleId": "NL-GRAMMAR-REPETITION",
+          "sceneId": "opening",
+          "quote": "heard",
+          "occurrence": 3,
+          "related": [],
+          "range": {
+            "byteStart": 43,
+            "byteEnd": 48,
+            "utf16Start": 42,
+            "utf16End": 47
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "40492c39984a013c6df3bc813baaf77fc684784b161e016a8b03f3105716e774"
+    },
+    {
+      "id": "c-clean",
+      "split": "calibration",
+      "family": "c-clean-mechanics",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-clean-mechanics",
+      "manuscript": {
+        "documentId": "c-clean",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Zoë counted the boats at the harbor. Each had a light at its mast.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "822e01ba02dc0bc57ef1823ba1f74fd08cedebd9a1346b59ab783aa953fa54cb"
+    },
+    {
+      "id": "c-intentional-repetition",
+      "split": "calibration",
+      "family": "c-deliberate-emphasis",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-deliberate-emphasis",
+      "manuscript": {
+        "documentId": "c-intentional-repetition",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Never never open that door, Zoë whispered.",
+            "intentions": [
+              "repetition"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "d1a67a0acba36265609421e65bfee52ba7fbd1b0eb37407b2957c39b3969ea7f"
+    },
+    {
+      "id": "c-rhetorical-punctuation",
+      "split": "calibration",
+      "family": "c-punctuated-repetition",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-punctuated-repetition",
+      "manuscript": {
+        "documentId": "c-rhetorical-punctuation",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Run, run, Zoë said. The child stayed by the harbor.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "9678700657d493457e541f0bb14acd91eaf0b62c880205321d2389534dd9b4bf"
+    },
+    {
+      "id": "c-unicode",
+      "split": "calibration",
+      "family": "c-unicode-mechanics",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-unicode-mechanics",
+      "manuscript": {
+        "documentId": "c-unicode",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "😀 雪. Zoë came came back to the harbor.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-GRAMMAR-REPETITION",
+          "sceneId": "opening",
+          "quote": "came",
+          "occurrence": 1,
+          "related": [],
+          "range": {
+            "byteStart": 20,
+            "byteEnd": 24,
+            "utf16Start": 15,
+            "utf16End": 19
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "189c9b068a1ffdac180552be93b8f9c1f519c1cfca8125af6cd46515f0f95a41"
+    },
+    {
+      "id": "c-dictionary",
+      "split": "calibration",
+      "family": "c-typo-versus-author-dictionary",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-typo-versus-author-dictionary",
+      "manuscript": {
+        "documentId": "c-dictionary",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Zoë saw a qwick bird beside the wyrmlet.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-SPELLING"
+          ],
+          "dictionary": [
+            "wyrmlet"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-GRAMMAR-SPELLING",
+          "sceneId": "opening",
+          "quote": "qwick",
+          "occurrence": 0,
+          "related": [],
+          "range": {
+            "byteStart": 11,
+            "byteEnd": 16,
+            "utf16Start": 10,
+            "utf16End": 15
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "882a24da870211d3d1aa45a5b1fe98eb8b83c5dde0085dfb820e3facd2f38713"
+    },
+    {
+      "id": "c-dialect",
+      "split": "calibration",
+      "family": "c-dialect",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-dialect",
+      "manuscript": {
+        "documentId": "c-dialect",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Keep walkin till the moon is high, Zoë said.",
+            "intentions": [
+              "dialect"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-SPELLING"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "12096cd27d1c6c1950f06cb277a1613701a6c4a1c4d91c8a2684d5176f8b2122"
+    },
+    {
+      "id": "c-lexicon",
+      "split": "calibration",
+      "family": "c-editorial-terms",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-editorial-terms",
+      "manuscript": {
+        "documentId": "c-lexicon",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Zoë suddenly saw the suddenly bright lights near the harbor.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-PROSE-LEXICON"
+          ],
+          "lexicon": [
+            "suddenly"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-PROSE-LEXICON",
+          "sceneId": "opening",
+          "quote": "suddenly",
+          "occurrence": 0,
+          "related": [],
+          "range": {
+            "byteStart": 5,
+            "byteEnd": 13,
+            "utf16Start": 4,
+            "utf16End": 12
+          }
+        },
+        {
+          "ruleId": "NL-PROSE-LEXICON",
+          "sceneId": "opening",
+          "quote": "suddenly",
+          "occurrence": 1,
+          "related": [],
+          "range": {
+            "byteStart": 22,
+            "byteEnd": 30,
+            "utf16Start": 21,
+            "utf16End": 29
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "4263014dbd13c8e1d91a3f1ac67dd026444c51c0b09c90d9053d51db92198543"
+    },
+    {
+      "id": "c-lexicon-boundary",
+      "split": "calibration",
+      "family": "c-whole-word-boundaries",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-whole-word-boundaries",
+      "manuscript": {
+        "documentId": "c-lexicon-boundary",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "The café was almost empty. Zoë waited by the harbor.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-PROSE-LEXICON"
+          ],
+          "lexicon": [
+            "cafe",
+            "most"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "b92601c12598cd0fab8f1d8f4908a6363a136aef59135b1c7f679c9f468e2a03"
+    },
+    {
+      "id": "c-location",
+      "split": "calibration",
+      "family": "c-locked-location",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-locked-location",
+      "manuscript": {
+        "documentId": "c-location",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Zoë was in the cellar. Someone locked the door.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "Zoë entered the garden.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-LOCKED"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-CONTINUITY-LOCKED",
+          "sceneId": "after",
+          "quote": "Zoë entered the garden.",
+          "occurrence": 0,
+          "related": [
+            {
+              "sceneId": "before",
+              "quote": "Zoë was in the cellar. Someone locked the door."
+            }
+          ],
+          "range": {
+            "byteStart": 0,
+            "byteEnd": 24,
+            "utf16Start": 0,
+            "utf16End": 23
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "7e03b80934c76179462e6b17c55f40e8c9997dc05c135f74e55dc83180e148f5"
+    },
+    {
+      "id": "c-release",
+      "split": "calibration",
+      "family": "c-explicit-release",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-explicit-release",
+      "manuscript": {
+        "documentId": "c-release",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Zoë was in the cellar. Someone locked the door.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "Zoë escaped from the cellar. Zoë entered the garden.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-LOCKED"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "cb175a1ef0d9ac31f3bbb08e54fc6f383006e255bfdaa3790896fc9229f37af2"
+    },
+    {
+      "id": "c-supernatural",
+      "split": "calibration",
+      "family": "c-intentional-physical-exception",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-intentional-physical-exception",
+      "manuscript": {
+        "documentId": "c-supernatural",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Zoë was in the cellar. Someone locked the door.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "Zoë entered the garden.",
+            "intentions": [
+              "supernatural"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-LOCKED"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "7e03b80934c76179462e6b17c55f40e8c9997dc05c135f74e55dc83180e148f5"
+    },
+    {
+      "id": "c-eye-conflict",
+      "split": "calibration",
+      "family": "c-stable-attribute",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-stable-attribute",
+      "manuscript": {
+        "documentId": "c-eye-conflict",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Zoë had blue eyes.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "Zoë had brown eyes.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-ATTRIBUTE"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-CONTINUITY-ATTRIBUTE",
+          "sceneId": "after",
+          "quote": "Zoë had brown eyes.",
+          "occurrence": 0,
+          "related": [
+            {
+              "sceneId": "before",
+              "quote": "Zoë had blue eyes."
+            }
+          ],
+          "range": {
+            "byteStart": 0,
+            "byteEnd": 20,
+            "utf16Start": 0,
+            "utf16End": 19
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "9e3e68f3a7f0beb15e2251420cf5d0ec431d9aab5f4647f64f8bd660e658ecfe"
+    },
+    {
+      "id": "c-quoted-eye",
+      "split": "calibration",
+      "family": "c-dialogue-is-not-fact",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-dialogue-is-not-fact",
+      "manuscript": {
+        "documentId": "c-quoted-eye",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Zoë had blue eyes.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "😀 “Zoë had brown eyes.”",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-ATTRIBUTE"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "480d712578541b78299a7384ee9f9208aa77f73b24b3698170b08151d8a45df5"
+    },
+    {
+      "id": "c-grey-gray",
+      "split": "calibration",
+      "family": "c-spelling-variant-colors",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-spelling-variant-colors",
+      "manuscript": {
+        "documentId": "c-grey-gray",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Zoë had grey eyes.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "Zoë had gray eyes.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-ATTRIBUTE"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "5234209cae7bb59c4ed703864927742d448521588b252df5d1949fdfc10bffa9"
+    },
+    {
+      "id": "c-object",
+      "split": "calibration",
+      "family": "c-object-change",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-object-change",
+      "manuscript": {
+        "documentId": "c-object",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "The key was on the desk.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "The key was on the shelf.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-OBJECT"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-CONTINUITY-OBJECT",
+          "sceneId": "after",
+          "quote": "The key was on the shelf.",
+          "occurrence": 0,
+          "related": [
+            {
+              "sceneId": "before",
+              "quote": "The key was on the desk."
+            }
+          ],
+          "range": {
+            "byteStart": 0,
+            "byteEnd": 25,
+            "utf16Start": 0,
+            "utf16End": 25
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "e11d062f8ecfc4a338ffdb7de330317c547fc14e9d57f4f4d1a875171fb97783"
+    },
+    {
+      "id": "c-object-transfer",
+      "split": "calibration",
+      "family": "c-explicit-object-transfer",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-explicit-object-transfer",
+      "manuscript": {
+        "documentId": "c-object-transfer",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "The book was in the cabin.",
+            "intentions": []
+          },
+          {
+            "id": "bridge",
+            "text": "Zoë carried the book to the bridge.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "The book was on the bridge.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-OBJECT"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "2635b6abf278c87f1e6ef99e00c8b187e64a1475e368d15cef778c5bd46e5e45"
+    },
+    {
+      "id": "c-empty",
+      "split": "calibration",
+      "family": "c-empty-input",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-empty-input",
+      "manuscript": {
+        "documentId": "c-empty",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-READABILITY-COMPLEX",
+            "NL-PACING-LONG"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "c-readability",
+      "split": "calibration",
+      "family": "c-dense-exposition",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-dense-exposition",
+      "manuscript": {
+        "documentId": "c-readability",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. ",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-READABILITY-COMPLEX"
+          ],
+          "genre": "Mystery"
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-READABILITY-COMPLEX",
+          "sceneId": "opening",
+          "quote": null,
+          "occurrence": 0,
+          "related": []
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "04d274a959cad14684e2878e95fd95ded02c8ab1470e882b8588097c068d3a6c"
+    },
+    {
+      "id": "c-readability-intention",
+      "split": "calibration",
+      "family": "c-intentional-dense-narrator",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-intentional-dense-narrator",
+      "manuscript": {
+        "documentId": "c-readability-intention",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. Institutional representatives reconsidered constitutional obligations while investigating interplanetary communication and bureaucratic responsibility. ",
+            "intentions": [
+              "complex_prose"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-READABILITY-COMPLEX"
+          ],
+          "genre": "Mystery"
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "04d274a959cad14684e2878e95fd95ded02c8ab1470e882b8588097c068d3a6c"
+    },
+    {
+      "id": "c-pacing",
+      "split": "calibration",
+      "family": "c-unbroken-sentence",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-unbroken-sentence",
+      "manuscript": {
+        "documentId": "c-pacing",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Zoë followed the road past the harbor and over the hill and through the trees and down to the field where the birds called from the branches and the light fell on the water and the path turned toward the town and the river shone beside the old stone bridge and the gate stood open by the house and the clouds moved across the sky and the wind bent the grass beside the wall and the bell rang in the tower while the ferry left the far bank and the first stars came out above the dark fields beyond the old house where a child waited by the fire.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-PACING-LONG"
+          ],
+          "genre": "Mystery"
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-PACING-LONG",
+          "sceneId": "opening",
+          "quote": null,
+          "occurrence": 0,
+          "related": []
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "788c4ead8eb4ebaeb1b8bdfa491a5218da7038a5b1a1994bedb2950db0091fbb"
+    },
+    {
+      "id": "c-pacing-intention",
+      "split": "calibration",
+      "family": "c-intentional-breathless-sentence",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-intentional-breathless-sentence",
+      "manuscript": {
+        "documentId": "c-pacing-intention",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Zoë followed the road past the harbor and over the hill and through the trees and down to the field where the birds called from the branches and the light fell on the water and the path turned toward the town and the river shone beside the old stone bridge and the gate stood open by the house and the clouds moved across the sky and the wind bent the grass beside the wall and the bell rang in the tower while the ferry left the far bank and the first stars came out above the dark fields beyond the old house where a child waited by the fire.",
+            "intentions": [
+              "long_sentences"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-PACING-LONG"
+          ],
+          "genre": "Mystery"
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "788c4ead8eb4ebaeb1b8bdfa491a5218da7038a5b1a1994bedb2950db0091fbb"
+    },
+    {
+      "id": "c-structure",
+      "split": "calibration",
+      "family": "c-declared-three-act-arc",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-declared-three-act-arc",
+      "manuscript": {
+        "documentId": "c-structure",
+        "scenes": [
+          {
+            "id": "setup",
+            "text": "Zoë found a letter at the harbor.",
+            "intentions": [],
+            "purpose": "setup inciting incident"
+          },
+          {
+            "id": "middle",
+            "text": "Zoë followed the trail across the sea.",
+            "intentions": [],
+            "purpose": "confrontation midpoint"
+          },
+          {
+            "id": "ending",
+            "text": "Zoë came home with the missing child.",
+            "intentions": [],
+            "purpose": "climax resolution"
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-STRUCTURE-MISSING-BEAT"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "1d62e010a341b4c30b6d9b7c6153f06682e25d372c0e856ff30f559a99b8d857"
+    },
+    {
+      "id": "c-flat",
+      "split": "calibration",
+      "family": "c-missing-conventional-beats",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-missing-conventional-beats",
+      "manuscript": {
+        "documentId": "c-flat",
+        "scenes": [
+          {
+            "id": "one",
+            "text": "The clock at the harbor stopped.",
+            "intentions": []
+          },
+          {
+            "id": "two",
+            "text": "The clock at the harbor stopped.",
+            "intentions": []
+          },
+          {
+            "id": "three",
+            "text": "The clock at the harbor stopped.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-STRUCTURE-MISSING-BEAT"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-STRUCTURE-MISSING-BEAT",
+          "sceneId": null,
+          "quote": null,
+          "occurrence": 0,
+          "related": [],
+          "messageContains": "Climax"
+        }
+      ],
+      "exhaustive": false,
+      "textSha256": "46124af61ab7d1dae12425b0ff828ec478a1b393fccd262d4688c8ded46adde4"
+    },
+    {
+      "id": "c-nonlinear",
+      "split": "calibration",
+      "family": "c-intentional-cyclical-form",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "c-intentional-cyclical-form",
+      "manuscript": {
+        "documentId": "c-nonlinear",
+        "scenes": [
+          {
+            "id": "one",
+            "text": "The clock at the harbor stopped.",
+            "intentions": [
+              "nonlinear"
+            ]
+          },
+          {
+            "id": "two",
+            "text": "The clock at the harbor stopped.",
+            "intentions": [
+              "nonlinear"
+            ]
+          },
+          {
+            "id": "three",
+            "text": "The clock at the harbor stopped.",
+            "intentions": [
+              "nonlinear"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-STRUCTURE-MISSING-BEAT"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "46124af61ab7d1dae12425b0ff828ec478a1b393fccd262d4688c8ded46adde4"
+    },
+    {
+      "id": "h-mechanics-mixed",
+      "split": "held_out",
+      "family": "h-copyedit-two-actions",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-copyedit-two-actions",
+      "manuscript": {
+        "documentId": "h-mechanics-mixed",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Mara saw saw the sealed door. A  bell rang beyond the observatory.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-GRAMMAR-REPETITION",
+          "sceneId": "opening",
+          "quote": "saw",
+          "occurrence": 1,
+          "related": [],
+          "range": {
+            "byteStart": 9,
+            "byteEnd": 12,
+            "utf16Start": 9,
+            "utf16End": 12
+          }
+        },
+        {
+          "ruleId": "NL-GRAMMAR-WHITESPACE",
+          "sceneId": "opening",
+          "quote": " ",
+          "occurrence": 7,
+          "related": [],
+          "range": {
+            "byteStart": 32,
+            "byteEnd": 33,
+            "utf16Start": 32,
+            "utf16End": 33
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "bf968bf2f9c84b3a90ba18453d327c9fe0f320a423e9e56899783cc21f7148ba"
+    },
+    {
+      "id": "h-duplicates",
+      "split": "held_out",
+      "family": "h-different-repetition-contexts",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-different-repetition-contexts",
+      "manuscript": {
+        "documentId": "h-duplicates",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Mara heard heard the bell. The child heard heard the sea.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-GRAMMAR-REPETITION",
+          "sceneId": "opening",
+          "quote": "heard",
+          "occurrence": 1,
+          "related": [],
+          "range": {
+            "byteStart": 11,
+            "byteEnd": 16,
+            "utf16Start": 11,
+            "utf16End": 16
+          }
+        },
+        {
+          "ruleId": "NL-GRAMMAR-REPETITION",
+          "sceneId": "opening",
+          "quote": "heard",
+          "occurrence": 3,
+          "related": [],
+          "range": {
+            "byteStart": 43,
+            "byteEnd": 48,
+            "utf16Start": 43,
+            "utf16End": 48
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "de244855247fa52def073f773c4040e328edf526fcf46b865c26ee6ab3477fe2"
+    },
+    {
+      "id": "h-clean",
+      "split": "held_out",
+      "family": "h-clean-mechanics",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-clean-mechanics",
+      "manuscript": {
+        "documentId": "h-clean",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Mara counted the boats at the observatory. Each had a light at its mast.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "40a7b6110048eef1baf089a46d77493427deb2d1ca2800bcee01a5d910f87c2a"
+    },
+    {
+      "id": "h-intentional-repetition",
+      "split": "held_out",
+      "family": "h-deliberate-emphasis",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-deliberate-emphasis",
+      "manuscript": {
+        "documentId": "h-intentional-repetition",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Never never open that door, Mara whispered.",
+            "intentions": [
+              "repetition"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "95a0bdcf19cdce592a8699c12d08dd4a3a19a8934df93f43f255239ba82f2e9c"
+    },
+    {
+      "id": "h-rhetorical-punctuation",
+      "split": "held_out",
+      "family": "h-punctuated-repetition",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-punctuated-repetition",
+      "manuscript": {
+        "documentId": "h-rhetorical-punctuation",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Run, run, Mara said. The child stayed by the observatory.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "09247d33931d8dd4a1ac2cd2ba8345307b460dcde39f8814a0ac523cf71102ca"
+    },
+    {
+      "id": "h-unicode",
+      "split": "held_out",
+      "family": "h-unicode-mechanics",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-unicode-mechanics",
+      "manuscript": {
+        "documentId": "h-unicode",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "😀 雪. Mara came came back to the observatory.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-REPETITION",
+            "NL-GRAMMAR-WHITESPACE"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-GRAMMAR-REPETITION",
+          "sceneId": "opening",
+          "quote": "came",
+          "occurrence": 1,
+          "related": [],
+          "range": {
+            "byteStart": 20,
+            "byteEnd": 24,
+            "utf16Start": 16,
+            "utf16End": 20
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "aab84b209c1d73c5eb469e01d33369138782657ccff2a63247dbd6d90d76a781"
+    },
+    {
+      "id": "h-dictionary",
+      "split": "held_out",
+      "family": "h-typo-versus-author-dictionary",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-typo-versus-author-dictionary",
+      "manuscript": {
+        "documentId": "h-dictionary",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Mara saw a qwick bird beside the wyrmlet.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-SPELLING"
+          ],
+          "dictionary": [
+            "wyrmlet"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-GRAMMAR-SPELLING",
+          "sceneId": "opening",
+          "quote": "qwick",
+          "occurrence": 0,
+          "related": [],
+          "range": {
+            "byteStart": 11,
+            "byteEnd": 16,
+            "utf16Start": 11,
+            "utf16End": 16
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "1efd6bf9d1ee8ce9b155698c8c63ad5017202faaff623e8becbef17e3e555ead"
+    },
+    {
+      "id": "h-dialect",
+      "split": "held_out",
+      "family": "h-dialect",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-dialect",
+      "manuscript": {
+        "documentId": "h-dialect",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Keep walkin till the moon is high, Mara said.",
+            "intentions": [
+              "dialect"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-GRAMMAR-SPELLING"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "56c9ae5276a054d4caefe03f269ae39d2cc2ef13352cb480d6ac9020aade9881"
+    },
+    {
+      "id": "h-lexicon",
+      "split": "held_out",
+      "family": "h-editorial-terms",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-editorial-terms",
+      "manuscript": {
+        "documentId": "h-lexicon",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Mara suddenly saw the suddenly bright lights near the observatory.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-PROSE-LEXICON"
+          ],
+          "lexicon": [
+            "suddenly"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-PROSE-LEXICON",
+          "sceneId": "opening",
+          "quote": "suddenly",
+          "occurrence": 0,
+          "related": [],
+          "range": {
+            "byteStart": 5,
+            "byteEnd": 13,
+            "utf16Start": 5,
+            "utf16End": 13
+          }
+        },
+        {
+          "ruleId": "NL-PROSE-LEXICON",
+          "sceneId": "opening",
+          "quote": "suddenly",
+          "occurrence": 1,
+          "related": [],
+          "range": {
+            "byteStart": 22,
+            "byteEnd": 30,
+            "utf16Start": 22,
+            "utf16End": 30
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "47b275a7d1728b593aa594ddebe07b159ed41a6099d1b05fd9470bf009da4025"
+    },
+    {
+      "id": "h-lexicon-boundary",
+      "split": "held_out",
+      "family": "h-whole-word-boundaries",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-whole-word-boundaries",
+      "manuscript": {
+        "documentId": "h-lexicon-boundary",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "The café was almost empty. Mara waited by the observatory.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-PROSE-LEXICON"
+          ],
+          "lexicon": [
+            "cafe",
+            "most"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "18ab8f4a87eaaad68388746ba80ce5b19f155499258923207b94b9b34eb0f5fc"
+    },
+    {
+      "id": "h-location",
+      "split": "held_out",
+      "family": "h-locked-location",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-locked-location",
+      "manuscript": {
+        "documentId": "h-location",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Mara was in the cellar. Someone locked the door.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "Mara entered the garden.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Mara"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-LOCKED"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-CONTINUITY-LOCKED",
+          "sceneId": "after",
+          "quote": "Mara entered the garden.",
+          "occurrence": 0,
+          "related": [
+            {
+              "sceneId": "before",
+              "quote": "Mara was in the cellar. Someone locked the door."
+            }
+          ],
+          "range": {
+            "byteStart": 0,
+            "byteEnd": 24,
+            "utf16Start": 0,
+            "utf16End": 24
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "233cf53a150eeb9a4cf77f29694708ce609f22f8e64fcd024d1b9373e630e4fe"
+    },
+    {
+      "id": "h-release",
+      "split": "held_out",
+      "family": "h-explicit-release",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-explicit-release",
+      "manuscript": {
+        "documentId": "h-release",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Mara was in the cellar. Someone locked the door.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "Mara escaped from the cellar. Mara entered the garden.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Mara"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-LOCKED"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "5477f4e990348c46ebff8b5539146f9a7dc17f4f218037ec55046a8f5a74c184"
+    },
+    {
+      "id": "h-supernatural",
+      "split": "held_out",
+      "family": "h-intentional-physical-exception",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-intentional-physical-exception",
+      "manuscript": {
+        "documentId": "h-supernatural",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Mara was in the cellar. Someone locked the door.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "Mara entered the garden.",
+            "intentions": [
+              "supernatural"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Mara"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-LOCKED"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "233cf53a150eeb9a4cf77f29694708ce609f22f8e64fcd024d1b9373e630e4fe"
+    },
+    {
+      "id": "h-eye-conflict",
+      "split": "held_out",
+      "family": "h-stable-attribute",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-stable-attribute",
+      "manuscript": {
+        "documentId": "h-eye-conflict",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Mara had blue eyes.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "Mara had brown eyes.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Mara"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-ATTRIBUTE"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-CONTINUITY-ATTRIBUTE",
+          "sceneId": "after",
+          "quote": "Mara had brown eyes.",
+          "occurrence": 0,
+          "related": [
+            {
+              "sceneId": "before",
+              "quote": "Mara had blue eyes."
+            }
+          ],
+          "range": {
+            "byteStart": 0,
+            "byteEnd": 20,
+            "utf16Start": 0,
+            "utf16End": 20
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "37cebb75455a5c48b1fd1aec45d1158b92edb2503a792e3a7544d3d5527b5ae5"
+    },
+    {
+      "id": "h-quoted-eye",
+      "split": "held_out",
+      "family": "h-dialogue-is-not-fact",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-dialogue-is-not-fact",
+      "manuscript": {
+        "documentId": "h-quoted-eye",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Mara had blue eyes.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "😀 “Mara had brown eyes.”",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Mara"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-ATTRIBUTE"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "cbcb8fd38f1cfb0be4b2bb4bae758b49151ee4a395e773fc79ea01656283b150"
+    },
+    {
+      "id": "h-grey-gray",
+      "split": "held_out",
+      "family": "h-spelling-variant-colors",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-spelling-variant-colors",
+      "manuscript": {
+        "documentId": "h-grey-gray",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "Mara had grey eyes.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "Mara had gray eyes.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Mara"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-ATTRIBUTE"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "893ac230839aa67d4fcf63ce080085a7b6620cdab6a66b3884b2bfa5969d6527"
+    },
+    {
+      "id": "h-object",
+      "split": "held_out",
+      "family": "h-object-change",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-object-change",
+      "manuscript": {
+        "documentId": "h-object",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "The key was in the drawer.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "The key was on the table.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-OBJECT"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-CONTINUITY-OBJECT",
+          "sceneId": "after",
+          "quote": "The key was on the table.",
+          "occurrence": 0,
+          "related": [
+            {
+              "sceneId": "before",
+              "quote": "The key was in the drawer."
+            }
+          ],
+          "range": {
+            "byteStart": 0,
+            "byteEnd": 25,
+            "utf16Start": 0,
+            "utf16End": 25
+          }
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "6d57402f3e9a98d043f41f4224938baf396c9ea24b738c467d71807e1353a0fe"
+    },
+    {
+      "id": "h-object-transfer",
+      "split": "held_out",
+      "family": "h-explicit-object-transfer",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-explicit-object-transfer",
+      "manuscript": {
+        "documentId": "h-object-transfer",
+        "scenes": [
+          {
+            "id": "before",
+            "text": "The book was in the cabin.",
+            "intentions": []
+          },
+          {
+            "id": "bridge",
+            "text": "Mara carried the book to the bridge.",
+            "intentions": []
+          },
+          {
+            "id": "after",
+            "text": "The book was on the bridge.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Mara"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-CONTINUITY-OBJECT"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "a1123d1b11aeb52757817b04122e306b82e281a87126434df1cdfe8961e35113"
+    },
+    {
+      "id": "h-empty",
+      "split": "held_out",
+      "family": "h-empty-input",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-empty-input",
+      "manuscript": {
+        "documentId": "h-empty",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-READABILITY-COMPLEX",
+            "NL-PACING-LONG"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "h-readability",
+      "split": "held_out",
+      "family": "h-dense-exposition",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-dense-exposition",
+      "manuscript": {
+        "documentId": "h-readability",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. ",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-READABILITY-COMPLEX"
+          ],
+          "genre": "SciFi"
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-READABILITY-COMPLEX",
+          "sceneId": "opening",
+          "quote": null,
+          "occurrence": 0,
+          "related": []
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "d973fbf5fa2c4f08eb701c6afefc1799a2016a22de0eb37bcc0c93fafd8bfe0f"
+    },
+    {
+      "id": "h-readability-intention",
+      "split": "held_out",
+      "family": "h-intentional-dense-narrator",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-intentional-dense-narrator",
+      "manuscript": {
+        "documentId": "h-readability-intention",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. Extraterrestrial investigators documented irreversible environmental deterioration, contradictory philosophical interpretations, and intergenerational institutional reconstruction. ",
+            "intentions": [
+              "complex_prose"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-READABILITY-COMPLEX"
+          ],
+          "genre": "SciFi"
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "d973fbf5fa2c4f08eb701c6afefc1799a2016a22de0eb37bcc0c93fafd8bfe0f"
+    },
+    {
+      "id": "h-pacing",
+      "split": "held_out",
+      "family": "h-unbroken-sentence",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-unbroken-sentence",
+      "manuscript": {
+        "documentId": "h-pacing",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Mara followed the road past the observatory and over the hill and through the trees and down to the field where the birds called from the branches and the light fell on the water and the path turned toward the town and the river shone beside the old stone bridge and the gate stood open by the house and the clouds moved across the sky and the wind bent the grass beside the wall and the bell rang in the tower while the ferry left the far bank and the first stars came out above the dark fields beyond the old house where a child waited by the fire.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-PACING-LONG"
+          ],
+          "genre": "SciFi"
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-PACING-LONG",
+          "sceneId": "opening",
+          "quote": null,
+          "occurrence": 0,
+          "related": []
+        }
+      ],
+      "exhaustive": true,
+      "textSha256": "7021e1cb44f13daaf119376c969bedb107411fd1c78e6d94e5b43306865b478e"
+    },
+    {
+      "id": "h-pacing-intention",
+      "split": "held_out",
+      "family": "h-intentional-breathless-sentence",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-intentional-breathless-sentence",
+      "manuscript": {
+        "documentId": "h-pacing-intention",
+        "scenes": [
+          {
+            "id": "opening",
+            "text": "Mara followed the road past the observatory and over the hill and through the trees and down to the field where the birds called from the branches and the light fell on the water and the path turned toward the town and the river shone beside the old stone bridge and the gate stood open by the house and the clouds moved across the sky and the wind bent the grass beside the wall and the bell rang in the tower while the ferry left the far bank and the first stars came out above the dark fields beyond the old house where a child waited by the fire.",
+            "intentions": [
+              "long_sentences"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-PACING-LONG"
+          ],
+          "genre": "SciFi"
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "7021e1cb44f13daaf119376c969bedb107411fd1c78e6d94e5b43306865b478e"
+    },
+    {
+      "id": "h-structure",
+      "split": "held_out",
+      "family": "h-declared-three-act-arc",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-declared-three-act-arc",
+      "manuscript": {
+        "documentId": "h-structure",
+        "scenes": [
+          {
+            "id": "setup",
+            "text": "Mara found a letter at the observatory.",
+            "intentions": [],
+            "purpose": "setup inciting incident"
+          },
+          {
+            "id": "middle",
+            "text": "Mara followed the trail across the sea.",
+            "intentions": [],
+            "purpose": "confrontation midpoint"
+          },
+          {
+            "id": "ending",
+            "text": "Mara came home with the missing child.",
+            "intentions": [],
+            "purpose": "climax resolution"
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-STRUCTURE-MISSING-BEAT"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "5122f3c4d4e8c8e3302d9e77e0b75c23de172f9865128181d250a50e2339b697"
+    },
+    {
+      "id": "h-flat",
+      "split": "held_out",
+      "family": "h-missing-conventional-beats",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-missing-conventional-beats",
+      "manuscript": {
+        "documentId": "h-flat",
+        "scenes": [
+          {
+            "id": "one",
+            "text": "The clock at the observatory stopped.",
+            "intentions": []
+          },
+          {
+            "id": "two",
+            "text": "The clock at the observatory stopped.",
+            "intentions": []
+          },
+          {
+            "id": "three",
+            "text": "The clock at the observatory stopped.",
+            "intentions": []
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-STRUCTURE-MISSING-BEAT"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "ruleId": "NL-STRUCTURE-MISSING-BEAT",
+          "sceneId": null,
+          "quote": null,
+          "occurrence": 0,
+          "related": [],
+          "messageContains": "Climax"
+        }
+      ],
+      "exhaustive": false,
+      "textSha256": "5dc38a1d9a5bcfd5620dbb4c6b88ebce738cde7b13dbe63b72a36fab042436e5"
+    },
+    {
+      "id": "h-nonlinear",
+      "split": "held_out",
+      "family": "h-intentional-cyclical-form",
+      "annotationOrigin": "OpenAI Codex; original synthetic fiction; agent-authored labels; no human editorial review",
+      "rationale": "h-intentional-cyclical-form",
+      "manuscript": {
+        "documentId": "h-nonlinear",
+        "scenes": [
+          {
+            "id": "one",
+            "text": "The clock at the observatory stopped.",
+            "intentions": [
+              "nonlinear"
+            ]
+          },
+          {
+            "id": "two",
+            "text": "The clock at the observatory stopped.",
+            "intentions": [
+              "nonlinear"
+            ]
+          },
+          {
+            "id": "three",
+            "text": "The clock at the observatory stopped.",
+            "intentions": [
+              "nonlinear"
+            ]
+          }
+        ],
+        "knownCharacters": [
+          "Zoë"
+        ],
+        "configuration": {
+          "rules": [
+            "NL-STRUCTURE-MISSING-BEAT"
+          ]
+        }
+      },
+      "expected": [],
+      "exhaustive": true,
+      "textSha256": "5dc38a1d9a5bcfd5620dbb4c6b88ebce738cde7b13dbe63b72a36fab042436e5"
+    }
+  ]
+}

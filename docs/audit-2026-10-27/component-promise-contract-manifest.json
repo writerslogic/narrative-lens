@@ -1,0 +1,62 @@
+{
+  "batch": "checked legacy promise ledger input contracts",
+  "files": [
+    {
+      "path": "src/structure/promise_payoff.rs",
+      "base_sha256": "23b02cc0c59bc08b88811724ec61142f51694a270630fe95be45a8ffdfc0b9c2",
+      "sha256": "7a3cf63987ceadde6a94c7025be580aeda9fc590d29aebac5ba59e9475c3f436"
+    },
+    {
+      "path": "tests/component_promise_contract.rs",
+      "base_sha256": null,
+      "sha256": "7250f8c32dad38562148d767c905bddd3771aed20592fdc3a5116e3822ba0404"
+    }
+  ],
+  "api": "build_promise_payoff_ledger_checked(same legacy args)->crate::Result<PromisePayoffResult>",
+  "legacy": "Existing function delegates checked path;invalid input returns explicit Unavailable diagnostic",
+  "fixes": [
+    "Scene/count/total cardinality agreement and bounded source bytes/scenes",
+    "Checked word-count sums prevent usize overflow;counts remain caller-supplied metadata",
+    "Bounded setup descriptors/counts,valid setup indices,unique bounded character names/indices,4MiB metadata",
+    "Empty/whitespace-only source without supplied setups is Unavailable with no scene0 promises",
+    "Whitespace bodies skip text-only work without dropping supplied outline setups or bool confirmations",
+    "Derived finite-output invariants checked;no new automatic fulfillment/location/quality inference"
+  ],
+  "checks": {
+    "focused": {
+      "passed": 6,
+      "log": "component-promise-contract-tests.log"
+    },
+    "existing": {
+      "passed": 9,
+      "log": "component-promise-contract-existing.log"
+    },
+    "integration": {
+      "passed": 8,
+      "log": "component-promise-contract-integration.log"
+    },
+    "bindings_clippy": {
+      "passed": true,
+      "log": "component-promise-contract-clippy.log"
+    }
+  },
+  "commands": [
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --test component_promise_contract",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --lib structure::promise_payoff",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --test cross_cutting",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo clippy --locked --features bindings --lib --test component_promise_contract -- -D warnings"
+  ],
+  "limits": [
+    "Legacy candidates remain semantic hypotheses;source-confirmed author workflows remain separate",
+    "Counts are bounded supplied metadata,not independently counted from prose",
+    "Contract only;no new thematic inference or automatic general payoff resolver",
+    "No claim of universal promise-ledger performance improvement",
+    "Node/adapters/schema wiring parent-owned and not part of this payload"
+  ],
+  "prerequisites": "component-theme-prerequisites.json records parent-owned text/nlp/entity/common_types syncs;exclude those files from delivery",
+  "stop_state": "Frozen at explicit user stop;do not begin additional improvements without renewed authorization",
+  "payload": {
+    "path": "component-promise-contract-payload.tar.gz",
+    "sha256": "24a213c7ef3b99ce5bbb763d47e772e7cfb5f3af3155235a0256aeb7e1327d4d"
+  }
+}

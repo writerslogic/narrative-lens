@@ -1,8 +1,8 @@
 [package]
 name = "narrative-lens"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.89"
 license = "Apache-2.0"
 authors = ["WritersLogic, Inc. <david@writerslogic.com>"]
 description = "Local, deterministic prose and narrative-craft analysis -- readability, pacing, voice, foreshadowing, continuity -- extracted from Emathy's meaning engine."
@@ -12,9 +12,15 @@ documentation = "https://docs.rs/narrative-lens"
 readme = "README.md"
 keywords = ["nlp", "text-analysis", "writing", "readability", "narrative"]
 categories = ["algorithms", "text-processing"]
+exclude = ["docs/audit-*/**"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "narrative-lens"
+path = "src/bin/narrative-lens.rs"
+required-features = ["cli"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -25,38 +31,38 @@ petgraph = "0.8"
 nalgebra = "0.35"
 napi = { version = "3.9", features = ["async", "serde-json"], optional = true }
 napi-derive = { version = "3.5", optional = true }
-# Only pulled in by the `node-api` feature, as the JSON bridge napi_bindings/
-# uses to cross the FFI boundary without a hand-written DTO per analyzer type.
+# JSON is needed by adapters and optional model manifests.
 serde_json = { version = "1.0", optional = true }
 ts-rs = { version = "12", features = ["serde-compat"], optional = true }
 schemars = { version = "1.2", features = ["derive"], optional = true }
+sha2 = { version = "0.10", optional = true }
 
 [build-dependencies]
 napi-build = { version = "2.2", optional = true }
 
 [features]
 default = []
-# Node.js bindings via napi. Off by default so a pure-Rust consumer pulls in
-# nothing but serde.
+cli = ["dep:serde_json"]
+# Node.js bindings via napi; excluded from default Rust builds.
 node-api = ["napi", "napi-derive", "dep:napi-build", "dep:serde_json"]
-# ts-rs/schemars type-binding generation. Only needed when regenerating the
-# TypeScript definitions in bindings/, not at runtime.
+# TypeScript declaration and JSON-schema generation; not needed at runtime.
 bindings = ["ts-rs", "schemars"]
 # Local ONNX-model-backed analysis: SBERT sentence embeddings (theme/genre/
 # narrative_entropy semantic similarity), NER (entity resolution), and NLI
 # (contradiction detection). Bring your own model -- no download, no bundled
 # weights. See docs/ARCHITECTURE.md.
-onnx = ["dep:tokenizers", "dep:ort", "dep:tract-onnx"]
+onnx = ["dep:tokenizers", "dep:ort", "dep:tract-onnx", "dep:getrandom04", "dep:sha2", "dep:serde_json"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # Later prereleases can change the session API without a semver-major bump.
-ort = { version = "=2.0.0-rc.13", optional = true }
+ort = { version = "=2.0.0-rc.15", optional = true }
 tokenizers = { version = "0.23", default-features = false, features = ["onig"], optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 tract-onnx = { version = "0.23", optional = true }
 tokenizers = { version = "0.21", default-features = false, features = ["unstable_wasm"], optional = true }
 getrandom = { version = "0.2", features = ["js"] }
+getrandom04 = { package = "getrandom", version = "0.4", features = ["wasm_js"], optional = true }
 
 [dev-dependencies]
 serde_json = "1.0"
@@ -70,3 +76,19 @@ serde_json = "1.0"
 too_many_arguments = "allow"
 needless_range_loop = "allow"
 module_inception = "allow"
+
+[[example]]
+name = "export_contracts"
+required-features = ["bindings"]
+
+[[example]]
+name = "export_standalone_contracts"
+required-features = ["bindings"]
+
+[[example]]
+name = "component_real_model"
+required-features = ["onnx"]
+
+[profile.release]
+# Older Rust/LLVM strip-debug emits dylibs rejected by macOS 27: rust-lang/rust#157750.
+strip = "none"

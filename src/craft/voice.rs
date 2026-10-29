@@ -1,12 +1,12 @@
-/// Character voice fingerprinting: detect when characters sound the same.
-///
-/// Analyzes dialogue attributed to each character and builds a multi-dimensional
-/// voice profile. Pairwise comparison flags characters whose voices are too
-/// similar, with actionable editorial suggestions.
+//! Defined lexical/style measurements over supplied attributed dialogue.
+//! Similarity and drift are distances on fixed, documented feature scales;
+//! they do not establish character identity or editorial quality.
 use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 
-use crate::substrate::utils::safe_div;
+use super::measurements;
+use crate::Result;
+use crate::substrate::utils::{AnalysisAvailability, safe_div};
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -19,6 +19,8 @@ fn contractions() -> &'static HashSet<&'static str> {
     INST.get_or_init(|| {
         [
             "don't",
+            "doesn't",
+            "didn't",
             "won't",
             "can't",
             "couldn't",
@@ -45,9 +47,11 @@ fn contractions() -> &'static HashSet<&'static str> {
             "we're",
             "we'll",
             "we've",
+            "we'd",
             "they're",
             "they'll",
             "they've",
+            "they'd",
             "that's",
             "what's",
             "who's",
@@ -84,6 +88,7 @@ fn stopwords() -> &'static HashSet<&'static str> {
 // Structs
 // ---------------------------------------------------------------------------
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CharacterVoiceProfile {
@@ -99,6 +104,7 @@ pub struct CharacterVoiceProfile {
     pub top_words: Vec<String>,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VoiceSimilarity {
@@ -109,9 +115,15 @@ pub struct VoiceSimilarity {
     pub suggestion: String,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VoiceAnalysisResult {
+    #[serde(default)]
+    pub availability: AnalysisAvailability,
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
+    pub samples: Vec<VoiceSampleCounts>,
     pub profiles: Vec<CharacterVoiceProfile>,
     pub similarities: Vec<VoiceSimilarity>,
     pub distinct_voices: bool,
@@ -133,135 +145,151 @@ fn extract_ngrams(tokens: &[String], n: usize) -> Vec<String> {
 // Profile building
 // ---------------------------------------------------------------------------
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VoiceSampleCounts {
+    pub input_turn_count: usize,
+    /// Turns containing at least one token; denominators exclude empty turns.
+    pub turn_count: usize,
+    pub word_count: usize,
+    pub sentence_count: usize,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VoiceProfileMeasurement {
+    pub availability: AnalysisAvailability,
+    pub diagnostics: Vec<String>,
+    pub profile: CharacterVoiceProfile,
+    pub sample: VoiceSampleCounts,
+}
+
+fn empty_profile(character_name: &str) -> CharacterVoiceProfile {
+    CharacterVoiceProfile {
+        character: character_name.into(),
+        avg_sentence_length: 0.0,
+        vocabulary_richness: 0.0,
+        question_rate: 0.0,
+        exclamation_rate: 0.0,
+        contraction_rate: 0.0,
+        formality_score: 0.5,
+        avg_word_length: 0.0,
+        unique_phrases: Vec::new(),
+        top_words: Vec::new(),
+    }
+}
+
+pub(crate) fn profile_measurement(
+    character_name: &str,
+    dialogue_lines: &[impl AsRef<str>],
+) -> VoiceProfileMeasurement {
+    let mut sample = VoiceSampleCounts {
+        input_turn_count: dialogue_lines.len(),
+        ..Default::default()
+    };
+    let mut total_chars = 0usize;
+    let mut unique_words = HashSet::new();
+    let mut content_word_freq = HashMap::<String, usize>::new();
+    let mut phrase_freq = HashMap::<String, usize>::new();
+    let mut contractions_count = 0usize;
+    let mut questions = 0usize;
+    let mut exclamations = 0usize;
+    let mut sentence_words = 0usize;
+    for line in dialogue_lines {
+        let line = line.as_ref();
+        let tokens = measurements::tokens(line);
+        if tokens.is_empty() {
+            continue;
+        }
+        sample.turn_count += 1;
+        sample.word_count += tokens.len();
+        questions += usize::from(line.trim_end().ends_with('?'));
+        exclamations += usize::from(line.contains('!'));
+        for sentence in crate::substrate::text::split_sentences(line) {
+            let count = measurements::tokens(sentence).len();
+            if count > 0 {
+                sample.sentence_count += 1;
+                sentence_words += count;
+            }
+        }
+        for token in &tokens {
+            total_chars += token.chars().count();
+            unique_words.insert(token.clone());
+            contractions_count += usize::from(contractions().contains(token.as_str()));
+            if !stopwords().contains(token.as_str()) && token.chars().count() > 1 {
+                *content_word_freq.entry(token.clone()).or_default() += 1;
+            }
+        }
+        for n in [2, 3] {
+            for phrase in extract_ngrams(&tokens, n) {
+                *phrase_freq.entry(phrase).or_default() += 1;
+            }
+        }
+    }
+    let mut profile = empty_profile(character_name);
+    if sample.word_count > 0 {
+        profile.avg_sentence_length = safe_div(sentence_words as f64, sample.sentence_count as f64);
+        profile.vocabulary_richness = unique_words.len() as f64 / sample.word_count as f64;
+        profile.question_rate = questions as f64 / sample.turn_count as f64;
+        profile.exclamation_rate = exclamations as f64 / sample.turn_count as f64;
+        profile.contraction_rate = contractions_count as f64 / sample.word_count as f64;
+        profile.avg_word_length = total_chars as f64 / sample.word_count as f64;
+        profile.formality_score = (1.0 - (profile.contraction_rate * 20.0).min(1.0)) * 0.4
+            + ((profile.avg_word_length - 3.0) / 3.0).clamp(0.0, 1.0) * 0.3
+            + ((profile.avg_sentence_length - 5.0) / 15.0).clamp(0.0, 1.0) * 0.3;
+        let mut ranked: Vec<_> = content_word_freq.into_iter().collect();
+        ranked.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        profile.top_words = ranked.into_iter().take(5).map(|(word, _)| word).collect();
+        profile.unique_phrases = phrase_freq
+            .into_iter()
+            .filter(|(phrase, count)| {
+                *count > 2
+                    && !phrase
+                        .split_whitespace()
+                        .all(|word| stopwords().contains(word))
+            })
+            .map(|(phrase, _)| phrase)
+            .collect();
+        profile.unique_phrases.sort();
+    }
+    VoiceProfileMeasurement {
+        availability: if sample.word_count == 0 {
+            AnalysisAvailability::Unavailable
+        } else {
+            AnalysisAvailability::Complete
+        },
+        diagnostics: vec![
+            "defined_stylometry;formality_and_similarity_are_uncalibrated_proxies;type_token_ratio_is_length_sensitive".into(),
+        ],
+        profile,
+        sample,
+    }
+}
+
+/// Measure token/sentence features on supplied turns, without joining turn boundaries.
+/// Question rate counts eligible turns ending in `?`; exclamation rate counts
+/// eligible turns containing `!`. Typographic apostrophes normalize for tokens only.
+pub fn build_voice_profile_checked(
+    character_name: &str,
+    dialogue_lines: &[String],
+) -> Result<VoiceProfileMeasurement> {
+    crate::manuscript::config::validate_name(character_name)?;
+    measurements::validate_texts(dialogue_lines.iter().map(String::as_str))?;
+    Ok(profile_measurement(character_name, dialogue_lines))
+}
+
 pub fn build_voice_profile(
     character_name: &str,
     dialogue_lines: &[String],
 ) -> CharacterVoiceProfile {
-    if dialogue_lines.is_empty() {
-        return CharacterVoiceProfile {
-            character: character_name.to_string(),
-            avg_sentence_length: 0.0,
-            vocabulary_richness: 0.0,
-            question_rate: 0.0,
-            exclamation_rate: 0.0,
-            contraction_rate: 0.0,
-            formality_score: 0.5,
-            avg_word_length: 0.0,
-            unique_phrases: Vec::new(),
-            top_words: Vec::new(),
-        };
-    }
-
-    let contraction_set = contractions();
-    let stop_set = stopwords();
-
-    let total_lines = dialogue_lines.len() as f64;
-    let mut total_words: usize = 0;
-    let mut total_chars_in_words: usize = 0;
-    let mut unique_words: HashSet<String> = HashSet::new();
-    let mut content_word_freq: HashMap<String, usize> = HashMap::new();
-    let mut contraction_count: usize = 0;
-    let mut question_count: usize = 0;
-    let mut exclamation_count: usize = 0;
-    let mut sentence_lengths: Vec<usize> = Vec::new();
-
-    // Collect all tokens for ngram analysis
-    let mut all_tokens: Vec<String> = Vec::new();
-
-    for line in dialogue_lines {
-        let trimmed = line.trim();
-        if trimmed.is_empty() {
-            continue;
+    match build_voice_profile_checked(character_name, dialogue_lines) {
+        Ok(measured) => measured.profile,
+        Err(_) => {
+            log::warn!("voice profile unavailable: invalid input; use checked API for details");
+            empty_profile("[unavailable]")
         }
-        if trimmed.ends_with('?') {
-            question_count += 1;
-        }
-        if trimmed.contains('!') {
-            exclamation_count += 1;
-        }
-
-        let tokens = crate::substrate::text::tokenize_words(trimmed);
-        sentence_lengths.push(tokens.len());
-
-        for token in &tokens {
-            total_words += 1;
-            total_chars_in_words += token.len();
-            unique_words.insert(token.clone());
-
-            if contraction_set.contains(token.as_str()) {
-                contraction_count += 1;
-            }
-            if !stop_set.contains(token.as_str()) && token.len() > 1 {
-                *content_word_freq.entry(token.clone()).or_insert(0) += 1;
-            }
-        }
-        all_tokens.extend(tokens);
-    }
-
-    let avg_sentence_length = if sentence_lengths.is_empty() {
-        0.0
-    } else {
-        sentence_lengths.iter().sum::<usize>() as f64 / sentence_lengths.len() as f64
-    };
-
-    let vocabulary_richness = safe_div(unique_words.len() as f64, total_words as f64);
-
-    let question_rate = question_count as f64 / total_lines;
-    let exclamation_rate = exclamation_count as f64 / total_lines;
-    let contraction_rate = safe_div(contraction_count as f64, total_words as f64);
-
-    let avg_word_length = safe_div(total_chars_in_words as f64, total_words as f64);
-
-    // Formality: low contractions + long words + long sentences = formal
-    let contraction_formality = 1.0 - (contraction_rate * 20.0).min(1.0);
-    let word_len_formality = ((avg_word_length - 3.0) / 3.0).clamp(0.0, 1.0);
-    let sentence_len_formality = ((avg_sentence_length - 5.0) / 15.0).clamp(0.0, 1.0);
-    let formality_score =
-        contraction_formality * 0.4 + word_len_formality * 0.3 + sentence_len_formality * 0.3;
-
-    // Top 5 content words
-    let mut word_vec: Vec<_> = content_word_freq.iter().collect();
-    word_vec.sort_by(|a, b| b.1.cmp(a.1));
-    let top_words: Vec<String> = word_vec
-        .iter()
-        .take(5)
-        .map(|(w, _)| w.to_string())
-        .collect();
-
-    // Ngrams (unique_phrases will be refined in compare step)
-    let mut bigram_freq: HashMap<String, usize> = HashMap::new();
-    for ng in extract_ngrams(&all_tokens, 2) {
-        *bigram_freq.entry(ng).or_insert(0) += 1;
-    }
-    let mut trigram_freq: HashMap<String, usize> = HashMap::new();
-    for ng in extract_ngrams(&all_tokens, 3) {
-        *trigram_freq.entry(ng).or_insert(0) += 1;
-    }
-
-    // Phrases used more than 2 times (pre-filter; cross-character filtering in compare)
-    let mut unique_phrases: Vec<String> = Vec::new();
-    for (phrase, count) in bigram_freq.iter().chain(trigram_freq.iter()) {
-        if *count > 2 {
-            // skip phrases that are all stopwords
-            let all_stop = phrase.split_whitespace().all(|w| stop_set.contains(w));
-            if !all_stop {
-                unique_phrases.push(phrase.clone());
-            }
-        }
-    }
-    unique_phrases.sort();
-
-    CharacterVoiceProfile {
-        character: character_name.to_string(),
-        avg_sentence_length,
-        vocabulary_richness,
-        question_rate,
-        exclamation_rate,
-        contraction_rate,
-        formality_score,
-        avg_word_length,
-        unique_phrases,
-        top_words,
     }
 }
 
@@ -281,7 +309,7 @@ const DIM_NAMES: [&str; 6] = [
 /// Map each profile to a fixed [0,1]^6 point using per-dimension scaling, so a
 /// profile's vector is stable regardless of how many profiles are compared.
 /// (Min-max across the set collapsed every dimension to 0/1 for any pair.)
-fn normalize_vectors(profiles: &[CharacterVoiceProfile]) -> Vec<[f64; 6]> {
+fn normalize_vectors(profiles: &[&CharacterVoiceProfile]) -> Vec<[f64; 6]> {
     profiles
         .iter()
         .map(|p| {
@@ -298,51 +326,13 @@ fn normalize_vectors(profiles: &[CharacterVoiceProfile]) -> Vec<[f64; 6]> {
 }
 
 fn dimension_suggestion(dim: &str, a: &CharacterVoiceProfile, b: &CharacterVoiceProfile) -> String {
-    let name_a = &a.character;
-    let name_b = &b.character;
-    match dim {
-        "sentence_length" => format!(
-            "{name_a} and {name_b} both use similar sentence lengths \
-             (avg {:.1} vs {:.1} words). Give one character longer, \
-             more flowing sentences to differentiate.",
-            a.avg_sentence_length, b.avg_sentence_length
-        ),
-        "vocabulary" => format!(
-            "{name_a} and {name_b} have similar vocabulary richness \
-             ({:.2} vs {:.2}). Give one a more limited or more varied word palette.",
-            a.vocabulary_richness, b.vocabulary_richness
-        ),
-        "question_rate" => format!(
-            "{name_a} and {name_b} ask questions at similar rates \
-             ({:.0}% vs {:.0}%). Make one more declarative or more inquisitive.",
-            a.question_rate * 100.0,
-            b.question_rate * 100.0
-        ),
-        "exclamation_rate" => format!(
-            "{name_a} and {name_b} use exclamations at similar rates \
-             ({:.0}% vs {:.0}%). Vary emotional expressiveness between them.",
-            a.exclamation_rate * 100.0,
-            b.exclamation_rate * 100.0
-        ),
-        "contraction_rate" => format!(
-            "{name_a} and {name_b} use contractions at similar rates \
-             ({:.1}% vs {:.1}%). Make one speak more formally (\"do not\" vs \"don't\").",
-            a.contraction_rate * 100.0,
-            b.contraction_rate * 100.0
-        ),
-        "formality" => format!(
-            "{name_a} and {name_b} have similar formality levels \
-             ({:.2} vs {:.2}). Differentiate by giving one more casual or more formal diction.",
-            a.formality_score, b.formality_score
-        ),
-        _ => format!(
-            "{name_a} and {name_b} sound too similar. \
-             Vary sentence length, vocabulary, or speech patterns to differentiate."
-        ),
-    }
+    format!(
+        "{} and {} have close fixed-scale style measurements; the closest dimension is {}. Consider the samples and intended contrast before revising.",
+        a.character, b.character, dim
+    )
 }
 
-pub fn compare_voices(profiles: &[CharacterVoiceProfile]) -> Vec<VoiceSimilarity> {
+fn compare_valid_profiles(profiles: &[&CharacterVoiceProfile]) -> Vec<VoiceSimilarity> {
     let n = profiles.len();
     if n < 2 {
         return Vec::new();
@@ -353,7 +343,8 @@ pub fn compare_voices(profiles: &[CharacterVoiceProfile]) -> Vec<VoiceSimilarity
     for i in 0..n {
         for j in (i + 1)..n {
             let sim = (1.0
-                - crate::substrate::utils::euclidean_distance(&normed[i][..], &normed[j][..]) / 6f64.sqrt())
+                - crate::substrate::utils::euclidean_distance(&normed[i][..], &normed[j][..])
+                    / 6f64.sqrt())
             .clamp(0.0, 1.0);
 
             // Find most similar dimension (smallest absolute difference)
@@ -369,7 +360,7 @@ pub fn compare_voices(profiles: &[CharacterVoiceProfile]) -> Vec<VoiceSimilarity
 
             let dim_name = DIM_NAMES[most_similar_dim];
             let suggestion = if sim > SIMILARITY_THRESHOLD {
-                dimension_suggestion(dim_name, &profiles[i], &profiles[j])
+                dimension_suggestion(dim_name, profiles[i], profiles[j])
             } else {
                 String::new()
             };
@@ -385,6 +376,58 @@ pub fn compare_voices(profiles: &[CharacterVoiceProfile]) -> Vec<VoiceSimilarity
     }
 
     results
+}
+
+fn validate_profile(profile: &CharacterVoiceProfile) -> Result<()> {
+    crate::manuscript::config::validate_name(&profile.character)?;
+    for value in [profile.avg_sentence_length, profile.avg_word_length] {
+        if !value.is_finite() || !(0.0..=measurements::MAX_TEXT_BYTES as f64).contains(&value) {
+            return Err(measurements::invalid(
+                "voice lengths must be finite within text limits",
+            ));
+        }
+    }
+    for value in [
+        profile.vocabulary_richness,
+        profile.question_rate,
+        profile.exclamation_rate,
+        profile.contraction_rate,
+        profile.formality_score,
+    ] {
+        if !value.is_finite() || !(0.0..=1.0).contains(&value) {
+            return Err(measurements::invalid(
+                "voice rates must be finite within 0..=1",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn has_sample(profile: &CharacterVoiceProfile) -> bool {
+    profile.avg_word_length > 0.0
+        && profile.avg_sentence_length > 0.0
+        && profile.vocabulary_richness > 0.0
+}
+
+/// Fixed-scale Euclidean similarity, not a validated identity/realism judgment.
+/// Zero-word profiles are excluded rather than ranked as identical voices.
+pub fn compare_voices_checked(profiles: &[CharacterVoiceProfile]) -> Result<Vec<VoiceSimilarity>> {
+    measurements::validate_names(profiles.iter().map(|profile| profile.character.as_str()))?;
+    for profile in profiles {
+        validate_profile(profile)?;
+    }
+    let eligible: Vec<_> = profiles
+        .iter()
+        .filter(|profile| has_sample(profile))
+        .collect();
+    Ok(compare_valid_profiles(&eligible))
+}
+
+pub fn compare_voices(profiles: &[CharacterVoiceProfile]) -> Vec<VoiceSimilarity> {
+    compare_voices_checked(profiles).unwrap_or_else(|_| {
+        log::warn!("voice comparison unavailable: invalid input; use checked API for details");
+        Vec::new()
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -435,7 +478,8 @@ fn drift_feature_vector(p: &CharacterVoiceProfile) -> [f64; 7] {
 /// How a feature moved from baseline to current. `delta` is signed in
 /// normalized [-1,1] space (current minus baseline); `baseline`/`current` are
 /// the raw feature values for human-readable reporting.
-#[derive(Clone, Debug, serde::Serialize)]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureDrift {
     pub feature: String,
@@ -453,9 +497,14 @@ pub struct FeatureDrift {
 /// so the largest contributors lead. `notes` summarizes the dominant shifts in
 /// plain language. `drifted` is a convenience flag: overall exceeds the
 /// notable-drift threshold.
-#[derive(Clone, Debug, serde::Serialize)]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VoiceDrift {
+    #[serde(default)]
+    pub availability: AnalysisAvailability,
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
     pub overall: f64,
     pub per_feature: Vec<FeatureDrift>,
     pub notes: Vec<String>,
@@ -524,7 +573,7 @@ fn drift_note(fd: &FeatureDrift) -> String {
 ///
 /// Deterministic: same inputs → same output, with `per_feature` in a stable
 /// order. Identical profiles yield `overall == 0.0` and no notes.
-pub fn measure_voice_drift(
+fn measure_valid_voice_drift(
     baseline: &CharacterVoiceProfile,
     current: &CharacterVoiceProfile,
 ) -> VoiceDrift {
@@ -566,11 +615,66 @@ pub fn measure_voice_drift(
         .collect();
 
     VoiceDrift {
+        availability: AnalysisAvailability::Complete,
+        diagnostics: vec!["fixed_scale_stylometric_drift;threshold_is_uncalibrated".into()],
         overall,
         per_feature,
         notes,
         drifted: overall >= DRIFT_NOTABLE_THRESHOLD,
     }
+}
+
+fn unavailable_drift(diagnostic: &str) -> VoiceDrift {
+    VoiceDrift {
+        availability: AnalysisAvailability::Unavailable,
+        diagnostics: vec![diagnostic.into()],
+        overall: 0.0,
+        per_feature: Vec::new(),
+        notes: Vec::new(),
+        drifted: false,
+    }
+}
+
+pub fn measure_voice_drift_checked(
+    baseline: &CharacterVoiceProfile,
+    current: &CharacterVoiceProfile,
+) -> Result<VoiceDrift> {
+    validate_profile(baseline)?;
+    validate_profile(current)?;
+    if baseline.character.to_lowercase() != current.character.to_lowercase() {
+        return Err(measurements::invalid(
+            "voice drift requires the same character label",
+        ));
+    }
+    Ok(if has_sample(baseline) && has_sample(current) {
+        measure_valid_voice_drift(baseline, current)
+    } else {
+        unavailable_drift("voice_drift_requires_nonempty_samples")
+    })
+}
+
+pub fn measure_voice_drift(
+    baseline: &CharacterVoiceProfile,
+    current: &CharacterVoiceProfile,
+) -> VoiceDrift {
+    measure_voice_drift_checked(baseline, current)
+        .unwrap_or_else(|_| unavailable_drift("invalid_voice_profiles;use_checked_api"))
+}
+
+pub fn measure_voice_drift_from_text_checked(
+    label: &str,
+    baseline_lines: &[String],
+    current_lines: &[String],
+) -> Result<VoiceDrift> {
+    measurements::validate_texts(
+        baseline_lines
+            .iter()
+            .chain(current_lines)
+            .map(String::as_str),
+    )?;
+    let baseline = build_voice_profile_checked(label, baseline_lines)?;
+    let current = build_voice_profile_checked(label, current_lines)?;
+    measure_voice_drift_checked(&baseline.profile, &current.profile)
 }
 
 /// Convenience: build both profiles from baseline-text and current-text lines
@@ -592,22 +696,34 @@ pub fn measure_voice_drift_from_text(
 // ---------------------------------------------------------------------------
 
 /// Refine unique_phrases: remove phrases that appear in other characters' dialogue.
-fn refine_unique_phrases(profiles: &mut [CharacterVoiceProfile]) {
-    // Collect all phrase sets per character
-    let all_phrases: Vec<HashSet<String>> = profiles
-        .iter()
-        .map(|p| p.unique_phrases.iter().cloned().collect::<HashSet<_>>())
-        .collect();
-
-    for (i, profile) in profiles.iter_mut().enumerate() {
-        profile.unique_phrases.retain(|phrase| {
-            // Keep only if no other character uses this phrase
-            all_phrases
-                .iter()
-                .enumerate()
-                .all(|(j, other)| j == i || !other.contains(phrase))
-        });
-        // Limit to 10 most interesting
+fn refine_unique_phrases(profiles: &mut [CharacterVoiceProfile], data: &[(String, Vec<String>)]) {
+    let mut owners = HashMap::<String, Option<usize>>::new();
+    for (index, profile) in profiles.iter().enumerate() {
+        for phrase in &profile.unique_phrases {
+            owners
+                .entry(phrase.clone())
+                .and_modify(|owner| *owner = None)
+                .or_insert(Some(index));
+        }
+    }
+    for (index, (_, lines)) in data.iter().enumerate() {
+        for line in lines {
+            let tokens = measurements::tokens(line);
+            for n in [2, 3] {
+                for phrase in extract_ngrams(&tokens, n) {
+                    if let Some(owner) = owners.get_mut(&phrase)
+                        && *owner != Some(index)
+                    {
+                        *owner = None;
+                    }
+                }
+            }
+        }
+    }
+    for (index, profile) in profiles.iter_mut().enumerate() {
+        profile
+            .unique_phrases
+            .retain(|phrase| owners[phrase] == Some(index));
         profile.unique_phrases.truncate(10);
     }
 }
@@ -623,23 +739,64 @@ pub fn compare_voices_py(profiles: Vec<CharacterVoiceProfile>) -> Vec<VoiceSimil
     compare_voices(&profiles)
 }
 
-pub fn analyze_character_voices(dialogue_data: Vec<(String, Vec<String>)>) -> VoiceAnalysisResult {
-    let mut profiles: Vec<CharacterVoiceProfile> = dialogue_data
+pub fn analyze_character_voices_checked(
+    dialogue_data: &[(String, Vec<String>)],
+) -> Result<VoiceAnalysisResult> {
+    measurements::validate_names(dialogue_data.iter().map(|(name, _)| name.as_str()))?;
+    measurements::validate_texts(
+        dialogue_data
+            .iter()
+            .flat_map(|(_, lines)| lines.iter().map(String::as_str)),
+    )?;
+    let measured: Vec<_> = dialogue_data
         .iter()
-        .map(|(name, lines)| build_voice_profile(name, lines))
+        .map(|(name, lines)| profile_measurement(name, lines))
         .collect();
-
-    refine_unique_phrases(&mut profiles);
-    let similarities = compare_voices(&profiles);
-    let distinct_voices = similarities
+    let samples: Vec<_> = measured
         .iter()
-        .all(|s| s.similarity <= SIMILARITY_THRESHOLD);
-
-    VoiceAnalysisResult {
+        .map(|measurement| measurement.sample.clone())
+        .collect();
+    let mut profiles: Vec<_> = measured
+        .into_iter()
+        .map(|measurement| measurement.profile)
+        .collect();
+    refine_unique_phrases(&mut profiles, dialogue_data);
+    let similarities = compare_voices_checked(&profiles)?;
+    let eligible = samples
+        .iter()
+        .filter(|sample| sample.word_count > 0)
+        .count();
+    let distinct_voices = eligible > 1
+        && similarities
+            .iter()
+            .all(|s| s.similarity <= SIMILARITY_THRESHOLD);
+    Ok(VoiceAnalysisResult {
+        availability: if eligible == 0 {
+            AnalysisAvailability::Unavailable
+        } else if eligible < profiles.len() {
+            AnalysisAvailability::Partial
+        } else {
+            AnalysisAvailability::Complete
+        },
+        diagnostics: vec![
+            "defined_stylometry;distinct_voices_is_an_uncalibrated_distance_threshold".into(),
+        ],
+        samples,
         profiles,
         similarities,
         distinct_voices,
-    }
+    })
+}
+
+pub fn analyze_character_voices(dialogue_data: Vec<(String, Vec<String>)>) -> VoiceAnalysisResult {
+    analyze_character_voices_checked(&dialogue_data).unwrap_or_else(|_| VoiceAnalysisResult {
+        availability: AnalysisAvailability::Unavailable,
+        diagnostics: vec!["invalid_dialogue_input;use_checked_api".into()],
+        samples: Vec::new(),
+        profiles: Vec::new(),
+        similarities: Vec::new(),
+        distinct_voices: false,
+    })
 }
 
 // ---------------------------------------------------------------------------

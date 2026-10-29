@@ -82,7 +82,8 @@ fn narrative_entropy_handles_a_real_multi_scene_manuscript() {
 
 #[test]
 fn narrative_entropy_handles_empty_manuscript() {
-    let result = narrative_entropy::compute_narrative_entropy(&[], &[], "three_act", "literary", &[]);
+    let result =
+        narrative_entropy::compute_narrative_entropy(&[], &[], "three_act", "literary", &[]);
     assert!(result.entropy_curve.is_empty());
     assert!(result.questions.is_empty());
 }

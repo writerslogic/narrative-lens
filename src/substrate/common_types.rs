@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// A character-scene coordinate used across multiple analysis modules.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CharacterScenePoint {
     pub character: String,
@@ -9,6 +10,7 @@ pub struct CharacterScenePoint {
 
 /// Writer-facing feedback note with scene location and actionable suggestion.
 /// Standardized across all V4.0 hard-science framework modules.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WriterNote {
     pub scene: usize,
@@ -20,6 +22,7 @@ pub struct WriterNote {
 }
 
 /// Severity of a writer note, used for triage prioritization.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NoteSeverity {
     Info,
@@ -52,6 +55,7 @@ pub fn safe_substr(s: &str, start: usize, end: usize) -> &str {
 ///
 /// [`AiDerived`]: Provenance::AiDerived
 /// [`UserEdited`]: Provenance::UserEdited
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Provenance {

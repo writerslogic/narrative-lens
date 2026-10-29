@@ -1,0 +1,52 @@
+{
+  "status": "frozen",
+  "base_ner_sha256": "864fb05a5e157ea45dec235d91d20f2cb7e8cafb9b824332cd8e304bff6d9cce",
+  "files": [
+    {
+      "path": "src/continuity/ner.rs",
+      "sha256": "ad0ed78f7d43f2cd7cd0e80b9b872f333889d7ee761a7c1b7653c164509e37eb"
+    },
+    {
+      "path": "tests/component_continuity_persons.rs",
+      "sha256": "29253ebdf55725ef9edda0bab2b5950512ea18344ee7ecfcf5557eea78aafd8f"
+    }
+  ],
+  "checks": [
+    {
+      "command": "cargo test --locked --features bindings --test component_continuity_persons --test component_continuity_ner",
+      "passed": 7,
+      "log": "continuity-person-tests.log"
+    },
+    {
+      "command": "cargo test --locked --features bindings --lib continuity::ner::tests",
+      "passed": 12,
+      "log": "continuity-person-unit.log"
+    },
+    {
+      "command": "cargo clippy --locked --features onnx,bindings --lib --test component_continuity_persons --test component_continuity_ner -- -D warnings",
+      "exit": 0,
+      "log": "continuity-person-clippy.log"
+    }
+  ],
+  "api": [
+    "ner_extract_persons_checked",
+    "ner_extract_persons_with_backend_checked",
+    "PersonExtractionResult",
+    "PersonMention"
+  ],
+  "fixes": [
+    "One model batch reused with explicit identity/failure fallback; no duplicate inference",
+    "Distinct longest located occurrences determine counts; correlated heuristic votes no longer masquerade as mentions",
+    "Original source casing and exact Unicode byte/UTF16 ranges retained; full-name/single alias overlap counts once",
+    "Repeated PER-only and attributed sentence-start candidates survive selection without requiring capitalization evidence",
+    "Suffix learning counts unique anchors, uses3Unicode characters and scans all title occurrences; learned-title selection path functional",
+    "Bounded scene/text/token/marker/candidate/name/matcher/observation budgets; errors never truncate silently"
+  ],
+  "limits": [
+    "Candidate identity and correlated selection tiers remain uncalibrated; no trained semantic accuracy claimed",
+    "NER1500-byte windows still require tokenizer-budget success; checked failure is explicit",
+    "Name inventory tuple API remains separate from future canonical entity/alias mode; exact source mentions retain aliases for that composition",
+    "English lexical and naming assumptions remain; parent independent development-only v4 evaluation owns observed accuracy",
+    "Prior native4-fixture tests verify raw-model execution/identity/token-budget contract, not learned NER quality"
+  ]
+}

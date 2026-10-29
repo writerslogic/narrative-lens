@@ -1,0 +1,29 @@
+{
+  "worktree": "/Volumes/A/.codex-worktrees/narrative-lens-release-critical",
+  "files": {
+    "src/manuscript/comparison.rs": {
+      "previous_sha256": "c7130bc6a50677addd7850c21ae875246e4da37c0a014f3bfeaddf8d9d09e444",
+      "sha256": "3282123de57b747ead5820fef8cebb8516872d60fb94520007c02dcbdf06a5bd"
+    },
+    "tests/release_integrity.rs": {
+      "previous_sha256": "f2d81ef323ae75d556efcf4f27bce92a56b261fd4f44289e824ea2b1473711d1",
+      "sha256": "68b69af489e1be4d395ce94c8769d12d8386fa831b6b23ad11a29ecafcf319a8"
+    },
+    "tests/cli.rs": {
+      "previous_sha256": "7bd3819db2f3f943a4a440fe189a30549df81066ab79a7a779d0aeeb5a62d3c6",
+      "sha256": "689ee01cfee3858b6d34d1380678614511b5b05dc60d1541c18b4f810ae35b08"
+    }
+  },
+  "behavior": "Schema1 population metadata is unvalidated/defaultable, so comparison.complete is false with any schema1 counterpart. Ordinary import and matching remain available. Invalid current report metadata also cannot establish completeness.",
+  "tests": {
+    "targeted": "cargo test --locked --features cli --test release_integrity --test cli legacy_report_population",
+    "passed": 2,
+    "failed": 0,
+    "clippy": "cargo clippy --locked --features cli --test release_integrity --test cli -- -D warnings",
+    "clippy_passed": true
+  },
+  "logs": [
+    "docs/audit-2026-10-27/critical-legacy-population.log",
+    "docs/audit-2026-10-27/critical-legacy-clippy.log"
+  ]
+}

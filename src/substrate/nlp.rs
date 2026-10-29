@@ -612,71 +612,25 @@ pub fn deduplicate_characters(names: Vec<String>) -> Result<Vec<String>, crate::
 pub fn merge_character_aliases(
     counts: Vec<(String, usize)>,
 ) -> Result<Vec<(String, usize)>, crate::error::Error> {
-    // Sort by count descending
-    let mut sorted = counts;
-    sorted.sort_by_key(|x| std::cmp::Reverse(x.1));
-
-    // canonical_name -> total_count
-    let mut canonical: Vec<(String, usize)> = Vec::new();
-
-    for (name, count) in &sorted {
-        let name_lower = name.to_lowercase();
-        let name_words: Vec<&str> = name.split_whitespace().collect();
-        let mut merged = false;
-
-        for (canon, canon_count) in canonical.iter_mut() {
-            let canon_lower = canon.to_lowercase();
-
-            // Substring match
-            if canon_lower.contains(&name_lower) || name_lower.contains(&canon_lower) {
-                // Keep the most frequent variant; use length as tiebreaker
-                if *count > *canon_count || (*count == *canon_count && name.len() > canon.len()) {
-                    *canon = name.clone();
-                }
-                *canon_count += count;
-                merged = true;
-                break;
-            }
-
-            // Shared first or last word
-            let canon_words: Vec<&str> = canon.split_whitespace().collect();
-            if let (Some(&n_first), Some(&n_last), Some(&c_first), Some(&c_last)) = (
-                name_words.first(),
-                name_words.last(),
-                canon_words.first(),
-                canon_words.last(),
-            ) {
-                let shares_first = n_first.eq_ignore_ascii_case(c_first);
-                let shares_last = n_last.eq_ignore_ascii_case(c_last);
-                if shares_first || shares_last {
-                    if *count > *canon_count || (*count == *canon_count && name.len() > canon.len())
-                    {
-                        *canon = name.clone();
-                    }
-                    *canon_count += count;
-                    merged = true;
-                    break;
-                }
-            }
-        }
-
-        if !merged {
-            canonical.push((name.clone(), *count));
-        }
-    }
-
-    // Sort final result by count descending
-    canonical.sort_by_key(|x| std::cmp::Reverse(x.1));
-    Ok(canonical)
+    let entities = crate::continuity::entity::resolve_counted(
+        &counts,
+        crate::continuity::entity::EntityType::Character,
+    )?;
+    let mut merged: Vec<_> = entities
+        .into_iter()
+        .map(|entity| (entity.canonical, entity.mention_count))
+        .collect();
+    merged.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    Ok(merged)
 }
 
 // ---------------------------------------------------------------------------
 // Theme keyword detection
 // ---------------------------------------------------------------------------
 
-type ThemeMap = Vec<(&'static str, Vec<&'static str>)>;
+pub(crate) type ThemeMap = Vec<(&'static str, Vec<&'static str>)>;
 
-fn theme_keywords() -> &'static ThemeMap {
+pub(crate) fn theme_keywords() -> &'static ThemeMap {
     static DATA: OnceLock<ThemeMap> = OnceLock::new();
     DATA.get_or_init(|| {
         vec![
@@ -1363,9 +1317,11 @@ mod tests {
 
     #[test]
     fn mentions_empty_input_is_empty() {
-        assert!(extract_character_mentions(&[] as &[&str])
-            .unwrap()
-            .is_empty());
+        assert!(
+            extract_character_mentions(&[] as &[&str])
+                .unwrap()
+                .is_empty()
+        );
     }
 
     // -- deduplicate_characters --
@@ -1418,7 +1374,7 @@ mod tests {
     // -- merge_character_aliases --
 
     #[test]
-    fn test_merge_aliases_substring() {
+    fn test_merge_aliases_known_nickname() {
         let counts = vec![("Elizabeth".into(), 10), ("Liz".into(), 5)];
         let result = merge_character_aliases(counts).unwrap();
         assert_eq!(result.len(), 1);
@@ -1448,13 +1404,16 @@ mod tests {
     }
 
     #[test]
-    fn test_merge_aliases_shared_last_word() {
-        // Neither name is a substring of the other; the shared-last-word branch
-        // (reading first/last words) drives the merge.
-        let counts = vec![("John Smith".into(), 7), ("Mary Smith".into(), 4)];
-        let result = merge_character_aliases(counts).unwrap();
-        assert_eq!(result.len(), 1);
-        assert_eq!(result[0].1, 11);
+    fn test_merge_aliases_shared_surname_preserves_distinct_people() {
+        let result =
+            merge_character_aliases(vec![("John Smith".into(), 7), ("Mary Smith".into(), 4)])
+                .unwrap();
+        assert_eq!(
+            result,
+            vec![("John Smith".into(), 7), ("Mary Smith".into(), 4)]
+        );
+        let result = merge_character_aliases(vec![("Ann".into(), 3), ("Anne".into(), 2)]).unwrap();
+        assert_eq!(result, vec![("Ann".into(), 3), ("Anne".into(), 2)]);
     }
 
     #[test]

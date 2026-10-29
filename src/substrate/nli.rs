@@ -11,15 +11,15 @@
 use crate::onnx;
 
 /// NLI labels, POSITIONALLY ALIGNED with the model's output logits. Matches the
-/// common `{0: contradiction, 1: neutral, 2: entailment}` id2label order used by
-/// `*-mnli` checkpoints. If you swap the model, update this to its config.json
-/// order.
+/// fixed `{0: contradiction, 1: neutral, 2: entailment}` order required by this
+/// adapter. Supplied models must export this order; shape checks cannot verify it.
 pub const NLI_LABELS: &[&str] = &["contradiction", "neutral", "entailment"];
 
 /// Index of the contradiction class in [`NLI_LABELS`] (and the model's logits).
 const CONTRADICTION_IDX: usize = 0;
 
-/// Set the directory searched for the NLI model (`nli-onnx/`). No-op on wasm.
+/// Set the explicit model root containing `nli-onnx/`.
+/// Replaces or retries the native model; a no-op on wasm.
 pub fn set_model_directory(path: &str) {
     onnx::set_nli_model_directory(path);
 }

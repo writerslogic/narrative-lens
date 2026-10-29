@@ -1,61 +1,71 @@
 # Security Policy
 
-narrative-lens is a stateless analysis library: it reads text passed to it and returns a
-result. It makes no network calls, stores no data, and reads no files beyond what the
-optional local ONNX model path is explicitly pointed at.
+narrative-lens analyzes caller-supplied text locally. Runtime analysis makes no
+network calls. The CLI reads only the inputs you name; optional model adapters read
+only explicitly configured model directories, with no ambient discovery. Native ONNX
+Runtime telemetry is disabled. Builds can fetch Cargo packages and native runtime
+binaries.
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-Please report security issues privately rather than opening a public issue:
+Report security issues privately rather than opening a public issue:
 
-- Use [GitHub's private vulnerability reporting](https://github.com/writerslogic/narrative-lens/security/advisories/new), or
+- [GitHub private vulnerability reporting](https://github.com/writerslogic/narrative-lens/security/advisories/new), or
 - Email security@writerslogic.com
 
 Include what you found, how to reproduce it, and its potential impact. We aim to
 acknowledge reports within 5 business days.
 
-## Supported Versions
+## Supported versions
+
+| Version | Supported |
+| --- | --- |
+| 0.2.x | Yes |
+| < 0.2 | No |
 
 Only the latest published release receives security fixes.
 
+## Data retention and models
+
+- Callers own manuscript contexts and optional NER caches. They retain text until cleared, evicted within their budgets, or dropped; default NER calls keep no process-global memo.
+- Cache budgets describe retained payload estimates, not process RSS.
+- Verified profiles hash immutable model and tokenizer bytes, validate preprocessing contracts and declared labels, and record identity in NLI reports. Pins must come from a trusted source; they establish neither learned accuracy nor sandboxed graph execution.
+- A failed verified replacement clears the prior model; replacement during an NLI pass discards that pass's model findings. Legacy setters remain explicitly unverified. Load models only from trusted sources.
+
 ## Automated checks
 
-GitHub Actions runs Rust tests (including the Node and ONNX features), clippy,
-Node binding tests, and TypeScript checks on pull requests and pushes to `main`.
-CodeQL scans Rust, JavaScript/TypeScript, and workflow definitions. The daily
-`cargo-fuzz` job also runs on pull requests and pushes, checking text analysis
-and Unicode offset handling with AddressSanitizer. Failing inputs are retained
-as workflow artifacts.
+| Check | Where |
+| --- | --- |
+| Rust tests across feature sets, clippy, Node binding, TypeScript, and packed-package tests | `ci.yml` on pushes and pull requests to `main` |
+| Minimum Rust versions (1.89 core, 1.92 native ONNX, 1.91 wasm) | `ci.yml` |
+| Dependency advisories, licenses, and sources from `deny.toml` | `ci.yml` (`cargo deny --deny unsound`) |
+| CodeQL for Rust, JavaScript/TypeScript, and workflow definitions | `codeql.yml` |
+| `cargo-fuzz` text-analysis target with AddressSanitizer, failing inputs kept as artifacts | `fuzz.yml`, daily and on every push and pull request |
+| OpenSSF Scorecard | `scorecard.yml` |
+| Release gate: installed-package tests and native binary digest verification on every target and Node line | `platform-assurance.yml`, `release.yml` |
 
-Workflow actions use immutable commit hashes. npm builds install the checked-in
-dependency lockfile with `npm ci`. Dependabot groups CodeQL action updates so
-initialization and analysis use the same version.
+Workflow actions are pinned to commit hashes, npm installs use `npm ci` against the
+checked-in lockfile, and Dependabot groups CodeQL action updates so initialization and
+analysis share a version.
 
-## Scorecard assessment (2026-10-27)
+`deny.toml` accepts the maintenance advisory `RUSTSEC-2024-0436` because the current
+`tokenizers` releases require the archived `paste` build-time macro and no patched
+version exists. The exception does not cover vulnerability or soundness advisories;
+reassess it when `tokenizers` changes.
 
-The 19 initial code scanning alerts were OpenSSF Scorecard supply-chain checks.
-Alerts [2–14](https://github.com/writerslogic/narrative-lens/security/code-scanning?query=is%3Aopen+rule%3APinnedDependenciesID)
-identified mutable workflow action references and npm installs that bypassed the
-lockfile; these were replaced with commit hashes and `npm ci`. Alert
-[16](https://github.com/writerslogic/narrative-lens/security/code-scanning/16)
-identified missing fuzzing; the fuzz target and scheduled workflow address it.
+## Scorecard history
 
-The following historical metrics are accepted exceptions after required checks
-and pull request review protection are enabled on `main`. They do not justify
-bypassing checks or reviews on future changes:
+The 19 initial code scanning alerts (2026-10-27) were OpenSSF Scorecard supply-chain
+checks. Mutable action references and lockfile-bypassing npm installs were replaced
+with pinned hashes and `npm ci`; the missing-fuzzing alert is addressed by the fuzz
+target and workflow. No code scanning alerts were open as of 2026-10-28.
 
-- [15: SAST](https://github.com/writerslogic/narrative-lens/security/code-scanning/15)
-  counted older commits created before scanning was consistently configured.
-  CodeQL checks are required for future merges; old commits are not rewritten
-  or given fabricated scan results.
-- [17: Code Review](https://github.com/writerslogic/narrative-lens/security/code-scanning/17)
-  counted changes already merged without approval. Future pull requests require
-  approval; retrospective approvals do not establish a review before merge.
-- [18: Maintained](https://github.com/writerslogic/narrative-lens/security/code-scanning/18)
-  reports that the repository was created on 2026-09-15 and is less than 90 days
-  old. Repository age cannot be repaired by a code change; the age condition
-  expires in December 2026.
+Three historical metrics are accepted exceptions and do not justify bypassing checks
+or reviews on future changes:
+
+- **SAST** counted commits made before scanning was consistently configured; old commits are not rewritten.
+- **Code Review** counted changes merged before approval was required; retrospective approvals do not establish review before merge.
+- **Maintained** reports a repository younger than 90 days (created 2026-09-15); the condition expires in December 2026.
 
 The [OpenSSF Best Practices entry](https://www.bestpractices.dev/en/projects/15147)
-is a separate, external self-certification. Its passing status must be established
-in that service; local metadata does not change the public badge.
+is a separate external self-certification whose status is established in that service.

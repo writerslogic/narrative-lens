@@ -1,0 +1,2050 @@
+{
+  "Configuration": {
+    "$defs": {
+      "AnalysisLimits": {
+        "additionalProperties": false,
+        "properties": {
+          "maxFindings": {
+            "default": 10000,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "modelInputBytes": {
+            "default": 16384,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "nliPairs": {
+            "default": 128,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "nliSentencesPerScene": {
+            "default": 8,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "nliWindowScenes": {
+            "default": 1,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sceneCandidates": {
+            "default": 4096,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "CorrectionAction": {
+        "description": "The three writer mutations the entity surface supports. `Tag` and `Reassign`\nboth bind a surface to a named canonical entity (tagging a previously\nunrecognized mention vs. moving a mis-grouped one); they carry the same data\nand are applied identically, so they share [`CorrectionAction::Assign`].",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "description": "Bind the surface to the entity with this canonical name (tag or reassign).",
+            "properties": {
+              "canonical": {
+                "type": "string"
+              },
+              "kind": {
+                "const": "assign",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "canonical"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Suppress the surface: it is not a real entity mention.",
+            "properties": {
+              "kind": {
+                "const": "reject",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "EntityCorrection": {
+        "additionalProperties": false,
+        "description": "A writer's authoritative decision about one mention surface, persisted and\nreapplied over the automatic resolution. A correction is keyed by the\n`surface` form it targets; the caller looks corrections up per document.",
+        "properties": {
+          "action": {
+            "$ref": "#/$defs/CorrectionAction",
+            "description": "What the writer decided for that surface."
+          },
+          "surface": {
+            "description": "The mention surface this decision applies to (e.g. \"Mr. Condrey\").",
+            "type": "string"
+          }
+        },
+        "required": [
+          "surface",
+          "action"
+        ],
+        "type": "object"
+      },
+      "Genre": {
+        "enum": [
+          "Literary",
+          "Thriller",
+          "Mystery",
+          "Romance",
+          "Fantasy",
+          "SciFi",
+          "Horror",
+          "HistoricalFiction",
+          "YoungAdult",
+          "ChildrensBook",
+          "General"
+        ],
+        "type": "string"
+      },
+      "ModelPolicy": {
+        "enum": [
+          "disabled",
+          "fallback",
+          "required"
+        ],
+        "type": "string"
+      },
+      "Severity": {
+        "enum": [
+          "info",
+          "suggestion",
+          "warning",
+          "error"
+        ],
+        "type": "string"
+      },
+      "Suppression": {
+        "additionalProperties": false,
+        "properties": {
+          "fingerprint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "ruleId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sceneId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "Thresholds": {
+        "additionalProperties": false,
+        "properties": {
+          "maxGrade": {
+            "default": null,
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxSentenceWords": {
+            "default": null,
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minSceneWords": {
+            "default": null,
+            "format": "uint",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "minStructureScenes": {
+            "default": null,
+            "format": "uint",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "nliContradiction": {
+            "default": null,
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "chronology": {
+        "default": false,
+        "type": "boolean"
+      },
+      "dictionary": {
+        "default": [],
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "entityCorrections": {
+        "default": [],
+        "items": {
+          "$ref": "#/$defs/EntityCorrection"
+        },
+        "type": "array"
+      },
+      "genre": {
+        "$ref": "#/$defs/Genre",
+        "default": "General"
+      },
+      "lexicon": {
+        "default": [],
+        "description": "Replacement list of whole-word editorial terms; empty by default.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "limits": {
+        "$ref": "#/$defs/AnalysisLimits",
+        "default": {
+          "maxFindings": 10000,
+          "modelInputBytes": 16384,
+          "nliPairs": 128,
+          "nliSentencesPerScene": 8,
+          "nliWindowScenes": 1,
+          "sceneCandidates": 4096
+        }
+      },
+      "minimumSeverity": {
+        "$ref": "#/$defs/Severity",
+        "default": "info"
+      },
+      "modelRevision": {
+        "default": "",
+        "description": "Caller changes this when replacing an injected model/backend.",
+        "type": "string"
+      },
+      "nli": {
+        "$ref": "#/$defs/ModelPolicy",
+        "default": "disabled"
+      },
+      "rules": {
+        "default": null,
+        "description": "None selects all supported rules; Some(empty) selects none.",
+        "items": {
+          "type": "string"
+        },
+        "type": [
+          "array",
+          "null"
+        ],
+        "uniqueItems": true
+      },
+      "structureTemplate": {
+        "default": "three_act",
+        "type": "string"
+      },
+      "suppressions": {
+        "default": [],
+        "items": {
+          "$ref": "#/$defs/Suppression"
+        },
+        "type": "array"
+      },
+      "thresholds": {
+        "$ref": "#/$defs/Thresholds",
+        "default": {
+          "maxGrade": null,
+          "maxSentenceWords": null,
+          "minSceneWords": null,
+          "minStructureScenes": null,
+          "nliContradiction": null
+        }
+      }
+    },
+    "title": "Configuration",
+    "type": "object"
+  },
+  "Manuscript": {
+    "$defs": {
+      "AnalysisLimits": {
+        "additionalProperties": false,
+        "properties": {
+          "maxFindings": {
+            "default": 10000,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "modelInputBytes": {
+            "default": 16384,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "nliPairs": {
+            "default": 128,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "nliSentencesPerScene": {
+            "default": 8,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "nliWindowScenes": {
+            "default": 1,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sceneCandidates": {
+            "default": 4096,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Chronology": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "lane": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "lane"
+        ],
+        "type": "object"
+      },
+      "Configuration": {
+        "additionalProperties": false,
+        "properties": {
+          "chronology": {
+            "default": false,
+            "type": "boolean"
+          },
+          "dictionary": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "entityCorrections": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/EntityCorrection"
+            },
+            "type": "array"
+          },
+          "genre": {
+            "$ref": "#/$defs/Genre",
+            "default": "General"
+          },
+          "lexicon": {
+            "default": [],
+            "description": "Replacement list of whole-word editorial terms; empty by default.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "limits": {
+            "$ref": "#/$defs/AnalysisLimits",
+            "default": {
+              "maxFindings": 10000,
+              "modelInputBytes": 16384,
+              "nliPairs": 128,
+              "nliSentencesPerScene": 8,
+              "nliWindowScenes": 1,
+              "sceneCandidates": 4096
+            }
+          },
+          "minimumSeverity": {
+            "$ref": "#/$defs/Severity",
+            "default": "info"
+          },
+          "modelRevision": {
+            "default": "",
+            "description": "Caller changes this when replacing an injected model/backend.",
+            "type": "string"
+          },
+          "nli": {
+            "$ref": "#/$defs/ModelPolicy",
+            "default": "disabled"
+          },
+          "rules": {
+            "default": null,
+            "description": "None selects all supported rules; Some(empty) selects none.",
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ],
+            "uniqueItems": true
+          },
+          "structureTemplate": {
+            "default": "three_act",
+            "type": "string"
+          },
+          "suppressions": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/Suppression"
+            },
+            "type": "array"
+          },
+          "thresholds": {
+            "$ref": "#/$defs/Thresholds",
+            "default": {
+              "maxGrade": null,
+              "maxSentenceWords": null,
+              "minSceneWords": null,
+              "minStructureScenes": null,
+              "nliContradiction": null
+            }
+          }
+        },
+        "type": "object"
+      },
+      "CorrectionAction": {
+        "description": "The three writer mutations the entity surface supports. `Tag` and `Reassign`\nboth bind a surface to a named canonical entity (tagging a previously\nunrecognized mention vs. moving a mis-grouped one); they carry the same data\nand are applied identically, so they share [`CorrectionAction::Assign`].",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "description": "Bind the surface to the entity with this canonical name (tag or reassign).",
+            "properties": {
+              "canonical": {
+                "type": "string"
+              },
+              "kind": {
+                "const": "assign",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "canonical"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Suppress the surface: it is not a real entity mention.",
+            "properties": {
+              "kind": {
+                "const": "reject",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "EntityCorrection": {
+        "additionalProperties": false,
+        "description": "A writer's authoritative decision about one mention surface, persisted and\nreapplied over the automatic resolution. A correction is keyed by the\n`surface` form it targets; the caller looks corrections up per document.",
+        "properties": {
+          "action": {
+            "$ref": "#/$defs/CorrectionAction",
+            "description": "What the writer decided for that surface."
+          },
+          "surface": {
+            "description": "The mention surface this decision applies to (e.g. \"Mr. Condrey\").",
+            "type": "string"
+          }
+        },
+        "required": [
+          "surface",
+          "action"
+        ],
+        "type": "object"
+      },
+      "Genre": {
+        "enum": [
+          "Literary",
+          "Thriller",
+          "Mystery",
+          "Romance",
+          "Fantasy",
+          "SciFi",
+          "Horror",
+          "HistoricalFiction",
+          "YoungAdult",
+          "ChildrensBook",
+          "General"
+        ],
+        "type": "string"
+      },
+      "Intention": {
+        "enum": [
+          "repetition",
+          "dialect",
+          "complex_prose",
+          "long_sentences",
+          "nonlinear",
+          "open_ending",
+          "supernatural"
+        ],
+        "type": "string"
+      },
+      "ModelPolicy": {
+        "enum": [
+          "disabled",
+          "fallback",
+          "required"
+        ],
+        "type": "string"
+      },
+      "Scene": {
+        "additionalProperties": false,
+        "properties": {
+          "chronology": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Chronology"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "chronologyLane": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "intentions": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/Intention"
+            },
+            "type": "array"
+          },
+          "purpose": {
+            "default": "",
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "type": "object"
+      },
+      "Severity": {
+        "enum": [
+          "info",
+          "suggestion",
+          "warning",
+          "error"
+        ],
+        "type": "string"
+      },
+      "Suppression": {
+        "additionalProperties": false,
+        "properties": {
+          "fingerprint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "ruleId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sceneId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "Thresholds": {
+        "additionalProperties": false,
+        "properties": {
+          "maxGrade": {
+            "default": null,
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxSentenceWords": {
+            "default": null,
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minSceneWords": {
+            "default": null,
+            "format": "uint",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "minStructureScenes": {
+            "default": null,
+            "format": "uint",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "nliContradiction": {
+            "default": null,
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "configuration": {
+        "$ref": "#/$defs/Configuration",
+        "default": {
+          "chronology": false,
+          "dictionary": [],
+          "entityCorrections": [],
+          "genre": "General",
+          "lexicon": [],
+          "limits": {
+            "maxFindings": 10000,
+            "modelInputBytes": 16384,
+            "nliPairs": 128,
+            "nliSentencesPerScene": 8,
+            "nliWindowScenes": 1,
+            "sceneCandidates": 4096
+          },
+          "minimumSeverity": "info",
+          "modelRevision": "",
+          "nli": "disabled",
+          "rules": null,
+          "structureTemplate": "three_act",
+          "suppressions": [],
+          "thresholds": {
+            "maxGrade": null,
+            "maxSentenceWords": null,
+            "minSceneWords": null,
+            "minStructureScenes": null,
+            "nliContradiction": null
+          }
+        }
+      },
+      "documentId": {
+        "type": "string"
+      },
+      "knownCharacters": {
+        "default": [],
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "scenes": {
+        "items": {
+          "$ref": "#/$defs/Scene"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "documentId",
+      "scenes"
+    ],
+    "title": "Manuscript",
+    "type": "object"
+  },
+  "Report": {
+    "$defs": {
+      "AnalysisLimits": {
+        "additionalProperties": false,
+        "properties": {
+          "maxFindings": {
+            "default": 10000,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "modelInputBytes": {
+            "default": 16384,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "nliPairs": {
+            "default": 128,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "nliSentencesPerScene": {
+            "default": 8,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "nliWindowScenes": {
+            "default": 1,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sceneCandidates": {
+            "default": 4096,
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ChronologyReport": {
+        "properties": {
+          "ambiguousSceneIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "lanes": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object"
+          },
+          "readerKnowledge": {
+            "items": {
+              "$ref": "#/$defs/ReaderKnowledge"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "lanes",
+          "ambiguousSceneIds",
+          "readerKnowledge"
+        ],
+        "type": "object"
+      },
+      "Confidence": {
+        "properties": {
+          "calibrationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "method": {
+            "type": "string"
+          },
+          "score": {
+            "format": "double",
+            "type": "number"
+          },
+          "source": {
+            "$ref": "#/$defs/ConfidenceSource"
+          }
+        },
+        "required": [
+          "score",
+          "source",
+          "method"
+        ],
+        "type": "object"
+      },
+      "ConfidenceSource": {
+        "enum": [
+          "heuristic",
+          "model",
+          "calibrated"
+        ],
+        "type": "string"
+      },
+      "Configuration": {
+        "additionalProperties": false,
+        "properties": {
+          "chronology": {
+            "default": false,
+            "type": "boolean"
+          },
+          "dictionary": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "entityCorrections": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/EntityCorrection"
+            },
+            "type": "array"
+          },
+          "genre": {
+            "$ref": "#/$defs/Genre",
+            "default": "General"
+          },
+          "lexicon": {
+            "default": [],
+            "description": "Replacement list of whole-word editorial terms; empty by default.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "limits": {
+            "$ref": "#/$defs/AnalysisLimits",
+            "default": {
+              "maxFindings": 10000,
+              "modelInputBytes": 16384,
+              "nliPairs": 128,
+              "nliSentencesPerScene": 8,
+              "nliWindowScenes": 1,
+              "sceneCandidates": 4096
+            }
+          },
+          "minimumSeverity": {
+            "$ref": "#/$defs/Severity",
+            "default": "info"
+          },
+          "modelRevision": {
+            "default": "",
+            "description": "Caller changes this when replacing an injected model/backend.",
+            "type": "string"
+          },
+          "nli": {
+            "$ref": "#/$defs/ModelPolicy",
+            "default": "disabled"
+          },
+          "rules": {
+            "default": null,
+            "description": "None selects all supported rules; Some(empty) selects none.",
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ],
+            "uniqueItems": true
+          },
+          "structureTemplate": {
+            "default": "three_act",
+            "type": "string"
+          },
+          "suppressions": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/Suppression"
+            },
+            "type": "array"
+          },
+          "thresholds": {
+            "$ref": "#/$defs/Thresholds",
+            "default": {
+              "maxGrade": null,
+              "maxSentenceWords": null,
+              "minSceneWords": null,
+              "minStructureScenes": null,
+              "nliContradiction": null
+            }
+          }
+        },
+        "type": "object"
+      },
+      "CorrectionAction": {
+        "description": "The three writer mutations the entity surface supports. `Tag` and `Reassign`\nboth bind a surface to a named canonical entity (tagging a previously\nunrecognized mention vs. moving a mis-grouped one); they carry the same data\nand are applied identically, so they share [`CorrectionAction::Assign`].",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "description": "Bind the surface to the entity with this canonical name (tag or reassign).",
+            "properties": {
+              "canonical": {
+                "type": "string"
+              },
+              "kind": {
+                "const": "assign",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "canonical"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Suppress the surface: it is not a real entity mention.",
+            "properties": {
+              "kind": {
+                "const": "reject",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "Coverage": {
+        "properties": {
+          "analyzedUnits": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "analyzer": {
+            "type": "string"
+          },
+          "diagnostics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/$defs/Status"
+          },
+          "totalUnits": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "unit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "analyzer",
+          "status",
+          "totalUnits",
+          "analyzedUnits",
+          "unit",
+          "diagnostics"
+        ],
+        "type": "object"
+      },
+      "Diagnostic": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "sceneIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "sceneIds"
+        ],
+        "type": "object"
+      },
+      "EntityCorrection": {
+        "additionalProperties": false,
+        "description": "A writer's authoritative decision about one mention surface, persisted and\nreapplied over the automatic resolution. A correction is keyed by the\n`surface` form it targets; the caller looks corrections up per document.",
+        "properties": {
+          "action": {
+            "$ref": "#/$defs/CorrectionAction",
+            "description": "What the writer decided for that surface."
+          },
+          "surface": {
+            "description": "The mention surface this decision applies to (e.g. \"Mr. Condrey\").",
+            "type": "string"
+          }
+        },
+        "required": [
+          "surface",
+          "action"
+        ],
+        "type": "object"
+      },
+      "Evidence": {
+        "properties": {
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EvidenceContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "quote": {
+            "type": "string"
+          },
+          "range": {
+            "$ref": "#/$defs/TextRange"
+          },
+          "role": {
+            "$ref": "#/$defs/EvidenceRole"
+          },
+          "sceneId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "documentId",
+          "sceneId",
+          "range",
+          "quote",
+          "role"
+        ],
+        "type": "object"
+      },
+      "EvidenceContext": {
+        "properties": {
+          "after": {
+            "type": "string"
+          },
+          "before": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "before",
+          "after"
+        ],
+        "type": "object"
+      },
+      "EvidenceRole": {
+        "enum": [
+          "primary",
+          "conflict",
+          "context"
+        ],
+        "type": "string"
+      },
+      "Finding": {
+        "properties": {
+          "analyzer": {
+            "type": "string"
+          },
+          "confidence": {
+            "$ref": "#/$defs/Confidence"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "evidence": {
+            "description": "Primary passage first; contradictory passages carry the Conflict role.\nAggregate findings may have no pinpoint evidence; their scope is explicit.",
+            "items": {
+              "$ref": "#/$defs/Evidence"
+            },
+            "type": "array"
+          },
+          "fingerprint": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "ruleId": {
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/$defs/Scope"
+          },
+          "severity": {
+            "$ref": "#/$defs/Severity"
+          },
+          "suggestion": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "documentId",
+          "ruleId",
+          "analyzer",
+          "severity",
+          "message",
+          "suggestion",
+          "confidence",
+          "scope",
+          "evidence",
+          "fingerprint"
+        ],
+        "type": "object"
+      },
+      "Genre": {
+        "enum": [
+          "Literary",
+          "Thriller",
+          "Mystery",
+          "Romance",
+          "Fantasy",
+          "SciFi",
+          "Horror",
+          "HistoricalFiction",
+          "YoungAdult",
+          "ChildrensBook",
+          "General"
+        ],
+        "type": "string"
+      },
+      "ModelIdentity": {
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/ModelKind"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ModelManifest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verification": {
+            "$ref": "#/$defs/ModelVerification"
+          }
+        },
+        "required": [
+          "kind",
+          "verification"
+        ],
+        "type": "object"
+      },
+      "ModelKind": {
+        "enum": [
+          "embedding",
+          "ner",
+          "emotion",
+          "nli"
+        ],
+        "type": "string"
+      },
+      "ModelManifest": {
+        "additionalProperties": false,
+        "description": "V1 profiles encode with tokenizer special tokens, reject tokenizer-side\ntruncation/padding, and right-pad IDs with `padding_token_id` and masks/types\nwith zero. Embeddings use masked mean pooling without normalization; class\nlogits are softmaxed and remapped to the crate's canonical label order.",
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/ModelKind"
+          },
+          "labels": {
+            "description": "Exact supported label names in source-logit order; empty for embeddings.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "maxTokens": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "modelSha256": {
+            "type": "string"
+          },
+          "paddingTokenId": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "profile": {
+            "$ref": "#/$defs/ModelProfile"
+          },
+          "schemaVersion": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "tokenizerSha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "kind",
+          "profile",
+          "modelSha256",
+          "tokenizerSha256",
+          "maxTokens",
+          "paddingTokenId",
+          "labels"
+        ],
+        "type": "object"
+      },
+      "ModelPolicy": {
+        "enum": [
+          "disabled",
+          "fallback",
+          "required"
+        ],
+        "type": "string"
+      },
+      "ModelProfile": {
+        "enum": [
+          "hugging_face_masked_mean_v1",
+          "hugging_face_bio9_v1",
+          "hugging_face_ekman7_v1",
+          "hugging_face_nli3_v1"
+        ],
+        "type": "string"
+      },
+      "ModelVerification": {
+        "enum": [
+          "unverified_legacy",
+          "verified_manifest_v1"
+        ],
+        "type": "string"
+      },
+      "ReaderKnowledge": {
+        "properties": {
+          "afterSceneId": {
+            "type": "string"
+          },
+          "introduced": {
+            "items": {
+              "$ref": "#/$defs/Evidence"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "afterSceneId",
+          "introduced"
+        ],
+        "type": "object"
+      },
+      "ReportSummary": {
+        "properties": {
+          "omittedFindings": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "omittedSuppressed": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "returnedFindings": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "severityCounts": {
+            "additionalProperties": false,
+            "properties": {
+              "error": {
+                "format": "uint",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "info": {
+                "format": "uint",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "suggestion": {
+                "format": "uint",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "warning": {
+                "format": "uint",
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "suppressedFindings": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "totalFindings": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "totalFindings",
+          "suppressedFindings",
+          "returnedFindings",
+          "omittedFindings",
+          "omittedSuppressed",
+          "severityCounts"
+        ],
+        "type": "object"
+      },
+      "SceneMetrics": {
+        "properties": {
+          "dialogueRatio": {
+            "format": "double",
+            "type": "number"
+          },
+          "grade": {
+            "format": "double",
+            "type": "number"
+          },
+          "sceneId": {
+            "type": "string"
+          },
+          "sentenceCount": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sentenceWords": {
+            "format": "double",
+            "type": "number"
+          },
+          "tension": {
+            "format": "double",
+            "type": "number"
+          },
+          "wordCount": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sceneId",
+          "wordCount",
+          "sentenceCount",
+          "grade",
+          "sentenceWords",
+          "dialogueRatio",
+          "tension"
+        ],
+        "type": "object"
+      },
+      "Scope": {
+        "oneOf": [
+          {
+            "properties": {
+              "kind": {
+                "const": "passage",
+                "type": "string"
+              },
+              "sceneId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "sceneId"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "scene",
+                "type": "string"
+              },
+              "sceneId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "sceneId"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "manuscript",
+                "type": "string"
+              },
+              "sceneIds": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "kind",
+              "sceneIds"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "Severity": {
+        "enum": [
+          "info",
+          "suggestion",
+          "warning",
+          "error"
+        ],
+        "type": "string"
+      },
+      "Status": {
+        "enum": [
+          "complete",
+          "heuristic_fallback",
+          "unavailable",
+          "insufficient_input",
+          "execution_failure"
+        ],
+        "type": "string"
+      },
+      "SuppressedFinding": {
+        "properties": {
+          "finding": {
+            "$ref": "#/$defs/Finding"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "finding",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "Suppression": {
+        "additionalProperties": false,
+        "properties": {
+          "fingerprint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "ruleId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sceneId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "TextRange": {
+        "properties": {
+          "byteEnd": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "byteStart": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "utf16End": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "utf16Start": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "byteStart",
+          "byteEnd",
+          "utf16Start",
+          "utf16End"
+        ],
+        "type": "object"
+      },
+      "Thresholds": {
+        "additionalProperties": false,
+        "properties": {
+          "maxGrade": {
+            "default": null,
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxSentenceWords": {
+            "default": null,
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minSceneWords": {
+            "default": null,
+            "format": "uint",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "minStructureScenes": {
+            "default": null,
+            "format": "uint",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "nliContradiction": {
+            "default": null,
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "chronology": {
+        "$ref": "#/$defs/ChronologyReport"
+      },
+      "configuration": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/Configuration"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "coverage": {
+        "items": {
+          "$ref": "#/$defs/Coverage"
+        },
+        "type": "array"
+      },
+      "diagnostics": {
+        "items": {
+          "$ref": "#/$defs/Diagnostic"
+        },
+        "type": "array"
+      },
+      "documentId": {
+        "type": "string"
+      },
+      "findings": {
+        "items": {
+          "$ref": "#/$defs/Finding"
+        },
+        "type": "array"
+      },
+      "metrics": {
+        "items": {
+          "$ref": "#/$defs/SceneMetrics"
+        },
+        "type": "array"
+      },
+      "modelIdentities": {
+        "default": [],
+        "items": {
+          "$ref": "#/$defs/ModelIdentity"
+        },
+        "type": "array"
+      },
+      "sceneIds": {
+        "description": "Presentation order, never changed by chronology.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "schemaVersion": {
+        "type": "string"
+      },
+      "summary": {
+        "$ref": "#/$defs/ReportSummary",
+        "default": {
+          "omittedFindings": 0,
+          "omittedSuppressed": 0,
+          "returnedFindings": 0,
+          "severityCounts": {},
+          "suppressedFindings": 0,
+          "totalFindings": 0
+        }
+      },
+      "suppressed": {
+        "items": {
+          "$ref": "#/$defs/SuppressedFinding"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "schemaVersion",
+      "documentId",
+      "sceneIds",
+      "findings",
+      "suppressed",
+      "metrics",
+      "coverage",
+      "diagnostics",
+      "chronology"
+    ],
+    "title": "Report",
+    "type": "object"
+  },
+  "RevisionComparison": {
+    "$defs": {
+      "ChangeDirection": {
+        "enum": [
+          "introduced",
+          "resolved"
+        ],
+        "type": "string"
+      },
+      "Confidence": {
+        "properties": {
+          "calibrationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "method": {
+            "type": "string"
+          },
+          "score": {
+            "format": "double",
+            "type": "number"
+          },
+          "source": {
+            "$ref": "#/$defs/ConfidenceSource"
+          }
+        },
+        "required": [
+          "score",
+          "source",
+          "method"
+        ],
+        "type": "object"
+      },
+      "ConfidenceSource": {
+        "enum": [
+          "heuristic",
+          "model",
+          "calibrated"
+        ],
+        "type": "string"
+      },
+      "Evidence": {
+        "properties": {
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EvidenceContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "quote": {
+            "type": "string"
+          },
+          "range": {
+            "$ref": "#/$defs/TextRange"
+          },
+          "role": {
+            "$ref": "#/$defs/EvidenceRole"
+          },
+          "sceneId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "documentId",
+          "sceneId",
+          "range",
+          "quote",
+          "role"
+        ],
+        "type": "object"
+      },
+      "EvidenceContext": {
+        "properties": {
+          "after": {
+            "type": "string"
+          },
+          "before": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "before",
+          "after"
+        ],
+        "type": "object"
+      },
+      "EvidenceRole": {
+        "enum": [
+          "primary",
+          "conflict",
+          "context"
+        ],
+        "type": "string"
+      },
+      "Finding": {
+        "properties": {
+          "analyzer": {
+            "type": "string"
+          },
+          "confidence": {
+            "$ref": "#/$defs/Confidence"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "evidence": {
+            "description": "Primary passage first; contradictory passages carry the Conflict role.\nAggregate findings may have no pinpoint evidence; their scope is explicit.",
+            "items": {
+              "$ref": "#/$defs/Evidence"
+            },
+            "type": "array"
+          },
+          "fingerprint": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "ruleId": {
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/$defs/Scope"
+          },
+          "severity": {
+            "$ref": "#/$defs/Severity"
+          },
+          "suggestion": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "documentId",
+          "ruleId",
+          "analyzer",
+          "severity",
+          "message",
+          "suggestion",
+          "confidence",
+          "scope",
+          "evidence",
+          "fingerprint"
+        ],
+        "type": "object"
+      },
+      "MatchKind": {
+        "enum": [
+          "context",
+          "evidence",
+          "ambiguous_occurrence"
+        ],
+        "type": "string"
+      },
+      "PersistentFinding": {
+        "properties": {
+          "after": {
+            "$ref": "#/$defs/Finding"
+          },
+          "before": {
+            "$ref": "#/$defs/Finding"
+          },
+          "matchKind": {
+            "$ref": "#/$defs/MatchKind"
+          }
+        },
+        "required": [
+          "before",
+          "after",
+          "matchKind"
+        ],
+        "type": "object"
+      },
+      "Scope": {
+        "oneOf": [
+          {
+            "properties": {
+              "kind": {
+                "const": "passage",
+                "type": "string"
+              },
+              "sceneId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "sceneId"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "scene",
+                "type": "string"
+              },
+              "sceneId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "sceneId"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "manuscript",
+                "type": "string"
+              },
+              "sceneIds": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "kind",
+              "sceneIds"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "Severity": {
+        "enum": [
+          "info",
+          "suggestion",
+          "warning",
+          "error"
+        ],
+        "type": "string"
+      },
+      "TextRange": {
+        "properties": {
+          "byteEnd": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "byteStart": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "utf16End": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "utf16Start": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "byteStart",
+          "byteEnd",
+          "utf16Start",
+          "utf16End"
+        ],
+        "type": "object"
+      },
+      "UnassessedFinding": {
+        "properties": {
+          "direction": {
+            "$ref": "#/$defs/ChangeDirection"
+          },
+          "finding": {
+            "$ref": "#/$defs/Finding"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "finding",
+          "direction",
+          "reason"
+        ],
+        "type": "object"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "complete": {
+        "default": false,
+        "type": "boolean"
+      },
+      "introduced": {
+        "items": {
+          "$ref": "#/$defs/Finding"
+        },
+        "type": "array"
+      },
+      "persistent": {
+        "items": {
+          "$ref": "#/$defs/PersistentFinding"
+        },
+        "type": "array"
+      },
+      "resolved": {
+        "items": {
+          "$ref": "#/$defs/Finding"
+        },
+        "type": "array"
+      },
+      "unassessed": {
+        "default": [],
+        "items": {
+          "$ref": "#/$defs/UnassessedFinding"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "introduced",
+      "persistent",
+      "resolved"
+    ],
+    "title": "RevisionComparison",
+    "type": "object"
+  }
+}

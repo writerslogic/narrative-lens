@@ -1,0 +1,69 @@
+{
+  "batch": "source-validated author-labelled subtext and thematic maps",
+  "files": [
+    {
+      "path": "src/craft/annotations.rs",
+      "base_sha256": null,
+      "sha256": "801bda73fbfd467c4950975c9dcf64187f7b7242a4a0eb6af6024e5523850b37"
+    },
+    {
+      "path": "src/craft/mod.rs",
+      "base_sha256": "d58fddc64de2732ea6c564c13ba9f91d489785600eda8869d024d3a303ff63d3",
+      "sha256": "e84a009245ce79d40a9ac94ce5caedc850409090c8ebc72ed3499745b78c8998"
+    },
+    {
+      "path": "src/craft/subtext.rs",
+      "base_sha256": "7a0075da7a3a8e327c08bdf4dea20e041227af18f15e1047f982cf13266c5169",
+      "sha256": "993b3e00246658d875d53ae6221de8bfeb9a7b5998cf321099d9726f34320710"
+    },
+    {
+      "path": "src/structure/thematic_argument.rs",
+      "base_sha256": "7d390ac79df2e6a556b252f0a8c874a3b54a6c8391fa695f1b1a165aa2db3d3a",
+      "sha256": "13fad7caf58056e35e36c3f59e49d4ed3ea01d06a2b19471d0ec752b0864c2d3"
+    },
+    {
+      "path": "tests/component_annotations.rs",
+      "base_sha256": null,
+      "sha256": "6f89bbdc0657631a20f51a59055e2fce38bf8f6f2747e20868268a6dc9e7f4a9"
+    }
+  ],
+  "checks": {
+    "default_tests": {
+      "command": "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --test component_annotations",
+      "passed": 10,
+      "log": "component-annotations-tests.log"
+    },
+    "bindings_clippy": {
+      "command": "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo clippy --locked --features bindings --lib --test component_annotations -- -D warnings",
+      "log": "component-annotations-clippy.log"
+    }
+  },
+  "supported": [
+    "Exact original byte/UTF16 sources, stable scene IDs and stale-source rejection",
+    "Union surface coverage excludes overlaps and subtext resolutions",
+    "Declared thematic links, canonical opposition pairs, dangling/self rejection",
+    "Counts/order/canonical cast labels deterministic under input permutation and scene reorder",
+    "10000-record/link and 4MiB metadata limits with -1/=/+1 checks"
+  ],
+  "limits": [
+    "Author-labelled mappings only: automatic semantic detection, truth, author intent, earned argument, editorial quality remain unassessed",
+    "Legacy automatic subtext/thematic APIs remain Unavailable",
+    "StructuralParallelById is required for new author mode; legacy presentation-index StructuralParallel is rejected",
+    "Complete availability means validated supplied annotations, not automatic accuracy"
+  ],
+  "public_api": [
+    "craft::subtext::analyze_subtext_annotations",
+    "AuthorSubtextAnnotation",
+    "AnnotatedSubtext",
+    "SubtextAnnotationResult",
+    "AuthorAnnotationCoverage",
+    "structure::thematic_argument::analyze_thematic_annotations",
+    "AuthorThematicThesis",
+    "AuthorThematicAnnotation",
+    "AnnotatedThematicEvidence",
+    "ThematicThesisSummary",
+    "ThematicAnnotationResult",
+    "EvidenceDelivery::StructuralParallelById{scene_id:String}"
+  ],
+  "provenance": "No external labels read or editorial inference claimed."
+}

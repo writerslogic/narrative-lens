@@ -1,0 +1,279 @@
+{
+  "comparison": {
+    "introduced": [],
+    "persistent": [
+      {
+        "after": {
+          "analyzer": "grammar",
+          "confidence": {
+            "calibrationId": null,
+            "method": "legacy-grammar-v1; dictionary absence is not proof of misspelling",
+            "score": 0.8,
+            "source": "heuristic"
+          },
+          "documentId": "manuscript",
+          "evidence": [
+            {
+              "context": {
+                "after": " the bird.",
+                "before": "She saw "
+              },
+              "documentId": "manuscript",
+              "quote": "saw",
+              "range": {
+                "byteEnd": 11,
+                "byteStart": 8,
+                "utf16End": 11,
+                "utf16Start": 8
+              },
+              "role": "primary",
+              "sceneId": "docs/audit-2026-10-27/ci-probe.txt"
+            }
+          ],
+          "fingerprint": "nl-v2-9a0962497aa5c6f7-0",
+          "message": "Repeated word ‘saw’.",
+          "ruleId": "NL-GRAMMAR-REPETITION",
+          "scope": {
+            "kind": "passage",
+            "sceneId": "docs/audit-2026-10-27/ci-probe.txt"
+          },
+          "severity": "warning",
+          "suggestion": ""
+        },
+        "before": {
+          "analyzer": "grammar",
+          "confidence": {
+            "calibrationId": null,
+            "method": "legacy-grammar-v1; dictionary absence is not proof of misspelling",
+            "score": 0.8,
+            "source": "heuristic"
+          },
+          "documentId": "manuscript",
+          "evidence": [
+            {
+              "context": {
+                "after": " the bird.",
+                "before": "She saw "
+              },
+              "documentId": "manuscript",
+              "quote": "saw",
+              "range": {
+                "byteEnd": 11,
+                "byteStart": 8,
+                "utf16End": 11,
+                "utf16Start": 8
+              },
+              "role": "primary",
+              "sceneId": "docs/audit-2026-10-27/ci-probe.txt"
+            }
+          ],
+          "fingerprint": "nl-v2-9a0962497aa5c6f7-0",
+          "message": "Repeated word ‘saw’.",
+          "ruleId": "NL-GRAMMAR-REPETITION",
+          "scope": {
+            "kind": "passage",
+            "sceneId": "docs/audit-2026-10-27/ci-probe.txt"
+          },
+          "severity": "warning",
+          "suggestion": ""
+        },
+        "matchKind": "context"
+      }
+    ],
+    "resolved": [],
+    "unassessed": []
+  },
+  "report": {
+    "chronology": {
+      "ambiguousSceneIds": [],
+      "lanes": {
+        "presentation": [
+          "docs/audit-2026-10-27/ci-probe.txt"
+        ]
+      },
+      "readerKnowledge": [
+        {
+          "afterSceneId": "docs/audit-2026-10-27/ci-probe.txt",
+          "introduced": []
+        }
+      ]
+    },
+    "configuration": {
+      "chronology": false,
+      "dictionary": [],
+      "entityCorrections": [],
+      "genre": "General",
+      "lexicon": [],
+      "limits": {
+        "maxFindings": 1,
+        "modelInputBytes": 16384,
+        "nliPairs": 128,
+        "nliSentencesPerScene": 8,
+        "nliWindowScenes": 1,
+        "sceneCandidates": 4096
+      },
+      "minimumSeverity": "info",
+      "modelRevision": "",
+      "nli": "disabled",
+      "rules": [
+        "NL-GRAMMAR-REPETITION"
+      ],
+      "structureTemplate": "three_act",
+      "suppressions": [],
+      "thresholds": {
+        "maxGrade": null,
+        "maxSentenceWords": null,
+        "minSceneWords": null,
+        "minStructureScenes": null,
+        "nliContradiction": null
+      }
+    },
+    "coverage": [
+      {
+        "analyzedUnits": 1,
+        "analyzer": "grammar",
+        "diagnostics": [],
+        "status": "heuristic_fallback",
+        "totalUnits": 1,
+        "unit": "scenes"
+      },
+      {
+        "analyzedUnits": 0,
+        "analyzer": "readability",
+        "diagnostics": [
+          "rule_not_selected_or_lexicon_empty"
+        ],
+        "status": "unavailable",
+        "totalUnits": 1,
+        "unit": "scenes"
+      },
+      {
+        "analyzedUnits": 0,
+        "analyzer": "pacing",
+        "diagnostics": [
+          "rule_not_selected_or_lexicon_empty"
+        ],
+        "status": "unavailable",
+        "totalUnits": 1,
+        "unit": "scenes"
+      },
+      {
+        "analyzedUnits": 0,
+        "analyzer": "prose",
+        "diagnostics": [
+          "rule_not_selected_or_lexicon_empty"
+        ],
+        "status": "unavailable",
+        "totalUnits": 1,
+        "unit": "scenes"
+      },
+      {
+        "analyzedUnits": 0,
+        "analyzer": "structure",
+        "diagnostics": [
+          "rule_not_selected"
+        ],
+        "status": "unavailable",
+        "totalUnits": 1,
+        "unit": "scenes"
+      },
+      {
+        "analyzedUnits": 0,
+        "analyzer": "continuity",
+        "diagnostics": [
+          "Explicit subject/location, eye-color, and object-location patterns only; unrecognized facts remain unknown.",
+          "rules_not_selected"
+        ],
+        "status": "unavailable",
+        "totalUnits": 1,
+        "unit": "scenes"
+      },
+      {
+        "analyzedUnits": 0,
+        "analyzer": "nli",
+        "diagnostics": [
+          "model_analysis_disabled_or_rule_not_selected"
+        ],
+        "status": "unavailable",
+        "totalUnits": 0,
+        "unit": "candidate_pairs"
+      }
+    ],
+    "diagnostics": [
+      {
+        "code": "finding_limit",
+        "message": "1 active and 0 suppressed findings omitted; total severity counts remain available.",
+        "sceneIds": []
+      }
+    ],
+    "documentId": "manuscript",
+    "findings": [
+      {
+        "analyzer": "grammar",
+        "confidence": {
+          "calibrationId": null,
+          "method": "legacy-grammar-v1; dictionary absence is not proof of misspelling",
+          "score": 0.8,
+          "source": "heuristic"
+        },
+        "documentId": "manuscript",
+        "evidence": [
+          {
+            "context": {
+              "after": " the bird.",
+              "before": "She saw "
+            },
+            "documentId": "manuscript",
+            "quote": "saw",
+            "range": {
+              "byteEnd": 11,
+              "byteStart": 8,
+              "utf16End": 11,
+              "utf16Start": 8
+            },
+            "role": "primary",
+            "sceneId": "docs/audit-2026-10-27/ci-probe.txt"
+          }
+        ],
+        "fingerprint": "nl-v2-9a0962497aa5c6f7-0",
+        "message": "Repeated word ‘saw’.",
+        "ruleId": "NL-GRAMMAR-REPETITION",
+        "scope": {
+          "kind": "passage",
+          "sceneId": "docs/audit-2026-10-27/ci-probe.txt"
+        },
+        "severity": "warning",
+        "suggestion": ""
+      }
+    ],
+    "metrics": [
+      {
+        "dialogueRatio": 0.0,
+        "grade": -1.84,
+        "sceneId": "docs/audit-2026-10-27/ci-probe.txt",
+        "sentenceCount": 2,
+        "sentenceWords": 5.0,
+        "tension": 0.21,
+        "wordCount": 10
+      }
+    ],
+    "sceneIds": [
+      "docs/audit-2026-10-27/ci-probe.txt"
+    ],
+    "schemaVersion": "2",
+    "summary": {
+      "omittedFindings": 1,
+      "omittedSuppressed": 0,
+      "returnedFindings": 1,
+      "severityCounts": {
+        "warning": 2
+      },
+      "suppressedFindings": 0,
+      "totalFindings": 2
+    },
+    "suppressed": []
+  },
+  "sources": {
+    "docs/audit-2026-10-27/ci-probe.txt": "file:///Volumes/A/narrative-lens/docs/audit-2026-10-27/ci-probe.txt"
+  }
+}

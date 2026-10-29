@@ -1,22 +1,20 @@
-//! Neuro-symbolic world state tracker.
-//!
-//! Maintains a formal model of the narrative universe by extracting facts from
-//! scene text and tracking them as hard logic. Detects continuity violations by
-//! proving that no valid information path exists for impossible knowledge,
-//! locations, or object states.
+//! Tracks explicit English location, acquisition, possession and constraint events
+//! in source order. Reports conflicts between observed movement and active
+//! constraints; unobserved information paths remain unknown.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::visit::EdgeRef;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+
+use crate::substrate::utils::AnalysisAvailability;
 
 // ─── Data Types ───────────────────────────────────────────────────────────────
 
 /// A fact about the story world at a specific point in narrative time.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(rename_all = "camelCase")]
 pub enum WorldFact {
     /// Character is at a location.
@@ -52,7 +50,8 @@ pub enum WorldFact {
     TemporalOrdering { before: String, after: String },
 }
 
-/// A continuity violation: something the author got wrong.
+/// A potential conflict between observed physical-state assertions.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContinuityViolation {
@@ -66,6 +65,7 @@ pub struct ContinuityViolation {
     pub fix_suggestion: String,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ViolationType {
     /// Character knows something they couldn't have learned.
@@ -83,16 +83,19 @@ pub enum ViolationType {
 }
 
 /// Snapshot of the world state at a scene boundary.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldStateSnapshot {
     pub after_scene: usize,
+    #[serde(serialize_with = "serialize_facts")]
     pub facts: HashSet<WorldFact>,
     pub new_facts: Vec<WorldFact>,
     pub invalidated_facts: Vec<WorldFact>,
 }
 
 /// Knowledge state for a single character.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CharacterKnowledgeState {
@@ -109,9 +112,14 @@ pub struct CharacterKnowledgeState {
 }
 
 /// Full world state analysis result.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldStateResult {
+    #[serde(default)]
+    pub availability: AnalysisAvailability,
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
     pub snapshots: Vec<WorldStateSnapshot>,
     pub violations: Vec<ContinuityViolation>,
     pub character_knowledge: Vec<CharacterKnowledgeState>,
@@ -125,1073 +133,885 @@ pub struct WorldStateResult {
     pub world_complexity: f64,
 }
 
-// ─── Compiled Regex Patterns ──────────────────────────────────────────────────
+/// Retention for the additive current-state API. Current facts, knowledge,
+/// locations, violations and scores are always computed by the full reducer.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct WorldStateOptions {
+    /// Retain net changes at every reduced scene boundary, including empty ones.
+    #[serde(default)]
+    pub include_deltas: bool,
+    /// Retain told_by, locations_visited, location_timeline and information_flow.
+    /// False leaves those optional histories empty without suppressing learning.
+    #[serde(default)]
+    pub include_event_history: bool,
+}
+
+/// Net changes from the previous scene boundary (the initial state is empty).
+/// Replay by removing invalidated_facts, then inserting new_facts. Facts created
+/// and removed within one scene cancel; legacy snapshot event lists are unchanged.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldStateDelta {
+    pub after_scene: usize,
+    pub new_facts: Vec<WorldFact>,
+    pub invalidated_facts: Vec<WorldFact>,
+}
+
+/// Final state without a cumulative fact-set copy for every scene.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldStateCurrentResult {
+    #[serde(default)]
+    pub availability: AnalysisAvailability,
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
+    /// Zero-based last reduced scene; None for empty scenes or an empty cast.
+    pub after_scene: Option<usize>,
+    #[serde(serialize_with = "serialize_facts")]
+    pub facts: HashSet<WorldFact>,
+    pub deltas: Vec<WorldStateDelta>,
+    pub options: WorldStateOptions,
+    pub violations: Vec<ContinuityViolation>,
+    pub character_knowledge: Vec<CharacterKnowledgeState>,
+    pub location_timeline: Vec<(usize, String, Vec<String>)>,
+    pub information_flow: Vec<(usize, String, String, String)>,
+    pub continuity_score: f64,
+    pub world_complexity: f64,
+}
+
+fn serialize_facts<S: serde::Serializer>(
+    facts: &HashSet<WorldFact>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    let mut ordered: Vec<_> = facts.iter().collect();
+    ordered.sort();
+    ordered.serialize(serializer)
+}
 
 struct Patterns {
     location: Regex,
-    entered: Regex,
     told: Regex,
-    discovered: Regex,
+    acquired: Regex,
     saw: Regex,
-    overheard: Regex,
-    read_info: Regex,
-    realized: Regex,
-    picked_up: Regex,
-    held: Regex,
-    took: Regex,
+    possession: Regex,
     gave: Regex,
     locked: Regex,
-    couldnt_leave: Regex,
-    alone_in: Regex,
+    unlocked: Regex,
+    trapped: Regex,
+    released: Regex,
 }
 
 impl Patterns {
-    fn compile(characters_pattern: &str) -> Self {
-        // Character names pattern for capture groups
-        let cp = characters_pattern;
-
-        Self {
-            location: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:was|were|stood|sat|waited|remained)\s+(?:in|at|inside)\s+(?:the\s+)?(\w[\w\s]{{0,30}}?)(?:\.|,|;|\s+(?:when|while|and|but|as))"
-            )).unwrap(),
-            entered: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:entered|walked into|stepped into|arrived at|went to|came to|moved to|returned to)\s+(?:the\s+)?(\w[\w\s]{{0,30}}?)(?:\.|,|;|\s+(?:when|while|and|but|as))"
-            )).unwrap(),
-            told: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:told|informed|explained to|said to|whispered to|mentioned to)\s+(?:{cp})\s+(?:about|that)\s+(.+?)(?:\.|;)"
-            )).unwrap(),
-            discovered: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:discovered|found out|learned|uncovered)\s+(?:that\s+)?(.+?)(?:\.|;)"
-            )).unwrap(),
-            saw: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:saw|watched|witnessed|observed|noticed)\s+(.+?)(?:\.|;)"
-            )).unwrap(),
-            overheard: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:overheard|eavesdropped on|listened to)\s+(.+?)(?:\.|;)"
-            )).unwrap(),
-            read_info: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:read|studied|examined)\s+(?:the\s+)?(.+?)(?:\.|;)"
-            )).unwrap(),
-            realized: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:realized|understood|grasped|figured out)\s+(?:that\s+)?(.+?)(?:\.|;)"
-            )).unwrap(),
-            picked_up: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:picked up|grabbed|snatched|seized)\s+(?:the\s+|a\s+)?(.+?)(?:\.|,|;)"
-            )).unwrap(),
-            held: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:held|clutched|gripped|carried)\s+(?:the\s+|a\s+)?(.+?)(?:\.|,|;)"
-            )).unwrap(),
-            took: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:took|pocketed|kept)\s+(?:the\s+|a\s+)?(.+?)(?:\.|,|;)"
-            )).unwrap(),
-            gave: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:gave|handed|passed|tossed)\s+(?:the\s+|a\s+)?(.+?)\s+to\s+(?:{cp})(?:\.|,|;)"
-            )).unwrap(),
-            locked: Regex::new(
-                r"(?i)(?:locked|bolted|barred|sealed)\s+(?:the\s+)?(?:door|gate|room|exit)"
-            ).unwrap(),
-            couldnt_leave: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:couldn't leave|could not leave|was trapped|was stuck|was imprisoned)"
-            )).unwrap(),
-            alone_in: Regex::new(&format!(
-                r"(?i)(?:{cp})\s+(?:was\s+)?alone\s+in\s+(?:the\s+)?(\w[\w\s]{{0,30}}?)(?:\.|,|;)"
-            )).unwrap(),
-        }
+    fn compile(cp: &str) -> crate::Result<Self> {
+        let compile = |pattern: &str| {
+            Regex::new(pattern).map_err(|_| {
+                crate::Error::AnalysisFailed("world_state_pattern_compile_failed".into())
+            })
+        };
+        Ok(Self {
+            location: compile(&format!(
+                r"(?i)\b(?P<actor>{cp})\s+(?:(?:was|were|stood|sat|waited|remained)\s+(?:alone\s+)?(?:in|at|inside)|entered|walked into|stepped into|arrived at|went to|came to|moved to|returned to)\s+(?:the\s+)?(?P<value>\w[\w\s]{{0,30}}?)(?:[.,;!?]|$|\s+(?:when|while|and|but|as)\b)"
+            ))?,
+            told: compile(&format!(
+                r"(?i)\b(?P<actor>{cp})\s+(?:told|informed|explained to|said to|whispered to|mentioned to)\s+(?P<recipient>{cp})\s+(?:about|that)\s+(?P<value>[^.;!?]+)(?:[.;!?]|$)"
+            ))?,
+            acquired: compile(&format!(
+                r"(?i)\b(?P<actor>{cp})\s+(?:discovered|found out|learned|uncovered|overheard|eavesdropped on|listened to|read|studied|examined|realized|understood|grasped|figured out)\s+(?:that\s+|the\s+)?(?P<value>[^.;!?]+)(?:[.;!?]|$)"
+            ))?,
+            saw: compile(&format!(
+                r"(?i)\b(?P<actor>{cp})\s+(?:saw|watched|witnessed|observed|noticed)\s+(?P<value>[^.;!?]+)(?:[.;!?]|$)"
+            ))?,
+            possession: compile(&format!(
+                r"(?i)\b(?P<actor>{cp})\s+(?:picked up|grabbed|snatched|seized|held|clutched|gripped|carried|took|pocketed|kept)\s+(?:the\s+|a\s+)?(?P<value>[^.,;!?]+)(?:[.,;!?]|$)"
+            ))?,
+            gave: compile(&format!(
+                r"(?i)\b(?P<actor>{cp})\s+(?:gave|handed|passed|tossed)\s+(?:the\s+|a\s+)?(?P<value>[^.,;!?]+?)\s+to\s+(?P<recipient>{cp})(?:[.,;!?]|$)"
+            ))?,
+            locked: compile(&format!(
+                r"(?i)\b(?:(?P<actor>{cp})\s+)?(?:locked|bolted|barred|sealed)\s+(?:the\s+)?(?P<value>door|gate|room|exit)\b"
+            ))?,
+            unlocked: compile(&format!(
+                r"(?i)\b(?:(?P<actor>{cp})\s+)?(?:unlocked|unbolted|unbarred|unsealed|opened)\s+(?:the\s+)?(?P<value>door|gate|room|exit)\b"
+            ))?,
+            trapped: compile(&format!(
+                r"(?i)\b(?P<actor>{cp})\s+(?:couldn't leave|could not leave|was trapped|was stuck|was imprisoned)\b"
+            ))?,
+            released: compile(&format!(
+                r"(?i)\b(?P<actor>{cp})\s+(?:was freed|was released|escaped|broke free|was no longer trapped|could leave)\b"
+            ))?,
+        })
     }
 }
 
-/// Return the compiled [`Patterns`] for a character alternation, reusing a cached
-/// set when the same alternation was compiled before. Compiling the 15 patterns
-/// is allocation-heavy, and the alternation is a pure function of the (sorted,
-/// escaped) character list, which changes far less often than scene text — so a
-/// project re-analyzed with the same cast skips the recompile entirely.
-fn compile_cached(chars_pattern: &str) -> Arc<Patterns> {
+fn compile_cached(chars_pattern: &str) -> crate::Result<Arc<Patterns>> {
     static CACHE: OnceLock<Mutex<HashMap<String, Arc<Patterns>>>> = OnceLock::new();
     let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));
-
-    // A poisoned lock only means a prior holder panicked; the cached patterns are
-    // immutable `Arc`s, so recovering the guard and continuing is safe.
     if let Some(hit) = cache
         .lock()
         .unwrap_or_else(|e| e.into_inner())
         .get(chars_pattern)
     {
-        return Arc::clone(hit);
+        return Ok(Arc::clone(hit));
     }
-
-    // Compile outside the lock — it is the expensive part and must not block other
-    // readers; a rare duplicate compile under a race is harmless.
-    let compiled = Arc::new(Patterns::compile(chars_pattern));
-
+    let compiled = Arc::new(Patterns::compile(chars_pattern)?);
     let mut map = cache.lock().unwrap_or_else(|e| e.into_inner());
-    // Bound memory: casts vary per project, so cap distinct compiled sets. A miss
-    // after a clear just recompiles, which is the pre-cache behavior.
     if map.len() >= 64 {
         map.clear();
     }
-    map.insert(chars_pattern.to_string(), Arc::clone(&compiled));
-    compiled
+    let ready = if let Some(existing) = map.get(chars_pattern) {
+        Arc::clone(existing)
+    } else {
+        map.insert(chars_pattern.to_owned(), Arc::clone(&compiled));
+        Arc::clone(&compiled)
+    };
+    drop(map);
+    Ok(ready)
 }
 
-// ─── Knowledge Graph ──────────────────────────────────────────────────────────
-
-/// Tracks how information flows between characters.
-struct KnowledgeGraph {
-    graph: DiGraph<String, (usize, String)>, // node=character, edge=(scene, info)
-    node_map: HashMap<String, NodeIndex>,
+#[derive(Debug)]
+enum EventKind {
+    Location(String, String),
+    Learn(String, String),
+    Witness(String, String),
+    Tell(String, String, String),
+    Possess(String, String),
+    Transfer(String, String, String),
+    Lock(String, Option<String>),
+    Unlock(String, Option<String>),
+    Trap(String),
+    Release(String),
 }
 
-impl KnowledgeGraph {
-    fn new(characters: &[&str]) -> Self {
-        let mut graph = DiGraph::new();
-        let mut node_map = HashMap::new();
-        for &c in characters {
-            let idx = graph.add_node(c.to_string());
-            node_map.insert(c.to_lowercase(), idx);
-        }
-        Self { graph, node_map }
+struct Event {
+    start: usize,
+    end: usize,
+    assertion: String,
+    kind: EventKind,
+}
+
+// Unrecognized explicit subjects must not borrow scene-level constraint locations.
+fn unqualified_constraint_prefix(text: &str, start: usize) -> bool {
+    fn trim(prefix: &str) -> &str {
+        prefix.trim_end_matches(|c: char| c.is_whitespace() && !matches!(c, '\n' | '\r'))
     }
-
-    fn add_communication(&mut self, from: &str, to: &str, scene: usize, info: &str) {
-        let from_lower = from.to_lowercase();
-        let to_lower = to.to_lowercase();
-        if let (Some(&from_idx), Some(&to_idx)) =
-            (self.node_map.get(&from_lower), self.node_map.get(&to_lower))
-        {
-            self.graph
-                .add_edge(from_idx, to_idx, (scene, info.to_string()));
-        }
+    let boundary = |prefix: &str| {
+        trim(prefix)
+            .chars()
+            .next_back()
+            .is_none_or(|c| matches!(c, '.' | ',' | ';' | ':' | '!' | '?' | '\n' | '\r'))
+    };
+    let prefix = trim(&text[..start]);
+    if boundary(prefix) {
+        return true;
     }
+    ["someone", "somebody"].iter().any(|subject| {
+        prefix
+            .len()
+            .checked_sub(subject.len())
+            .is_some_and(|offset| {
+                prefix
+                    .get(offset..)
+                    .is_some_and(|tail| tail.eq_ignore_ascii_case(subject))
+                    && boundary(&prefix[..offset])
+            })
+    })
+}
 
-    /// Check if there is any path from a source of `info` to `target` by `scene`.
-    fn has_info_path(&self, target: &str, info: &str, by_scene: usize) -> bool {
-        let target_lower = target.to_lowercase();
-        let target_idx = match self.node_map.get(&target_lower) {
-            Some(&idx) => idx,
-            None => return false,
-        };
-
-        // BFS backwards from target looking for any edge carrying this info
-        // that happened at or before `by_scene`.
-        let mut visited = HashSet::new();
-        let mut queue = std::collections::VecDeque::new();
-        queue.push_back(target_idx);
-        visited.insert(target_idx);
-
-        while let Some(node) = queue.pop_front() {
-            // Check incoming edges
-            for edge in self
-                .graph
-                .edges_directed(node, petgraph::Direction::Incoming)
+fn events(text: &str, patterns: &Patterns) -> Vec<Event> {
+    let mut events = Vec::new();
+    for (pattern, kind) in [
+        (&patterns.location, 0),
+        (&patterns.told, 1),
+        (&patterns.acquired, 2),
+        (&patterns.saw, 3),
+        (&patterns.possession, 4),
+        (&patterns.gave, 5),
+        (&patterns.locked, 6),
+        (&patterns.unlocked, 7),
+        (&patterns.trapped, 8),
+        (&patterns.released, 9),
+    ] {
+        for capture in pattern.captures_iter(text) {
+            let matched = capture.get(0).expect("matched event");
+            let actor = capture
+                .name("actor")
+                .map(|m| m.as_str().to_lowercase())
+                .unwrap_or_default();
+            if matches!(kind, 6 | 7)
+                && actor.is_empty()
+                && !unqualified_constraint_prefix(text, matched.start())
             {
-                let (scene, ref edge_info) = *edge.weight();
-                let source = edge.source();
-                if scene <= by_scene && edge_info == info && !visited.contains(&source) {
-                    return true;
-                }
-                if scene <= by_scene && !visited.contains(&source) {
-                    visited.insert(source);
-                    queue.push_back(source);
-                }
+                continue;
             }
+            let recipient = capture
+                .name("recipient")
+                .map(|m| m.as_str().to_lowercase())
+                .unwrap_or_default();
+            let value = capture
+                .name("value")
+                .map(|m| m.as_str().trim())
+                .unwrap_or_default();
+            let event = match kind {
+                0 if is_valid_location(value) => EventKind::Location(actor, value.to_lowercase()),
+                1 if !value.is_empty() => EventKind::Tell(actor, recipient, value.into()),
+                2 if !value.is_empty() => EventKind::Learn(actor, value.into()),
+                3 if !value.is_empty() => EventKind::Witness(actor, value.into()),
+                4 if is_valid_object(value) => EventKind::Possess(actor, value.to_lowercase()),
+                5 if is_valid_object(value) => {
+                    EventKind::Transfer(actor, recipient, value.to_lowercase())
+                }
+                6 => EventKind::Lock(value.to_lowercase(), (!actor.is_empty()).then_some(actor)),
+                7 => EventKind::Unlock(value.to_lowercase(), (!actor.is_empty()).then_some(actor)),
+                8 => EventKind::Trap(actor),
+                9 => EventKind::Release(actor),
+                _ => continue,
+            };
+            events.push(Event {
+                start: matched.start(),
+                end: matched.end(),
+                assertion: matched.as_str().into(),
+                kind: event,
+            });
         }
-        false
+    }
+    events.sort_by_key(|e| (e.start, e.end));
+    events
+}
+
+struct Constraint {
+    location: Option<String>,
+    scene: usize,
+    assertion: String,
+}
+
+#[derive(Default)]
+struct State {
+    locations: BTreeMap<String, String>,
+    knowledge: BTreeMap<String, BTreeSet<String>>,
+    witnessed: BTreeMap<String, BTreeSet<String>>,
+    told_by: BTreeMap<String, Vec<(String, String)>>,
+    location_history: BTreeMap<String, Vec<(usize, String)>>,
+    constraints: BTreeMap<(String, String), Constraint>,
+    facts: HashSet<WorldFact>,
+}
+
+struct FactChanges {
+    legacy: bool,
+    delta: bool,
+    new_facts: Vec<WorldFact>,
+    invalidated_facts: Vec<WorldFact>,
+    net_added: BTreeSet<WorldFact>,
+    net_removed: BTreeSet<WorldFact>,
+}
+
+impl FactChanges {
+    fn new(legacy: bool, delta: bool) -> Self {
+        Self {
+            legacy,
+            delta,
+            new_facts: Vec::new(),
+            invalidated_facts: Vec::new(),
+            net_added: BTreeSet::new(),
+            net_removed: BTreeSet::new(),
+        }
+    }
+
+    fn added(&mut self, fact: WorldFact) {
+        if self.delta && !self.net_removed.remove(&fact) {
+            self.net_added.insert(fact.clone());
+        }
+        if self.legacy {
+            self.new_facts.push(fact);
+        }
+    }
+
+    fn removed(&mut self, fact: WorldFact) {
+        if self.delta && !self.net_added.remove(&fact) {
+            self.net_removed.insert(fact.clone());
+        }
+        if self.legacy {
+            self.invalidated_facts.push(fact);
+        }
     }
 }
 
-// ─── Main Entry Point ─────────────────────────────────────────────────────────
-
-/// Analyze scenes and characters to produce a full world state analysis.
-///
-/// # Arguments
-/// * `scenes` - Ordered scene texts.
-/// * `characters` - Known character names (case-insensitive matching).
-pub fn track_world_state(scenes: &[&str], characters: &[&str]) -> WorldStateResult {
-    if scenes.is_empty() || characters.is_empty() {
-        return WorldStateResult {
-            snapshots: Vec::new(),
-            violations: Vec::new(),
-            character_knowledge: Vec::new(),
-            location_timeline: Vec::new(),
-            information_flow: Vec::new(),
-            continuity_score: 1.0,
-            world_complexity: 0.0,
-        };
+fn remove_facts(
+    state: &mut State,
+    predicate: impl Fn(&WorldFact) -> bool,
+    changes: &mut FactChanges,
+) {
+    if !changes.legacy && !changes.delta {
+        state.facts.retain(|fact| !predicate(fact));
+        return;
     }
-
-    // Build regex character alternation (escaped, longest first for greedy match)
-    let mut sorted_chars: Vec<&str> = characters.to_vec();
-    sorted_chars.sort_by_key(|c| std::cmp::Reverse(c.len()));
-    let chars_pattern = sorted_chars
+    let mut removed: Vec<_> = state
+        .facts
         .iter()
-        .map(|c| regex::escape(c))
-        .collect::<Vec<_>>()
-        .join("|");
-
-    let patterns = compile_cached(&chars_pattern);
-    let mut knowledge_graph = KnowledgeGraph::new(characters);
-
-    // Per-character state tracking
-    let mut char_locations: HashMap<String, String> = HashMap::new();
-    let mut char_knowledge: HashMap<String, HashSet<String>> = HashMap::new();
-    let mut char_witnessed: HashMap<String, HashSet<String>> = HashMap::new();
-    let mut char_possessions: HashMap<String, HashSet<String>> = HashMap::new();
-    let mut char_constraints: HashMap<String, Vec<String>> = HashMap::new();
-    let mut char_told_by: HashMap<String, Vec<(String, String)>> = HashMap::new();
-    let mut char_locations_history: HashMap<String, Vec<(usize, String)>> = HashMap::new();
-
-    // Object location tracking
-    let mut object_locations: HashMap<String, (usize, String)> = HashMap::new(); // object -> (scene, location)
-
-    // Global accumulators
-    let mut snapshots: Vec<WorldStateSnapshot> = Vec::new();
-    let mut violations: Vec<ContinuityViolation> = Vec::new();
-    let mut location_timeline: Vec<(usize, String, Vec<String>)> = Vec::new();
-    let mut information_flow: Vec<(usize, String, String, String)> = Vec::new();
-
-    // Initialize character maps
-    for &c in characters {
-        let cl = c.to_lowercase();
-        char_knowledge.insert(cl.clone(), HashSet::new());
-        char_witnessed.insert(cl.clone(), HashSet::new());
-        char_possessions.insert(cl.clone(), HashSet::new());
-        char_constraints.insert(cl.clone(), Vec::new());
-        char_told_by.insert(cl.clone(), Vec::new());
-        char_locations_history.insert(cl.clone(), Vec::new());
-    }
-
-    
-    let mut cumulative_facts: HashSet<WorldFact> = HashSet::new();
-
-    for (scene_idx, &scene_text) in scenes.iter().enumerate() {
-        let mut new_facts: Vec<WorldFact> = Vec::new();
-        let mut invalidated_facts: Vec<WorldFact> = Vec::new();
-        let text_lower = scene_text.to_lowercase();
-
-        // ─── Location Extraction ──────────────────────────────────────────────
-        extract_locations(
-            scene_text,
-            scene_idx,
-            characters,
-            &patterns,
-            &mut char_locations,
-            &mut char_locations_history,
-            &mut new_facts,
-            &mut invalidated_facts,
-            &cumulative_facts,
-        );
-
-        // ─── Knowledge Extraction ─────────────────────────────────────────────
-        extract_knowledge(
-            scene_text,
-            scene_idx,
-            characters,
-            &patterns,
-            &mut char_knowledge,
-            &mut char_witnessed,
-            &mut char_told_by,
-            &mut knowledge_graph,
-            &mut new_facts,
-            &mut information_flow,
-        );
-
-        // ─── Possession Extraction ────────────────────────────────────────────
-        extract_possessions(
-            scene_text,
-            scene_idx,
-            characters,
-            &patterns,
-            &mut char_possessions,
-            &mut object_locations,
-            &mut new_facts,
-        );
-
-        // ─── Constraint Extraction ────────────────────────────────────────────
-        extract_constraints(
-            scene_text,
-            scene_idx,
-            characters,
-            &patterns,
-            &text_lower,
-            &char_locations,
-            &mut char_constraints,
-            &mut new_facts,
-        );
-
-        // ─── Inference: Co-location ──────────────────────────────────────────
-        let colocation_facts = infer_colocation(characters, &char_locations);
-        for fact in &colocation_facts {
-            if !cumulative_facts.contains(fact) {
-                new_facts.push(fact.clone());
-            }
-        }
-
-        // ─── Build Location Timeline ─────────────────────────────────────────
-        let mut loc_chars: HashMap<String, Vec<String>> = HashMap::new();
-        for (ch, loc) in &char_locations {
-            loc_chars.entry(loc.clone()).or_default().push(ch.clone());
-        }
-        for (loc, chars_at) in &loc_chars {
-            location_timeline.push((scene_idx, loc.clone(), chars_at.clone()));
-        }
-
-        // ─── Violation Detection ─────────────────────────────────────────────
-        detect_violations(
-            scene_idx,
-            characters,
-            &char_locations,
-            &char_constraints,
-            &char_knowledge,
-            &knowledge_graph,
-            &cumulative_facts,
-            &new_facts,
-            &mut violations,
-        );
-
-        // ─── Update Cumulative Facts ─────────────────────────────────────────
-        for fact in &invalidated_facts {
-            cumulative_facts.remove(fact);
-        }
-        for fact in &new_facts {
-            cumulative_facts.insert(fact.clone());
-        }
-
-        // Clear constraints at scene boundary (they may not persist)
-        for constraints in char_constraints.values_mut() {
-            constraints.clear();
-        }
-
-        snapshots.push(WorldStateSnapshot {
-            after_scene: scene_idx,
-            facts: cumulative_facts.clone(),
-            new_facts,
-            invalidated_facts,
-        });
-    }
-
-    let total_facts_extracted: usize = cumulative_facts.len();
-
-    // ─── Build Character Knowledge States ────────────────────────────────────
-    let character_knowledge_states: Vec<CharacterKnowledgeState> = characters
-        .iter()
-        .map(|&c| {
-            let cl = c.to_lowercase();
-            CharacterKnowledgeState {
-                character: c.to_string(),
-                knows: char_knowledge
-                    .get(&cl)
-                    .map(|s| s.iter().cloned().collect())
-                    .unwrap_or_default(),
-                witnessed: char_witnessed
-                    .get(&cl)
-                    .map(|s| s.iter().cloned().collect())
-                    .unwrap_or_default(),
-                told_by: char_told_by.get(&cl).cloned().unwrap_or_default(),
-                locations_visited: char_locations_history.get(&cl).cloned().unwrap_or_default(),
-                current_location: char_locations.get(&cl).cloned(),
-            }
-        })
+        .filter(|f| predicate(f))
+        .cloned()
         .collect();
+    removed.sort();
+    for fact in removed {
+        state.facts.remove(&fact);
+        changes.removed(fact);
+    }
+}
 
-    // ─── Scoring ─────────────────────────────────────────────────────────────
-    let weighted_violations: f64 = violations.iter().map(|v| v.severity).sum();
-    let max_possible = scenes.len() as f64 * 0.5;
-    let continuity_score = if max_possible > 0.0 {
-        (1.0 - weighted_violations / max_possible).clamp(0.0, 1.0)
+fn add_fact(state: &mut State, fact: WorldFact, changes: &mut FactChanges) {
+    if !changes.legacy && !changes.delta {
+        state.facts.insert(fact);
+    } else if state.facts.insert(fact.clone()) {
+        changes.added(fact);
+    }
+}
+
+fn sync_colocation(state: &mut State, changes: &mut FactChanges) {
+    let mut desired = BTreeSet::new();
+    let locations: Vec<_> = state.locations.iter().collect();
+    for (i, (a, location_a)) in locations.iter().enumerate() {
+        for (b, location_b) in locations.iter().skip(i + 1) {
+            if location_a == location_b {
+                desired.insert(WorldFact::CoLocated {
+                    character_a: (*a).clone(),
+                    character_b: (*b).clone(),
+                });
+            }
+        }
+    }
+    remove_facts(
+        state,
+        |f| matches!(f, WorldFact::CoLocated { .. }) && !desired.contains(f),
+        changes,
+    );
+    for fact in desired {
+        add_fact(state, fact, changes);
+    }
+}
+
+fn sync_constraints(state: &mut State, changes: &mut FactChanges) {
+    let desired: BTreeSet<_> = state
+        .constraints
+        .iter()
+        .map(
+            |((character, _), constraint)| WorldFact::PhysicalConstraint {
+                character: character.clone(),
+                constraint: constraint
+                    .location
+                    .as_ref()
+                    .map(|location| format!("locked in {location}"))
+                    .unwrap_or_else(|| "cannot leave current location".into()),
+            },
+        )
+        .collect();
+    remove_facts(
+        state,
+        |f| matches!(f, WorldFact::PhysicalConstraint { .. }) && !desired.contains(f),
+        changes,
+    );
+    for fact in desired {
+        add_fact(state, fact, changes);
+    }
+}
+
+fn observed_location(state: &State, participants: &BTreeSet<String>) -> Option<String> {
+    let locations: BTreeSet<_> = participants
+        .iter()
+        .filter_map(|c| state.locations.get(c))
+        .collect();
+    if locations.len() == 1 {
+        locations.into_iter().next().cloned()
     } else {
-        1.0
-    };
+        None
+    }
+}
 
-    let world_complexity = if !scenes.is_empty() {
-        total_facts_extracted as f64 / scenes.len() as f64
-    } else {
-        0.0
-    };
+fn learn(state: &mut State, character: &str, information: &str, changes: &mut FactChanges) {
+    state
+        .knowledge
+        .entry(character.into())
+        .or_default()
+        .insert(information.into());
+    add_fact(
+        state,
+        WorldFact::CharacterKnows {
+            character: character.into(),
+            information: information.into(),
+        },
+        changes,
+    );
+}
 
-    WorldStateResult {
-        snapshots,
+fn possess(state: &mut State, character: String, object: String, changes: &mut FactChanges) {
+    remove_facts(
+        state,
+        |f| matches!(f, WorldFact::CharacterPossesses { character: old, object: held } if held == &object && old != &character),
+        changes,
+    );
+    add_fact(
+        state,
+        WorldFact::CharacterPossesses { character, object },
+        changes,
+    );
+}
+
+struct WorldReduction {
+    result: WorldStateResult,
+    facts: HashSet<WorldFact>,
+    deltas: Vec<WorldStateDelta>,
+    after_scene: Option<usize>,
+}
+
+/// Track explicit English location, acquisition, transfer and constraint events
+/// in presentation order. Unobserved knowledge paths remain unknown. Invalid
+/// input returns Unavailable with static diagnostics; prefer the checked API.
+pub fn track_world_state(scenes: &[&str], characters: &[&str]) -> WorldStateResult {
+    track_world_state_checked(scenes, characters).unwrap_or_else(|error| WorldStateResult {
+        availability: AnalysisAvailability::Unavailable,
+        diagnostics: vec![
+            match error {
+                crate::Error::InvalidInput(_) => "world_state_invalid_input",
+                crate::Error::AnalysisFailed(_) => "world_state_analysis_failed",
+            }
+            .into(),
+        ],
+        snapshots: Vec::new(),
+        violations: Vec::new(),
+        character_knowledge: Vec::new(),
+        location_timeline: Vec::new(),
+        information_flow: Vec::new(),
+        continuity_score: 0.0,
+        world_complexity: 0.0,
+    })
+}
+
+/// Validate input bounds and propagate static, input-free analysis failures.
+/// Full history retains a fact set per scene; use the current-state API to avoid
+/// that output-size lower bound. Input bounds are not an output-heap budget.
+pub fn track_world_state_checked(
+    scenes: &[&str],
+    characters: &[&str],
+) -> crate::Result<WorldStateResult> {
+    Ok(reduce_world_state(scenes, characters, true, false, true)?.result)
+}
+
+/// Run the same source-ordered reducer without retaining cumulative snapshots.
+/// With deltas disabled, no per-scene fact history is built or discarded.
+pub fn track_world_state_current(
+    scenes: &[&str],
+    characters: &[&str],
+    options: &WorldStateOptions,
+) -> crate::Result<WorldStateCurrentResult> {
+    let reduced = reduce_world_state(
+        scenes,
+        characters,
+        false,
+        options.include_deltas,
+        options.include_event_history,
+    )?;
+    let WorldStateResult {
+        availability,
+        diagnostics,
+        snapshots: _,
         violations,
-        character_knowledge: character_knowledge_states,
+        character_knowledge,
         location_timeline,
         information_flow,
         continuity_score,
         world_complexity,
+    } = reduced.result;
+    Ok(WorldStateCurrentResult {
+        availability,
+        diagnostics,
+        after_scene: reduced.after_scene,
+        facts: reduced.facts,
+        deltas: reduced.deltas,
+        options: *options,
+        violations,
+        character_knowledge,
+        location_timeline,
+        information_flow,
+        continuity_score,
+        world_complexity,
+    })
+}
+
+fn validate_world_inputs(scenes: &[&str], characters: &[&str]) -> crate::Result<()> {
+    if scenes.len() > 10_000 || characters.len() > 256 {
+        return Err(crate::Error::InvalidInput(
+            "world state exceeds 10000 scenes or 256 characters".into(),
+        ));
     }
+    for name in characters {
+        crate::manuscript::config::validate_name(name)?;
+    }
+    let mut total = 0usize;
+    for scene in scenes {
+        if scene.len() > 16 * 1024 * 1024 {
+            return Err(crate::Error::InvalidInput(
+                "world state scene exceeds 16 MiB".into(),
+            ));
+        }
+        total = total
+            .checked_add(scene.len())
+            .filter(|bytes| *bytes <= 64 * 1024 * 1024)
+            .ok_or_else(|| {
+                crate::Error::InvalidInput("world state total text exceeds 64 MiB".into())
+            })?;
+    }
+    Ok(())
 }
 
-// ─── Extraction Helpers ───────────────────────────────────────────────────────
-
-fn find_character_in_match<'a>(cap_text: &str, characters: &[&'a str]) -> Option<&'a str> {
-    let lower = cap_text.to_lowercase();
-    characters
-        .iter()
-        .find(|&&c| lower.contains(&c.to_lowercase()))
-        .copied()
-}
-
-fn extract_locations(
-    scene_text: &str,
-    scene_idx: usize,
+fn reduce_world_state(
+    scenes: &[&str],
     characters: &[&str],
-    patterns: &Patterns,
-    char_locations: &mut HashMap<String, String>,
-    char_locations_history: &mut HashMap<String, Vec<(usize, String)>>,
-    new_facts: &mut Vec<WorldFact>,
-    invalidated_facts: &mut Vec<WorldFact>,
-    cumulative_facts: &HashSet<WorldFact>,
-) {
-    // "Character was in/at LOCATION"
-    for cap in patterns.location.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        if let Some(character) = find_character_in_match(full_match, characters)
-            && let Some(loc_match) = cap.get(1) {
-                let location = loc_match.as_str().trim().to_lowercase();
-                if is_valid_location(&location) {
-                    update_character_location(
-                        character,
-                        &location,
-                        scene_idx,
-                        char_locations,
-                        char_locations_history,
-                        new_facts,
-                        invalidated_facts,
-                        cumulative_facts,
+    retain_snapshots: bool,
+    include_deltas: bool,
+    include_event_history: bool,
+) -> crate::Result<WorldReduction> {
+    validate_world_inputs(scenes, characters)?;
+    let mut cast: Vec<_> = characters
+        .iter()
+        .copied()
+        .filter(|c| !c.trim().is_empty())
+        .collect();
+    cast.sort_by(|a, b| {
+        a.to_lowercase()
+            .cmp(&b.to_lowercase())
+            .then_with(|| a.cmp(b))
+    });
+    cast.dedup_by(|a, b| a.to_lowercase() == b.to_lowercase());
+    if scenes.is_empty() || cast.is_empty() {
+        return Ok(WorldReduction {
+            result: WorldStateResult {
+                availability: AnalysisAvailability::Complete,
+                diagnostics: Vec::new(),
+                snapshots: Vec::new(),
+                violations: Vec::new(),
+                character_knowledge: Vec::new(),
+                location_timeline: Vec::new(),
+                information_flow: Vec::new(),
+                continuity_score: 1.0,
+                world_complexity: 0.0,
+            },
+            facts: HashSet::new(),
+            deltas: Vec::new(),
+            after_scene: None,
+        });
+    }
+    let mut names = cast.clone();
+    names.sort_by(|a, b| b.len().cmp(&a.len()).then_with(|| a.cmp(b)));
+    let pattern = names
+        .iter()
+        .map(|c| regex::escape(c))
+        .collect::<Vec<_>>()
+        .join("|");
+    let patterns = compile_cached(&pattern)?;
+    let mut state = State::default();
+    let mut snapshots = Vec::new();
+    let mut deltas = Vec::new();
+    let mut violations = Vec::new();
+    let mut location_timeline = Vec::new();
+    let mut information_flow = Vec::new();
+    for (scene, text) in scenes.iter().enumerate() {
+        let mut changes = FactChanges::new(retain_snapshots, include_deltas);
+        let mut participants = BTreeSet::new();
+        for event in events(text, &patterns) {
+            match event.kind {
+                EventKind::Location(character, location) => {
+                    if let Some(old) = state
+                        .locations
+                        .get(&character)
+                        .filter(|old| **old != location)
+                        && let Some(constraint) =
+                            state.constraints.iter().find_map(|((who, _), constraint)| {
+                                (who == &character && constraint.location.as_ref() == Some(old))
+                                    .then_some(constraint)
+                            })
+                    {
+                        let display = cast
+                            .iter()
+                            .find(|c| c.to_lowercase() == character)
+                            .copied()
+                            .unwrap_or(&character);
+                        violations.push(ContinuityViolation {
+                                scene,
+                                violation_type: ViolationType::ImpossibleLocation,
+                                description: format!("{display} moves from '{old}' to '{location}' while an observed constraint remains active."),
+                                proof: format!("Scene {}: '{}'. Scene {scene}: '{}'. No intervening release was observed.", constraint.scene, constraint.assertion, event.assertion),
+                                severity: 0.8,
+                                fix_suggestion: "Review the constraint, movement and any missing release event.".into(),
+                            });
+                    }
+                    remove_facts(
+                        &mut state,
+                        |f| matches!(f, WorldFact::CharacterAt { character: who, location: old } if who == &character && old != &location),
+                        &mut changes,
+                    );
+                    state.locations.insert(character.clone(), location.clone());
+                    if include_event_history {
+                        state
+                            .location_history
+                            .entry(character.clone())
+                            .or_default()
+                            .push((scene, location.clone()));
+                    }
+                    participants.insert(character.clone());
+                    add_fact(
+                        &mut state,
+                        WorldFact::CharacterAt {
+                            character,
+                            location,
+                        },
+                        &mut changes,
+                    );
+                    sync_colocation(&mut state, &mut changes);
+                }
+                EventKind::Learn(character, information) => {
+                    participants.insert(character.clone());
+                    learn(&mut state, &character, &information, &mut changes);
+                }
+                EventKind::Witness(character, information) => {
+                    participants.insert(character.clone());
+                    state
+                        .witnessed
+                        .entry(character.clone())
+                        .or_default()
+                        .insert(information.clone());
+                    learn(&mut state, &character, &information, &mut changes);
+                    add_fact(
+                        &mut state,
+                        WorldFact::CharacterWitnessed {
+                            character,
+                            event: information,
+                        },
+                        &mut changes,
                     );
                 }
-            }
-    }
-
-    // "Character entered/walked into LOCATION"
-    for cap in patterns.entered.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        if let Some(character) = find_character_in_match(full_match, characters)
-            && let Some(loc_match) = cap.get(1) {
-                let location = loc_match.as_str().trim().to_lowercase();
-                if is_valid_location(&location) {
-                    update_character_location(
-                        character,
-                        &location,
-                        scene_idx,
-                        char_locations,
-                        char_locations_history,
-                        new_facts,
-                        invalidated_facts,
-                        cumulative_facts,
+                EventKind::Tell(from, to, information) => {
+                    participants.insert(from.clone());
+                    participants.insert(to.clone());
+                    learn(&mut state, &to, &information, &mut changes);
+                    if include_event_history {
+                        state
+                            .told_by
+                            .entry(to.clone())
+                            .or_default()
+                            .push((from.clone(), information.clone()));
+                        information_flow.push((
+                            scene,
+                            from.clone(),
+                            to.clone(),
+                            information.clone(),
+                        ));
+                    }
+                    add_fact(
+                        &mut state,
+                        WorldFact::CommunicationVector {
+                            from,
+                            to,
+                            content: information,
+                        },
+                        &mut changes,
                     );
                 }
-            }
-    }
-}
-
-fn update_character_location(
-    character: &str,
-    location: &str,
-    scene_idx: usize,
-    char_locations: &mut HashMap<String, String>,
-    char_locations_history: &mut HashMap<String, Vec<(usize, String)>>,
-    new_facts: &mut Vec<WorldFact>,
-    invalidated_facts: &mut Vec<WorldFact>,
-    cumulative_facts: &HashSet<WorldFact>,
-) {
-    let cl = character.to_lowercase();
-    let old_location = char_locations.get(&cl).cloned();
-
-    // Invalidate previous location fact
-    if let Some(ref old_loc) = old_location
-        && old_loc != location {
-            let old_fact = WorldFact::CharacterAt {
-                character: cl.clone(),
-                location: old_loc.clone(),
-            };
-            if cumulative_facts.contains(&old_fact) {
-                invalidated_facts.push(old_fact);
+                EventKind::Possess(character, object) => {
+                    participants.insert(character.clone());
+                    possess(&mut state, character, object, &mut changes);
+                }
+                EventKind::Transfer(from, to, object) => {
+                    participants.insert(from);
+                    participants.insert(to.clone());
+                    possess(&mut state, to, object, &mut changes);
+                }
+                EventKind::Lock(exit, actor) => {
+                    let location = if let Some(actor) = actor {
+                        participants.insert(actor.clone());
+                        state.locations.get(&actor).cloned()
+                    } else {
+                        observed_location(&state, &participants)
+                    };
+                    if let Some(location) = location {
+                        for character in state
+                            .locations
+                            .iter()
+                            .filter(|(_, loc)| **loc == location)
+                            .map(|(c, _)| c.clone())
+                            .collect::<Vec<_>>()
+                        {
+                            state.constraints.insert(
+                                (character, exit.clone()),
+                                Constraint {
+                                    location: Some(location.clone()),
+                                    scene,
+                                    assertion: event.assertion.clone(),
+                                },
+                            );
+                        }
+                        sync_constraints(&mut state, &mut changes);
+                    }
+                }
+                EventKind::Unlock(exit, actor) => {
+                    let location = if let Some(actor) = actor {
+                        participants.insert(actor.clone());
+                        state.locations.get(&actor).cloned()
+                    } else {
+                        observed_location(&state, &participants).or_else(|| {
+                            let locations: BTreeSet<_> = state
+                                .constraints
+                                .iter()
+                                .filter(|((_, key), _)| key == &exit)
+                                .filter_map(|(_, c)| c.location.clone())
+                                .collect();
+                            (locations.len() == 1)
+                                .then(|| locations.into_iter().next())
+                                .flatten()
+                        })
+                    };
+                    if let Some(location) = location {
+                        state.constraints.retain(|(_, key), c| {
+                            key != &exit || c.location.as_ref() != Some(&location)
+                        });
+                        sync_constraints(&mut state, &mut changes);
+                    }
+                }
+                EventKind::Trap(character) => {
+                    participants.insert(character.clone());
+                    let location = state.locations.get(&character).cloned();
+                    state.constraints.insert(
+                        (character, "restriction".into()),
+                        Constraint {
+                            location,
+                            scene,
+                            assertion: event.assertion,
+                        },
+                    );
+                    sync_constraints(&mut state, &mut changes);
+                }
+                EventKind::Release(character) => {
+                    participants.insert(character.clone());
+                    state.constraints.retain(|(who, _), _| who != &character);
+                    sync_constraints(&mut state, &mut changes);
+                }
             }
         }
-
-    char_locations.insert(cl.clone(), location.to_string());
-    char_locations_history
-        .entry(cl.clone())
-        .or_default()
-        .push((scene_idx, location.to_string()));
-
-    let fact = WorldFact::CharacterAt {
-        character: cl,
-        location: location.to_string(),
+        if include_event_history {
+            let mut at: BTreeMap<String, Vec<String>> = BTreeMap::new();
+            for (character, location) in &state.locations {
+                at.entry(location.clone())
+                    .or_default()
+                    .push(character.clone());
+            }
+            location_timeline.extend(
+                at.into_iter()
+                    .map(|(location, chars)| (scene, location, chars)),
+            );
+        }
+        if retain_snapshots {
+            snapshots.push(WorldStateSnapshot {
+                after_scene: scene,
+                facts: state.facts.clone(),
+                new_facts: changes.new_facts,
+                invalidated_facts: changes.invalidated_facts,
+            });
+        }
+        if include_deltas {
+            deltas.push(WorldStateDelta {
+                after_scene: scene,
+                new_facts: changes.net_added.into_iter().collect(),
+                invalidated_facts: changes.net_removed.into_iter().collect(),
+            });
+        }
+    }
+    let character_knowledge = cast
+        .iter()
+        .map(|&character| {
+            let key = character.to_lowercase();
+            CharacterKnowledgeState {
+                character: character.into(),
+                knows: state
+                    .knowledge
+                    .get(&key)
+                    .map(|s| s.iter().cloned().collect())
+                    .unwrap_or_default(),
+                witnessed: state
+                    .witnessed
+                    .get(&key)
+                    .map(|s| s.iter().cloned().collect())
+                    .unwrap_or_default(),
+                told_by: state.told_by.get(&key).cloned().unwrap_or_default(),
+                locations_visited: state
+                    .location_history
+                    .get(&key)
+                    .cloned()
+                    .unwrap_or_default(),
+                current_location: state.locations.get(&key).cloned(),
+            }
+        })
+        .collect();
+    let penalty: f64 = violations.iter().map(|v| v.severity).sum();
+    let result = WorldStateResult {
+        availability: AnalysisAvailability::Complete,
+        diagnostics: Vec::new(),
+        snapshots,
+        violations,
+        character_knowledge,
+        location_timeline,
+        information_flow,
+        continuity_score: (1.0 - penalty / (scenes.len() as f64 * 0.5)).clamp(0.0, 1.0),
+        world_complexity: state.facts.len() as f64 / scenes.len() as f64,
     };
-    new_facts.push(fact);
+    Ok(WorldReduction {
+        result,
+        facts: state.facts,
+        deltas,
+        after_scene: Some(scenes.len() - 1),
+    })
 }
 
 fn is_valid_location(location: &str) -> bool {
-    // Must be non-empty and not too long (avoids capturing garbage)
-    if location.is_empty() || location.len() > 40 {
-        return false;
-    }
-    // Basic sanity: contains at least one alphabetic character
-    location.chars().any(|c| c.is_alphabetic())
-}
-
-fn extract_knowledge(
-    scene_text: &str,
-    scene_idx: usize,
-    characters: &[&str],
-    patterns: &Patterns,
-    char_knowledge: &mut HashMap<String, HashSet<String>>,
-    char_witnessed: &mut HashMap<String, HashSet<String>>,
-    char_told_by: &mut HashMap<String, Vec<(String, String)>>,
-    knowledge_graph: &mut KnowledgeGraph,
-    new_facts: &mut Vec<WorldFact>,
-    information_flow: &mut Vec<(usize, String, String, String)>,
-) {
-    // "Character told Character about INFO"
-    for cap in patterns.told.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        // Find two different characters in the match
-        let chars_found: Vec<&str> = characters
-            .iter()
-            .filter(|&&c| full_match.to_lowercase().contains(&c.to_lowercase()))
-            .copied()
-            .collect();
-
-        if chars_found.len() >= 2 {
-            let from = chars_found[0];
-            let to = chars_found[1];
-            if let Some(info_match) = cap.get(cap.len() - 1) {
-                let info = info_match.as_str().trim().to_string();
-                let from_lower = from.to_lowercase();
-                let to_lower = to.to_lowercase();
-
-                char_knowledge
-                    .entry(to_lower.clone())
-                    .or_default()
-                    .insert(info.clone());
-                char_told_by
-                    .entry(to_lower.clone())
-                    .or_default()
-                    .push((from_lower.clone(), info.clone()));
-                knowledge_graph.add_communication(from, to, scene_idx, &info);
-                information_flow.push((
-                    scene_idx,
-                    from_lower.clone(),
-                    to_lower.clone(),
-                    info.clone(),
-                ));
-
-                new_facts.push(WorldFact::CommunicationVector {
-                    from: from_lower,
-                    to: to_lower.clone(),
-                    content: info.clone(),
-                });
-                new_facts.push(WorldFact::CharacterKnows {
-                    character: to_lower,
-                    information: info,
-                });
-            }
-        }
-    }
-
-    // "Character discovered INFO"
-    for cap in patterns.discovered.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        if let Some(character) = find_character_in_match(full_match, characters)
-            && let Some(info_match) = cap.get(cap.len() - 1) {
-                let info = info_match.as_str().trim().to_string();
-                let cl = character.to_lowercase();
-                char_knowledge
-                    .entry(cl.clone())
-                    .or_default()
-                    .insert(info.clone());
-                new_facts.push(WorldFact::CharacterKnows {
-                    character: cl,
-                    information: info,
-                });
-            }
-    }
-
-    // "Character saw EVENT"
-    for cap in patterns.saw.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        if let Some(character) = find_character_in_match(full_match, characters)
-            && let Some(event_match) = cap.get(cap.len() - 1) {
-                let event = event_match.as_str().trim().to_string();
-                let cl = character.to_lowercase();
-                char_witnessed
-                    .entry(cl.clone())
-                    .or_default()
-                    .insert(event.clone());
-                new_facts.push(WorldFact::CharacterWitnessed {
-                    character: cl,
-                    event,
-                });
-            }
-    }
-
-    // "Character overheard INFO"
-    for cap in patterns.overheard.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        if let Some(character) = find_character_in_match(full_match, characters)
-            && let Some(info_match) = cap.get(cap.len() - 1) {
-                let info = info_match.as_str().trim().to_string();
-                let cl = character.to_lowercase();
-                char_knowledge
-                    .entry(cl.clone())
-                    .or_default()
-                    .insert(info.clone());
-                new_facts.push(WorldFact::CharacterKnows {
-                    character: cl,
-                    information: info,
-                });
-            }
-    }
-
-    // "Character read the letter/note"
-    for cap in patterns.read_info.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        if let Some(character) = find_character_in_match(full_match, characters)
-            && let Some(info_match) = cap.get(cap.len() - 1) {
-                let info = info_match.as_str().trim().to_string();
-                let cl = character.to_lowercase();
-                char_knowledge
-                    .entry(cl.clone())
-                    .or_default()
-                    .insert(info.clone());
-                new_facts.push(WorldFact::CharacterKnows {
-                    character: cl,
-                    information: info,
-                });
-            }
-    }
-
-    // "Character realized INFO"
-    for cap in patterns.realized.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        if let Some(character) = find_character_in_match(full_match, characters)
-            && let Some(info_match) = cap.get(cap.len() - 1) {
-                let info = info_match.as_str().trim().to_string();
-                let cl = character.to_lowercase();
-                char_knowledge
-                    .entry(cl.clone())
-                    .or_default()
-                    .insert(info.clone());
-                new_facts.push(WorldFact::CharacterKnows {
-                    character: cl,
-                    information: info,
-                });
-            }
-    }
-}
-
-fn extract_possessions(
-    scene_text: &str,
-    scene_idx: usize,
-    characters: &[&str],
-    patterns: &Patterns,
-    char_possessions: &mut HashMap<String, HashSet<String>>,
-    object_locations: &mut HashMap<String, (usize, String)>,
-    new_facts: &mut Vec<WorldFact>,
-) {
-    // "Character picked up/grabbed OBJECT"
-    for pattern in [&patterns.picked_up, &patterns.held, &patterns.took] {
-        for cap in pattern.captures_iter(scene_text) {
-            let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-            if let Some(character) = find_character_in_match(full_match, characters)
-                && let Some(obj_match) = cap.get(cap.len() - 1) {
-                    let object = obj_match.as_str().trim().to_lowercase();
-                    if is_valid_object(&object) {
-                        let cl = character.to_lowercase();
-                        char_possessions
-                            .entry(cl.clone())
-                            .or_default()
-                            .insert(object.clone());
-                        object_locations
-                            .insert(object.clone(), (scene_idx, format!("with:{}", cl)));
-                        new_facts.push(WorldFact::CharacterPossesses {
-                            character: cl,
-                            object,
-                        });
-                    }
-                }
-        }
-    }
-
-    // "Character gave OBJECT to Character"
-    for cap in patterns.gave.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        let chars_found: Vec<&str> = characters
-            .iter()
-            .filter(|&&c| full_match.to_lowercase().contains(&c.to_lowercase()))
-            .copied()
-            .collect();
-
-        if chars_found.len() >= 2 {
-            let from = chars_found[0].to_lowercase();
-            let to = chars_found[1].to_lowercase();
-            // Try to find the object (middle capture group)
-            if let Some(obj_match) = cap.get(1) {
-                let object = obj_match.as_str().trim().to_lowercase();
-                if is_valid_object(&object) {
-                    char_possessions
-                        .entry(from.clone())
-                        .or_default()
-                        .remove(&object);
-                    char_possessions
-                        .entry(to.clone())
-                        .or_default()
-                        .insert(object.clone());
-                    object_locations.insert(object.clone(), (scene_idx, format!("with:{}", to)));
-                    new_facts.push(WorldFact::CharacterPossesses {
-                        character: to,
-                        object,
-                    });
-                }
-            }
-        }
-    }
+    !location.is_empty() && location.len() <= 40 && location.chars().any(char::is_alphabetic)
 }
 
 fn is_valid_object(object: &str) -> bool {
-    if object.is_empty() || object.len() > 40 {
-        return false;
-    }
-    // Filter out common false positives (verbs, pronouns, etc.)
-    let stopwords = [
-        "him",
-        "her",
-        "them",
-        "it",
-        "his",
-        "that",
-        "this",
-        "what",
-        "which",
-        "something",
-        "nothing",
-        "everything",
-        "anything",
-    ];
-    !stopwords.contains(&object)
+    !object.is_empty()
+        && object.len() <= 40
+        && ![
+            "him",
+            "her",
+            "them",
+            "it",
+            "his",
+            "that",
+            "this",
+            "what",
+            "which",
+            "something",
+            "nothing",
+            "everything",
+            "anything",
+        ]
+        .contains(&object.to_lowercase().as_str())
 }
-
-fn extract_constraints(
-    scene_text: &str,
-    _scene_idx: usize,
-    characters: &[&str],
-    patterns: &Patterns,
-    text_lower: &str,
-    char_locations: &HashMap<String, String>,
-    char_constraints: &mut HashMap<String, Vec<String>>,
-    new_facts: &mut Vec<WorldFact>,
-) {
-    // "locked the door" — applies to characters at the current location
-    if patterns.locked.is_match(scene_text) {
-        // All characters currently at a location get constrained
-        for (cl, loc) in char_locations.iter() {
-            // Check if any character name appears in this scene
-            if text_lower.contains(cl.as_str()) {
-                let constraint = format!("locked in {}", loc);
-                char_constraints
-                    .entry(cl.clone())
-                    .or_default()
-                    .push(constraint.clone());
-                new_facts.push(WorldFact::PhysicalConstraint {
-                    character: cl.clone(),
-                    constraint,
-                });
-            }
-        }
-    }
-
-    // "Character couldn't leave"
-    for cap in patterns.couldnt_leave.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        if let Some(character) = find_character_in_match(full_match, characters) {
-            let cl = character.to_lowercase();
-            let constraint = "cannot leave current location".to_string();
-            char_constraints
-                .entry(cl.clone())
-                .or_default()
-                .push(constraint.clone());
-            new_facts.push(WorldFact::PhysicalConstraint {
-                character: cl,
-                constraint,
-            });
-        }
-    }
-
-    // "Character alone in LOCATION" — means only that character is there
-    for cap in patterns.alone_in.captures_iter(scene_text) {
-        let full_match = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-        if let Some(character) = find_character_in_match(full_match, characters) {
-            let cl = character.to_lowercase();
-            let constraint = "alone — no other characters present".to_string();
-            char_constraints
-                .entry(cl.clone())
-                .or_default()
-                .push(constraint.clone());
-            new_facts.push(WorldFact::PhysicalConstraint {
-                character: cl,
-                constraint,
-            });
-        }
-    }
-}
-
-fn infer_colocation(
-    characters: &[&str],
-    char_locations: &HashMap<String, String>,
-) -> Vec<WorldFact> {
-    let mut facts = Vec::new();
-    let chars: Vec<&str> = characters.to_vec();
-
-    for i in 0..chars.len() {
-        for j in (i + 1)..chars.len() {
-            let a = chars[i].to_lowercase();
-            let b = chars[j].to_lowercase();
-            if let (Some(loc_a), Some(loc_b)) = (char_locations.get(&a), char_locations.get(&b))
-                && loc_a == loc_b {
-                    facts.push(WorldFact::CoLocated {
-                        character_a: a,
-                        character_b: b,
-                    });
-                }
-        }
-    }
-    facts
-}
-
-// ─── Violation Detection ──────────────────────────────────────────────────────
-
-fn detect_violations(
-    scene_idx: usize,
-    characters: &[&str],
-    char_locations: &HashMap<String, String>,
-    _char_constraints: &HashMap<String, Vec<String>>,
-    _char_knowledge: &HashMap<String, HashSet<String>>,
-    knowledge_graph: &KnowledgeGraph,
-    cumulative_facts: &HashSet<WorldFact>,
-    new_facts: &[WorldFact],
-    violations: &mut Vec<ContinuityViolation>,
-) {
-    // Skip scene 0 — no prior state to violate
-    if scene_idx == 0 {
-        return;
-    }
-
-    // ─── Impossible Location ─────────────────────────────────────────────────
-    // Check if any character had a constraint in the previous scene's facts
-    // but has now moved.
-    for &c in characters {
-        let cl = c.to_lowercase();
-        // Look for constraint facts in cumulative state
-        let was_constrained = cumulative_facts.iter().any(|f| {
-            matches!(
-                f,
-                WorldFact::PhysicalConstraint { character, constraint }
-                if character == &cl && constraint.starts_with("locked in")
-            )
-        });
-
-        if was_constrained {
-            // Check if character moved to a new location in this scene
-            let moved_to_new = new_facts.iter().any(|f| {
-                matches!(
-                    f,
-                    WorldFact::CharacterAt { character, .. }
-                    if character == &cl
-                )
-            });
-
-            if moved_to_new {
-                let current_loc = char_locations.get(&cl).cloned().unwrap_or_default();
-                // Find the constraint location
-                let constraint_loc = cumulative_facts
-                    .iter()
-                    .find_map(|f| {
-                        if let WorldFact::PhysicalConstraint {
-                            character,
-                            constraint,
-                        } = f
-                        {
-                            if character == &cl && constraint.starts_with("locked in") {
-                                Some(constraint.trim_start_matches("locked in ").to_string())
-                            } else {
-                                None
-                            }
-                        } else {
-                            None
-                        }
-                    })
-                    .unwrap_or_default();
-
-                if !constraint_loc.is_empty() && current_loc != constraint_loc {
-                    violations.push(ContinuityViolation {
-                        scene: scene_idx,
-                        violation_type: ViolationType::ImpossibleLocation,
-                        description: format!(
-                            "{} appears at '{}' but was locked in '{}' with no escape shown.",
-                            c, current_loc, constraint_loc
-                        ),
-                        proof: format!(
-                            "Scene {}: PhysicalConstraint({}, locked in {}) is active. \
-                             Scene {}: CharacterAt({}, {}) with no intervening release event.",
-                            scene_idx - 1,
-                            c,
-                            constraint_loc,
-                            scene_idx,
-                            c,
-                            current_loc
-                        ),
-                        severity: 0.8,
-                        fix_suggestion: format!(
-                            "Either remove the physical constraint in the previous scene, \
-                             add a scene showing {}'s escape/release, or adjust the timeline.",
-                            c
-                        ),
-                    });
-                }
-            }
-        }
-    }
-
-    // ─── Impossible Knowledge ────────────────────────────────────────────────
-    // For new CharacterKnows facts, check if there's a valid info path.
-    for fact in new_facts {
-        if let WorldFact::CharacterKnows {
-            character,
-            information,
-        } = fact
-        {
-            // Skip if this character discovered/realized it in this scene (self-generated)
-            // The knowledge_graph path check handles external knowledge
-            if !knowledge_graph.has_info_path(character, information, scene_idx) {
-                // Check if it was witnessed
-                let was_witnessed = cumulative_facts.iter().any(|f| {
-                    matches!(
-                        f,
-                        WorldFact::CharacterWitnessed { character: c, event }
-                        if c == character && event == information
-                    )
-                });
-
-                // Check if character was co-located with someone who spoke about it
-                // (This is a simplified heuristic — in a real system we'd track dialogue)
-                let could_have_overheard = cumulative_facts.iter().any(|f| {
-                    matches!(
-                        f,
-                        WorldFact::CoLocated { character_a, character_b }
-                        if character_a == character || character_b == character
-                    )
-                });
-
-                // Only flag if there's genuinely no explanation
-                if !was_witnessed && !could_have_overheard && scene_idx > 0 {
-                    // Check: is this info established in a PRIOR scene that the character wasn't in?
-                    // For now, we use the knowledge graph as the definitive check.
-                    // Only report if the character has no path to this info at all.
-                    let has_prior_communication = cumulative_facts.iter().any(|f| {
-                        matches!(
-                            f,
-                            WorldFact::CommunicationVector { from: _, to, content }
-                            if to == character && content == information
-                        )
-                    });
-
-                    if !has_prior_communication {
-                        let char_str = character.as_str();
-                        let original_char = characters
-                            .iter()
-                            .find(|&&c| c.to_lowercase() == *character)
-                            .unwrap_or(&char_str);
-
-                        violations.push(ContinuityViolation {
-                            scene: scene_idx,
-                            violation_type: ViolationType::ImpossibleKnowledge,
-                            description: format!(
-                                "{} references '{}' but no valid information path exists.",
-                                original_char, information
-                            ),
-                            proof: format!(
-                                "Character {} acquires knowledge '{}' in scene {}, but: \
-                                 - {} was not present when this information was established. \
-                                 - No character who knew this communicated with {} before scene {}. \
-                                 - No written record of this information was accessible to {}.",
-                                original_char, information, scene_idx,
-                                original_char, original_char, scene_idx, original_char
-                            ),
-                            severity: 0.9,
-                            fix_suggestion: format!(
-                                "Add a scene where {} learns '{}' — either witness it directly, \
-                                 be told by someone who knows, or find written evidence.",
-                                original_char, information
-                            ),
-                        });
-                    }
-                }
-            }
-        }
-    }
-
-    // ─── Object Continuity ───────────────────────────────────────────────────
-    // Check for objects appearing in new locations without transfer
-    for fact in new_facts {
-        if let WorldFact::ObjectAt { object, location } = fact {
-            // Check if this object was previously at a different location
-            let prev_location = cumulative_facts.iter().find_map(|f| {
-                if let WorldFact::ObjectAt {
-                    object: o,
-                    location: l,
-                } = f
-                {
-                    if o == object && l != location {
-                        Some(l.clone())
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            });
-
-            if let Some(prev_loc) = prev_location {
-                // Check if any character moved the object
-                let was_transferred = new_facts.iter().any(|f| {
-                    matches!(
-                        f,
-                        WorldFact::CharacterPossesses { object: o, .. }
-                        if o == object
-                    )
-                });
-
-                if !was_transferred {
-                    violations.push(ContinuityViolation {
-                        scene: scene_idx,
-                        violation_type: ViolationType::ObjectContinuity,
-                        description: format!(
-                            "'{}' appears at '{}' but was last seen at '{}'.",
-                            object, location, prev_loc
-                        ),
-                        proof: format!(
-                            "Object '{}' established at '{}' in prior scene. \
-                             Now appears at '{}' in scene {} with no transfer event.",
-                            object, prev_loc, location, scene_idx
-                        ),
-                        severity: 0.5,
-                        fix_suggestion: format!(
-                            "Show '{}' being moved from '{}' to '{}' — have a character \
-                             carry it, mail it, or explain its relocation.",
-                            object, prev_loc, location
-                        ),
-                    });
-                }
-            }
-        }
-    }
-}
-
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn oversized_internal_pattern_failure_has_static_context() {
+        let pattern = "x".repeat(200_000);
+        let error = Patterns::compile(&pattern)
+            .err()
+            .expect("compiled pattern limit");
+        assert_eq!(
+            error.to_string(),
+            "analysis failed: world_state_pattern_compile_failed"
+        );
+    }
 
     #[test]
     fn test_empty_input() {

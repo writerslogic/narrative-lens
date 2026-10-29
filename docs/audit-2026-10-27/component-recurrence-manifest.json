@@ -1,0 +1,251 @@
+{
+  "batch": "located literal recurrence and indexed heuristic context",
+  "files": [
+    {
+      "path": "src/structure/foreshadow.rs",
+      "base_sha256": "99714233125bba4a6942e0018200d478cd3f844e1e4188d71eabe5eb14aaabfb",
+      "sha256": "eec783597a3ecdda57cdc9e41aaeee8b472ab52b857e80ba09bf642e19364d91"
+    },
+    {
+      "path": "src/structure/foreshadow/recurrence.rs",
+      "base_sha256": null,
+      "sha256": "6936185befc2268bf341d740309f8b9157c3315c8e91b03c71c2a718a02765c6"
+    },
+    {
+      "path": "tests/component_recurrence.rs",
+      "base_sha256": null,
+      "sha256": "aadfcf7d6012f347003f241d3e83f5047b9e350d3e003c650f984e0f9515ab57"
+    },
+    {
+      "path": "tests/component_recurrence_memory.rs",
+      "base_sha256": null,
+      "sha256": "451860615a1f88db839265bcf3e3f94d4fc6e3990dc21df82ecf3637f3b0dc3b"
+    }
+  ],
+  "apis": [
+    "analyze_foreshadowing_checked(Vec<Vec<String>>,usize)->Result<Vec<ForeshadowingItem>>",
+    "track_recurrences(&Manuscript,&[RecurrenceTerm],&RecurrenceOptions)->Result<RecurrenceResult>"
+  ],
+  "types": [
+    "RecurrenceTerm",
+    "RecurrenceOptions",
+    "TermRecurrence",
+    "RecurrenceResult"
+  ],
+  "legacy_fields": [
+    "availability",
+    "diagnostics",
+    "payoff_assessed:false",
+    "recurrence_signal",
+    "last_recurrence_scene"
+  ],
+  "fixes": [
+    "Uppercase caller tokens normalize before emphasis/symbolic/context comparisons",
+    "One-pass marker-local windows replace candidate-by-full-scene rescans;compact scene counts replace retained scene-index lists",
+    "Original recurrence/context signal math and count/location/ranking projection fingerprints match baseline on3bounded workloads",
+    "Actual source Evidence for supplied literal whole words/phrases,overlaps,Unicode lowercase expansion and32KiB chunk boundaries",
+    "Complete occurrence counts independent of optional globally capped source retention",
+    "No semantic resolved/unresolved/overcrowded verdicts;payoff_sceneNone/payoff_quality0.5 compatibility placeholders,observed values in explicit recurrence fields",
+    "Checked token/scene/byte/vocabulary/finding limits fail rather than silently truncate or imply success"
+  ],
+  "limits": {
+    "legacy": "10000 scenes,1000000 tokens,1..4096 bytes/token,16MiB/scene64MiB total,100000 setup terms,10000 findings;newbounds tested-1/=/+1",
+    "literal": "256 unique term IDs/Unicode-lowercase patterns;1..128-byte unpadded control-free terms;0..10000 global retained Evidence;manuscript limits shared",
+    "language": "Unicode lowercase literal matching,not normalization/full casefold/stemming;English heuristic cue lists not a semantic detector",
+    "order": "Stable source scene/term IDs;thirds/first/last follow current presentation order;fewer3scenes all-middle;retention chooses earliest(scene,start,termID,end)",
+    "output_lower_bound": "Retaining full evidence requires memory proportional to retained source records;counts-only avoids it;cap and omissions explicit",
+    "unknowns": "Foreshadow significance,author intent,required fulfillment and semantic payoff unassessed;no automatic accuracy claim"
+  },
+  "checks": {
+    "case_red": {
+      "failed": 1,
+      "log": "component-recurrence-case-red.log"
+    },
+    "focused": {
+      "passed": 9,
+      "ignored_perf": 1,
+      "log": "component-recurrence-tests.log"
+    },
+    "existing": {
+      "passed": 9,
+      "log": "component-recurrence-initial.log"
+    },
+    "bindings_clippy": {
+      "passed": true,
+      "log": "component-recurrence-clippy.log"
+    },
+    "heap_clippy": {
+      "passed": true,
+      "log": "component-recurrence-memory-clippy.log"
+    },
+    "legacy_release_bench": {
+      "passed": true,
+      "before": "component-recurrence-before.log",
+      "after": "component-recurrence-after.log"
+    },
+    "requested_heap_bench": {
+      "passed": true,
+      "log": "component-recurrence-memory.log"
+    }
+  },
+  "performance": {
+    "host": {
+      "compiler": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "cpu": "Apple M4",
+      "os": "27.0"
+    },
+    "legacyTimingComparison": [
+      {
+        "vocabulary": 256,
+        "beforeMedianMs": 1.932083,
+        "afterMedianMs": 0.165875,
+        "ratio": 11.647825169555388,
+        "equalSignalCountLocationAndRankingFingerprint": true,
+        "fingerprint": "9db0bf827b4b76ca"
+      },
+      {
+        "vocabulary": 1024,
+        "beforeMedianMs": 19.574709,
+        "afterMedianMs": 0.670875,
+        "ratio": 29.17787814421464,
+        "equalSignalCountLocationAndRankingFingerprint": true,
+        "fingerprint": "8737467774080aae"
+      },
+      {
+        "vocabulary": 4096,
+        "beforeMedianMs": 286.377708,
+        "afterMedianMs": 2.7166669999999997,
+        "ratio": 105.41509430489641,
+        "equalSignalCountLocationAndRankingFingerprint": true,
+        "fingerprint": "b214eaffabe98b12"
+      }
+    ],
+    "legacySamples": [
+      {
+        "findings": 257,
+        "medianMs": 0.165875,
+        "samplesMs": [
+          0.160792,
+          0.162166,
+          0.165875,
+          0.166708,
+          0.170167
+        ],
+        "semanticFingerprintFNV1a64": "9db0bf827b4b76ca",
+        "timingScope": "analysis+returned output;input clone and static dictionary warmup excluded",
+        "vocabulary": 256,
+        "workload": "9 scenes,unique alphabetic rare terms in setup and final scene,no middle mentions"
+      },
+      {
+        "findings": 1025,
+        "medianMs": 0.670875,
+        "samplesMs": [
+          0.663208,
+          0.6702910000000001,
+          0.670875,
+          0.679,
+          0.7412500000000001
+        ],
+        "semanticFingerprintFNV1a64": "8737467774080aae",
+        "timingScope": "analysis+returned output;input clone and static dictionary warmup excluded",
+        "vocabulary": 1024,
+        "workload": "9 scenes,unique alphabetic rare terms in setup and final scene,no middle mentions"
+      },
+      {
+        "findings": 4097,
+        "medianMs": 2.7166669999999997,
+        "samplesMs": [
+          2.679125,
+          2.6914170000000004,
+          2.7166669999999997,
+          2.864666,
+          2.888416
+        ],
+        "semanticFingerprintFNV1a64": "b214eaffabe98b12",
+        "timingScope": "analysis+returned output;input clone and static dictionary warmup excluded",
+        "vocabulary": 4096,
+        "workload": "9 scenes,unique alphabetic rare terms in setup and final scene,no middle mentions"
+      }
+    ],
+    "literalRequestedHeap": [
+      {
+        "sourceBytes": 65516,
+        "retainOccurrences": false,
+        "medianMs": 0.78225,
+        "peakRequestedBytesAboveInput": 598324,
+        "retainedRequestedBytesAboveInput": 960,
+        "retainedOccurrences": 0,
+        "totalLiteralMatches": 11912
+      },
+      {
+        "sourceBytes": 65516,
+        "retainOccurrences": true,
+        "medianMs": 3.2504169999999997,
+        "peakRequestedBytesAboveInput": 3528894,
+        "retainedRequestedBytesAboveInput": 2596328,
+        "retainedOccurrences": 10000,
+        "totalLiteralMatches": 11912
+      },
+      {
+        "sourceBytes": 1048564,
+        "retainOccurrences": false,
+        "medianMs": 12.174707999999999,
+        "peakRequestedBytesAboveInput": 598324,
+        "retainedRequestedBytesAboveInput": 960,
+        "retainedOccurrences": 0,
+        "totalLiteralMatches": 190648
+      },
+      {
+        "sourceBytes": 1048564,
+        "retainOccurrences": true,
+        "medianMs": 14.920417,
+        "peakRequestedBytesAboveInput": 3528894,
+        "retainedRequestedBytesAboveInput": 2596328,
+        "retainedOccurrences": 10000,
+        "totalLiteralMatches": 190648
+      },
+      {
+        "sourceBytes": 8388600,
+        "retainOccurrences": false,
+        "medianMs": 98.14458400000001,
+        "peakRequestedBytesAboveInput": 598324,
+        "retainedRequestedBytesAboveInput": 960,
+        "retainedOccurrences": 0,
+        "totalLiteralMatches": 1525200
+      },
+      {
+        "sourceBytes": 8388600,
+        "retainOccurrences": true,
+        "medianMs": 102.7425,
+        "peakRequestedBytesAboveInput": 3528894,
+        "retainedRequestedBytesAboveInput": 2596328,
+        "retainedOccurrences": 10000,
+        "totalLiteralMatches": 1525200
+      }
+    ],
+    "limits": [
+      "Legacy timing excludes input cloning/dictionary warmup;5samples each;concurrent host load uncontrolled",
+      "Equal FNV projection covers original count/location/numeric-signal/ranking,not intentionally corrected semantic status names",
+      "Heap is requestedRustglobal allocator live/peak above caller input+warmed caches;not RSS/native/JS heap",
+      "Heap times instrumented in separatetestbinary;not compared to bare legacy timings",
+      "Bounded authored workloads,not a universal manuscript performance claim"
+    ]
+  },
+  "commands": [
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --test component_recurrence",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --lib structure::foreshadow",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo clippy --locked --features bindings --lib --test component_recurrence -- -D warnings",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo clippy --locked --test component_recurrence_memory -- -D warnings",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --release --test component_recurrence legacy_recurrence_performance -- --ignored --nocapture",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --release --test component_recurrence_memory -- --ignored --nocapture --test-threads=1"
+  ],
+  "readiness": {
+    "literal_recurrence": "source/count/property/boundary verified,confidence4",
+    "defined_token_signal": "regression/equivalence/performance verified,confidence4",
+    "semantic_foreshadow_payoff_accuracy": "U;not claimed"
+  },
+  "payload": {
+    "path": "component-recurrence-payload.tar.gz",
+    "sha256": "f9ccb8ad0dde1d1b0245143f8fabdb6d6a7c919439b448b9247a578940c605ad"
+  }
+}

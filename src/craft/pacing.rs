@@ -109,6 +109,7 @@ fn action_verbs() -> &'static HashSet<&'static str> {
 // PacingMetrics
 // ---------------------------------------------------------------------------
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PacingMetrics {
@@ -127,6 +128,7 @@ pub struct PacingMetrics {
 // AggregatedPacing
 // ---------------------------------------------------------------------------
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AggregatedPacing {
@@ -187,6 +189,7 @@ pub fn analyze_scene(
 }
 
 /// Information density result for a single scene.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SceneInfoDensity {
@@ -447,9 +450,10 @@ pub fn aggregate_pacing(scene_metrics: &[PacingMetrics]) -> Option<AggregatedPac
             ));
         }
         if m.is_talking_head
-            && let Some(last) = assessments.last_mut() {
-                last.push_str("; dialogue-heavy with minimal action");
-            }
+            && let Some(last) = assessments.last_mut()
+        {
+            last.push_str("; dialogue-heavy with minimal action");
+        }
     }
 
     Some(AggregatedPacing {

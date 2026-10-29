@@ -1,0 +1,21 @@
+{
+  "copied_from": "/Volumes/A/narrative-lens",
+  "files": [
+    {
+      "path": "src/substrate/embedding.rs",
+      "sha256": "9f28c0c6f1d8ddf65433a08f0234b6b6407d0f776effe76d421c60b2ecdabd74"
+    },
+    {
+      "path": "src/substrate/wordfreq.rs",
+      "sha256": "5ef623308947a584598157e12ba9f24ce2afc62a7f34224972166aef52787174"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "ac6c14d8703980121e7e239b4cdec6536f48891f45cb68f8a268ecddbdc5257c"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "0ea96def393475ad8f12a2196250839a30e59e746ba2d5493b5166bdde314558"
+    }
+  ]
+}

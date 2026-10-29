@@ -9,134 +9,247 @@
 //! `wasm32-unknown-unknown` has no filesystem, so the model-search paths the
 //! native backend uses never resolve. Instead the host (which *can* fetch over
 //! the network) supplies the ONNX model bytes and the `tokenizer.json` bytes via
-//! [`set_sbert_model_bytes`] / [`set_ner_model_bytes`] before the first call.
+//! [`set_sbert_model_bytes`] / [`set_ner_model_bytes`]; setters replace or retry models.
 //! Until then — or if a load fails — the backend degrades to empty output,
 //! exactly the historical missing-model contract; nothing ever panics.
 //!
 //! Everything after the raw tensor (masked mean-pooling, BIO span decoding) is
 //! the runtime-agnostic [`super::decode`] code the native backend also uses, so
-//! a wasm embedding/tag is bit-for-bit identical to the native one.
+//! backend numerical parity remains a tolerance-based runtime check.
 
-use std::sync::OnceLock;
-
+use super::InferenceBackend;
+use super::checked::{ModelFailure, ModelKind};
+use super::decode::{decode_entities, masked_mean_pool};
+use super::model::{ModelIdentity, ModelManifest, ModelMetadata};
+use std::sync::{Arc, Mutex, OnceLock};
 use tokenizers::Tokenizer;
 use tract_onnx::prelude::*;
 
-use super::decode::{argmax_labels, decode_entities, masked_mean_pool, softmax};
-use super::InferenceBackend;
-
-type RunnableModel = TypedRunnableModel<TypedModel>;
-
-/// A loaded model: the optimized tract plan, its declared input names (so inputs
-/// are fed in the model's own order, not a guessed one), and the tokenizer.
+type RunnableModel = TypedRunnableModel;
 struct TractModel {
-    model: RunnableModel,
+    model: Arc<RunnableModel>,
     input_names: Vec<String>,
     tokenizer: Tokenizer,
+    metadata: ModelMetadata,
 }
-
+#[derive(Default)]
+struct ModelSlot {
+    bytes: Option<Arc<(Vec<u8>, Vec<u8>)>>,
+    generation: u64,
+    loaded: Option<Result<Arc<TractModel>, ModelFailure>>,
+}
 struct TractBackend;
-
 static BACKEND: TractBackend = TractBackend;
-
-/// Host-supplied `(model_onnx, tokenizer_json)` bytes, set before first use.
-static SBERT_BYTES: OnceLock<(Vec<u8>, Vec<u8>)> = OnceLock::new();
-static NER_BYTES: OnceLock<(Vec<u8>, Vec<u8>)> = OnceLock::new();
-static EMOTION_BYTES: OnceLock<(Vec<u8>, Vec<u8>)> = OnceLock::new();
-static NLI_BYTES: OnceLock<(Vec<u8>, Vec<u8>)> = OnceLock::new();
-
+static SBERT_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
+static NER_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
+static EMOTION_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
+static NLI_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
 pub fn backend() -> &'static dyn InferenceBackend {
     &BACKEND
 }
-
-/// Setting a model directory is a no-op on wasm: there is no filesystem to read
-/// model files from. Retained for signature parity with the native backend; the
-/// host provides bytes through [`set_sbert_model_bytes`] instead.
 pub fn set_sbert_model_directory(_path: &str) {}
-
-/// See [`set_sbert_model_directory`]: no-op on wasm.
 pub fn set_ner_model_directory(_path: &str) {}
-
-/// See [`set_sbert_model_directory`]: no-op on wasm.
 pub fn set_emotion_model_directory(_path: &str) {}
-
-/// See [`set_sbert_model_directory`]: no-op on wasm.
 pub fn set_nli_model_directory(_path: &str) {}
 
-/// Provide the SBERT model + tokenizer bytes. Must be called before the first
-/// embedding; no-op once a load has been attempted (the `OnceLock` is set).
+fn set_bytes(slot: &OnceLock<Mutex<ModelSlot>>, model: &[u8], tokenizer: &[u8]) {
+    let bytes = if model.len() > 1024 * 1024 * 1024 || tokenizer.len() > 64 * 1024 * 1024 {
+        Err(ModelFailure::incompatible("model_file_size_or_type"))
+    } else {
+        Ok(Arc::new((model.to_vec(), tokenizer.to_vec())))
+    };
+    let previous = {
+        let mut state = slot
+            .get_or_init(Default::default)
+            .lock()
+            .expect("model configuration lock poisoned");
+        state.generation = state.generation.wrapping_add(1);
+        let previous = state.loaded.take();
+        match bytes {
+            Ok(bytes) => state.bytes = Some(bytes),
+            Err(error) => {
+                state.bytes = None;
+                state.loaded = Some(Err(error));
+            }
+        }
+        previous
+    };
+    drop(previous);
+}
 pub fn set_sbert_model_bytes(model: &[u8], tokenizer: &[u8]) {
-    let _ = SBERT_BYTES.set((model.to_vec(), tokenizer.to_vec()));
+    set_bytes(&SBERT_MODEL, model, tokenizer);
 }
-
-/// Provide the NER model + tokenizer bytes. Must be called before the first NER
-/// call; no-op once a load has been attempted.
 pub fn set_ner_model_bytes(model: &[u8], tokenizer: &[u8]) {
-    let _ = NER_BYTES.set((model.to_vec(), tokenizer.to_vec()));
+    set_bytes(&NER_MODEL, model, tokenizer);
 }
-
-/// Provide the emotion model + tokenizer bytes. Must be called before the first
-/// classification; no-op once a load has been attempted.
 pub fn set_emotion_model_bytes(model: &[u8], tokenizer: &[u8]) {
-    let _ = EMOTION_BYTES.set((model.to_vec(), tokenizer.to_vec()));
+    set_bytes(&EMOTION_MODEL, model, tokenizer);
 }
-
-/// Provide the NLI model + tokenizer bytes. Must be called before the first pair
-/// classification; no-op once a load has been attempted.
 pub fn set_nli_model_bytes(model: &[u8], tokenizer: &[u8]) {
-    let _ = NLI_BYTES.set((model.to_vec(), tokenizer.to_vec()));
+    set_bytes(&NLI_MODEL, model, tokenizer);
 }
 
-/// Parse and optimize an ONNX model from raw bytes with the pure-Rust `tract`
-/// runtime, pairing it with the tokenizer parsed from `tokenizer_bytes`. Returns
-/// `None` on any parse/optimize/tokenizer failure (graceful degrade).
-fn load_model(model_bytes: &[u8], tokenizer_bytes: &[u8]) -> Option<TractModel> {
+fn validate_model(model: &TypedModel, metadata: &ModelMetadata) -> Result<(), ModelFailure> {
+    metadata.validate_input_names(
+        model
+            .inputs
+            .iter()
+            .map(|outlet| model.node(outlet.node).name.as_str()),
+    )?;
+    for i in 0..model.inputs.len() {
+        let fact = model
+            .input_fact(i)
+            .map_err(|_| ModelFailure::incompatible("model_profile_input_tensor"))?;
+        if fact.datum_type != DatumType::I64
+            || fact.shape.rank() != 2
+            || fact
+                .shape
+                .iter()
+                .any(|dim| dim.as_i64().is_some_and(|n| n <= 0))
+        {
+            return Err(ModelFailure::incompatible("model_profile_input_tensor"));
+        }
+    }
+    if model.outputs.len() != 1 {
+        return Err(ModelFailure::incompatible("model_profile_outputs"));
+    }
+    let fact = model
+        .output_fact(0)
+        .map_err(|_| ModelFailure::incompatible("model_profile_output_tensor"))?;
+    if fact.datum_type != DatumType::F32 {
+        return Err(ModelFailure::incompatible("model_profile_output_tensor"));
+    }
+    let expected = metadata.output_shape();
+    if fact.shape.rank() != expected.len()
+        || fact.shape.iter().zip(expected).any(|(actual, expected)| {
+            actual.as_i64().is_some_and(|n| n <= 0)
+                || expected.is_some_and(|n| actual.as_i64() != Some(n as i64))
+        })
+    {
+        return Err(ModelFailure::incompatible("model_profile_output_shape"));
+    }
+    Ok(())
+}
+
+fn load_model(
+    model_bytes: &[u8],
+    tokenizer_bytes: &[u8],
+    metadata: ModelMetadata,
+) -> Result<Arc<TractModel>, ModelFailure> {
+    let tokenizer = Tokenizer::from_bytes(tokenizer_bytes)
+        .map_err(|_| ModelFailure::incompatible("tokenizer_invalid"))?;
+    metadata.validate_tokenizer(&tokenizer)?;
     let mut reader = model_bytes;
     let typed = tract_onnx::onnx()
         .model_for_read(&mut reader)
-        .and_then(|m| m.into_optimized())
-        .ok()?;
-    // Capture the model's declared input names so we feed tensors in its order.
-    let input_names: Vec<String> = typed
+        .and_then(|model| model.into_optimized())
+        .map_err(|_| ModelFailure::incompatible("model_load_failed"))?;
+    if metadata.identity.manifest.is_some() {
+        validate_model(&typed, &metadata)?;
+    }
+    let input_names = typed
         .inputs
         .iter()
         .map(|outlet| typed.node(outlet.node).name.clone())
         .collect();
-    let model = typed.into_runnable().ok()?;
-    let tokenizer = Tokenizer::from_bytes(tokenizer_bytes).ok()?;
-    Some(TractModel {
+    let model = typed
+        .into_runnable()
+        .map_err(|_| ModelFailure::incompatible("model_load_failed"))?;
+    Ok(Arc::new(TractModel {
         model,
         input_names,
         tokenizer,
-    })
+        metadata,
+    }))
+}
+fn configured_model(
+    slot: &OnceLock<Mutex<ModelSlot>>,
+    kind: ModelKind,
+) -> Result<Arc<TractModel>, ModelFailure> {
+    let slot = slot.get_or_init(Default::default);
+    loop {
+        let (bytes, generation) = {
+            let state = slot
+                .lock()
+                .map_err(|_| ModelFailure::execution("model_configuration_lock_failed"))?;
+            if let Some(loaded) = &state.loaded {
+                return loaded.clone();
+            }
+            (
+                state
+                    .bytes
+                    .clone()
+                    .ok_or_else(|| ModelFailure::unavailable("model_bytes_missing"))?,
+                state.generation,
+            )
+        };
+        let loaded = load_model(&bytes.0, &bytes.1, ModelMetadata::unverified(kind));
+        let mut state = slot
+            .lock()
+            .map_err(|_| ModelFailure::execution("model_configuration_lock_failed"))?;
+        if state.generation != generation {
+            drop(state);
+            drop(loaded);
+            continue;
+        }
+        if let Some(existing) = &state.loaded {
+            let existing = existing.clone();
+            drop(state);
+            drop(loaded);
+            return existing;
+        }
+        state.loaded = Some(loaded.clone());
+        drop(state);
+        return loaded;
+    }
+}
+fn sbert_model() -> Result<Arc<TractModel>, ModelFailure> {
+    configured_model(&SBERT_MODEL, ModelKind::Embedding)
+}
+fn ner_model() -> Result<Arc<TractModel>, ModelFailure> {
+    configured_model(&NER_MODEL, ModelKind::Ner)
+}
+fn emotion_model() -> Result<Arc<TractModel>, ModelFailure> {
+    configured_model(&EMOTION_MODEL, ModelKind::Emotion)
+}
+fn nli_model() -> Result<Arc<TractModel>, ModelFailure> {
+    configured_model(&NLI_MODEL, ModelKind::Nli)
 }
 
-fn sbert_model() -> Option<&'static TractModel> {
-    static MODEL: OnceLock<Option<TractModel>> = OnceLock::new();
-    MODEL
-        .get_or_init(|| SBERT_BYTES.get().and_then(|(m, t)| load_model(m, t)))
-        .as_ref()
+fn slot_for_kind(kind: ModelKind) -> &'static OnceLock<Mutex<ModelSlot>> {
+    match kind {
+        ModelKind::Embedding => &SBERT_MODEL,
+        ModelKind::Ner => &NER_MODEL,
+        ModelKind::Emotion => &EMOTION_MODEL,
+        ModelKind::Nli => &NLI_MODEL,
+    }
 }
 
-fn ner_model() -> Option<&'static TractModel> {
-    static MODEL: OnceLock<Option<TractModel>> = OnceLock::new();
-    MODEL
-        .get_or_init(|| NER_BYTES.get().and_then(|(m, t)| load_model(m, t)))
+pub fn set_model_bytes_verified(
+    kind: ModelKind,
+    model: &[u8],
+    tokenizer: &[u8],
+    manifest: &ModelManifest,
+) -> Result<ModelIdentity, ModelFailure> {
+    let loaded = ModelMetadata::verify(kind, manifest, model, tokenizer)
+        .and_then(|metadata| load_model(model, tokenizer, metadata));
+    let identity = loaded
         .as_ref()
-}
-
-fn emotion_model() -> Option<&'static TractModel> {
-    static MODEL: OnceLock<Option<TractModel>> = OnceLock::new();
-    MODEL
-        .get_or_init(|| EMOTION_BYTES.get().and_then(|(m, t)| load_model(m, t)))
-        .as_ref()
-}
-
-fn nli_model() -> Option<&'static TractModel> {
-    static MODEL: OnceLock<Option<TractModel>> = OnceLock::new();
-    MODEL
-        .get_or_init(|| NLI_BYTES.get().and_then(|(m, t)| load_model(m, t)))
-        .as_ref()
+        .map(|m| m.metadata.identity.clone())
+        .map_err(Clone::clone);
+    let previous = {
+        let mut state = slot_for_kind(kind)
+            .get_or_init(Default::default)
+            .lock()
+            .map_err(|_| ModelFailure::execution("model_configuration_lock_failed"))?;
+        state.generation = state.generation.wrapping_add(1);
+        let bytes = state.bytes.take();
+        let previous = state.loaded.replace(loaded);
+        super::MODEL_GENERATION.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        (bytes, previous)
+    };
+    drop(previous);
+    identity
 }
 
 /// A row's tokenization: BERT input ids / attention mask / token-type ids, plus
@@ -146,16 +259,25 @@ struct Row {
     mask: Vec<i64>,
     type_ids: Vec<i64>,
     offsets: Vec<(usize, usize)>,
+    words: Vec<Option<u32>>,
 }
 
 /// Tokenize every text, returning the per-row tensors and the batch's max token
 /// length. `None` on any tokenizer error (graceful degrade, like the native
 /// path). `want_offsets` is false for embedding (offsets are NER-only).
-fn tokenize(model: &TractModel, texts: &[&str], want_offsets: bool) -> Option<(Vec<Row>, usize)> {
+fn tokenize(
+    model: &TractModel,
+    texts: &[&str],
+    want_offsets: bool,
+) -> Result<(Vec<Row>, usize), ModelFailure> {
     let mut rows: Vec<Row> = Vec::with_capacity(texts.len());
     let mut max_len = 0usize;
     for text in texts {
-        let encoding = model.tokenizer.encode(*text, true).ok()?;
+        let encoding = model
+            .tokenizer
+            .encode(*text, true)
+            .map_err(|_| ModelFailure::execution("tokenization_failed"))?;
+        model.metadata.validate_tokens(encoding.len())?;
         let ids: Vec<i64> = encoding.get_ids().iter().map(|&id| id as i64).collect();
         let mask: Vec<i64> = encoding
             .get_attention_mask()
@@ -163,10 +285,13 @@ fn tokenize(model: &TractModel, texts: &[&str], want_offsets: bool) -> Option<(V
             .map(|&m| m as i64)
             .collect();
         let type_ids: Vec<i64> = encoding.get_type_ids().iter().map(|&t| t as i64).collect();
-        let offsets = if want_offsets {
-            encoding.get_offsets().to_vec()
+        let (offsets, words) = if want_offsets {
+            (
+                encoding.get_offsets().to_vec(),
+                encoding.get_word_ids().to_vec(),
+            )
         } else {
-            Vec::new()
+            (Vec::new(), Vec::new())
         };
         max_len = max_len.max(ids.len());
         rows.push(Row {
@@ -174,9 +299,10 @@ fn tokenize(model: &TractModel, texts: &[&str], want_offsets: bool) -> Option<(V
             mask,
             type_ids,
             offsets,
+            words,
         });
     }
-    Some((rows, max_len))
+    Ok((rows, max_len))
 }
 
 /// Flatten rows into padded `[batch, max_len]` row-major buffers (pad value 0;
@@ -184,6 +310,7 @@ fn tokenize(model: &TractModel, texts: &[&str], want_offsets: bool) -> Option<(V
 /// tensors in the model's declared input order. `None` on any shape error.
 fn build_inputs(model: &TractModel, rows: &[Row], max_len: usize) -> Option<TVec<TValue>> {
     let batch = rows.len();
+    super::checked::input_elements(batch, max_len).ok()?;
     let mut ids_flat: Vec<i64> = Vec::with_capacity(batch * max_len);
     let mut mask_flat: Vec<i64> = Vec::with_capacity(batch * max_len);
     let mut type_flat: Vec<i64> = Vec::with_capacity(batch * max_len);
@@ -193,7 +320,7 @@ fn build_inputs(model: &TractModel, rows: &[Row], max_len: usize) -> Option<TVec
         mask_flat.extend_from_slice(&row.mask);
         type_flat.extend_from_slice(&row.type_ids);
         for _ in len..max_len {
-            ids_flat.push(0);
+            ids_flat.push(model.metadata.padding_id());
             mask_flat.push(0);
             type_flat.push(0);
         }
@@ -211,7 +338,8 @@ fn build_inputs(model: &TractModel, rows: &[Row], max_len: usize) -> Option<TVec
         let t = match name.as_str() {
             "attention_mask" => mask_t.clone(),
             "token_type_ids" => type_t.clone(),
-            _ => ids_t.clone(),
+            "input_ids" => ids_t.clone(),
+            _ => return None,
         };
         inputs.push(t.into());
     }
@@ -220,45 +348,69 @@ fn build_inputs(model: &TractModel, rows: &[Row], max_len: usize) -> Option<TVec
 
 /// Run the model and return its first output as `(last_dim, flat_f32)`,
 /// validating a 3-D `[batch, max_len, last_dim]` shape. `None` on any error.
-fn run_3d(model: &TractModel, inputs: TVec<TValue>) -> Option<(usize, Vec<f32>)> {
-    let outputs = model.model.run(inputs).ok()?;
-    let view = outputs.first()?.to_array_view::<f32>().ok()?;
-    if view.shape().len() != 3 {
-        return None;
+fn run_3d(
+    model: &TractModel,
+    inputs: TVec<TValue>,
+    batch: usize,
+    tokens: usize,
+    channels: Option<usize>,
+) -> std::result::Result<(usize, Vec<f32>), ModelFailure> {
+    let outputs = model
+        .model
+        .run(inputs)
+        .map_err(|_| ModelFailure::execution("onnx_execution_failed"))?;
+    let view = outputs
+        .first()
+        .ok_or_else(|| ModelFailure::incompatible("model_has_no_outputs"))?
+        .to_plain_array_view::<f32>()
+        .map_err(|_| ModelFailure::incompatible("model_output_not_float32"))?;
+    let shape = view.shape().iter().map(|n| *n as i64).collect::<Vec<_>>();
+    if view.len() > 16 * 1024 * 1024 {
+        return Err(ModelFailure::incompatible("model_output_allocation_limit"));
     }
-    let last_dim = view.shape()[2];
-    let data: Vec<f32> = view.iter().copied().collect();
-    Some((last_dim, data))
+    let data = view.iter().copied().collect::<Vec<_>>();
+    super::checked::tensor_shape(&shape, &[Some(batch), Some(tokens), channels], &data)?;
+    Ok((shape[2] as usize, data))
 }
-
-/// Run the model and return its first output as `(num_classes, flat_f32)`,
-/// validating a 2-D `[batch, num_classes]` shape (sequence classification).
-/// `None` on any error.
-fn run_2d(model: &TractModel, inputs: TVec<TValue>) -> Option<(usize, Vec<f32>)> {
-    let outputs = model.model.run(inputs).ok()?;
-    let view = outputs.first()?.to_array_view::<f32>().ok()?;
-    if view.shape().len() != 2 {
-        return None;
+fn run_2d(
+    model: &TractModel,
+    inputs: TVec<TValue>,
+    batch: usize,
+) -> std::result::Result<(usize, Vec<f32>), ModelFailure> {
+    let outputs = model
+        .model
+        .run(inputs)
+        .map_err(|_| ModelFailure::execution("onnx_execution_failed"))?;
+    let view = outputs
+        .first()
+        .ok_or_else(|| ModelFailure::incompatible("model_has_no_outputs"))?
+        .to_plain_array_view::<f32>()
+        .map_err(|_| ModelFailure::incompatible("model_output_not_float32"))?;
+    let shape = view.shape().iter().map(|n| *n as i64).collect::<Vec<_>>();
+    if view.len() > 16 * 1024 * 1024 {
+        return Err(ModelFailure::incompatible("model_output_allocation_limit"));
     }
-    let last_dim = view.shape()[1];
-    let data: Vec<f32> = view.iter().copied().collect();
-    Some((last_dim, data))
+    let data = view.iter().copied().collect::<Vec<_>>();
+    super::checked::tensor_shape(&shape, &[Some(batch), None], &data)?;
+    Ok((shape[1] as usize, data))
 }
 
 fn embed_inner(texts: &[&str]) -> Vec<Vec<f64>> {
-    if texts.is_empty() {
-        return Vec::new();
-    }
-    let empty = || vec![Vec::new(); texts.len()];
+    texts
+        .chunks(256)
+        .flat_map(|chunk| {
+            embed_inner_checked(chunk).unwrap_or_else(|_| vec![Vec::new(); chunk.len()])
+        })
+        .collect()
+}
 
-    let model = match sbert_model() {
-        Some(m) => m,
-        None => return empty(),
-    };
-    let (rows, max_len) = match tokenize(model, texts, false) {
-        Some(r) => r,
-        None => return empty(),
-    };
+fn embed_inner_checked(texts: &[&str]) -> std::result::Result<Vec<Vec<f64>>, ModelFailure> {
+    if texts.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let model = sbert_model()?;
+    let (rows, max_len) = tokenize(&model, texts, false)?;
     // Per-row attention masks padded to max_len, for masked pooling.
     let row_masks: Vec<Vec<i64>> = rows
         .iter()
@@ -269,46 +421,52 @@ fn embed_inner(texts: &[&str]) -> Vec<Vec<f64>> {
         })
         .collect();
 
-    let inputs = match build_inputs(model, &rows, max_len) {
+    let inputs = match build_inputs(&model, &rows, max_len) {
         Some(i) => i,
-        None => return empty(),
+        None => return Err(ModelFailure::execution("model_tokenization_or_input_limit")),
     };
-    let (hidden_dim, data) = match run_3d(model, inputs) {
-        Some(o) => o,
-        None => return empty(),
-    };
-    masked_mean_pool(&data, &row_masks, max_len, hidden_dim)
+    let (hidden_dim, data) = run_3d(&model, inputs, rows.len(), max_len, None)?;
+    Ok(masked_mean_pool(&data, &row_masks, max_len, hidden_dim))
 }
 
-fn tag_inner(texts: &[&str]) -> Vec<Vec<(String, String, usize, usize)>> {
-    if texts.is_empty() {
-        return Vec::new();
-    }
-    let empty = || vec![Vec::new(); texts.len()];
+fn tag_inner(texts: &[&str]) -> Vec<super::NerSpans> {
+    texts
+        .chunks(256)
+        .flat_map(|chunk| {
+            tag_inner_checked(chunk).unwrap_or_else(|_| vec![Vec::new(); chunk.len()])
+        })
+        .collect()
+}
 
-    let model = match ner_model() {
-        Some(m) => m,
-        None => return empty(),
-    };
-    let (rows, max_len) = match tokenize(model, texts, true) {
-        Some(r) => r,
-        None => return empty(),
-    };
-    let inputs = match build_inputs(model, &rows, max_len) {
+fn tag_inner_checked(texts: &[&str]) -> std::result::Result<Vec<super::NerSpans>, ModelFailure> {
+    if texts.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let model = ner_model()?;
+    let (rows, max_len) = tokenize(&model, texts, true)?;
+    let inputs = match build_inputs(&model, &rows, max_len) {
         Some(i) => i,
-        None => return empty(),
+        None => return Err(ModelFailure::execution("model_tokenization_or_input_limit")),
     };
-    let (num_labels, logits) = match run_3d(model, inputs) {
-        Some(o) => o,
-        None => return empty(),
-    };
+    let (num_labels, logits) = run_3d(&model, inputs, rows.len(), max_len, Some(9))?;
 
     let mut out = Vec::with_capacity(rows.len());
     for (b, (row, text)) in rows.iter().zip(texts.iter()).enumerate() {
-        let predicted = argmax_labels(&logits, b, max_len, num_labels, row.offsets.len());
-        out.push(decode_entities(&predicted, &row.offsets, text));
+        if row
+            .offsets
+            .iter()
+            .any(|(a, b)| a > b || text.get(*a..*b).is_none())
+        {
+            return Err(ModelFailure::incompatible("tokenizer_invalid_offsets"));
+        }
+        let predicted =
+            model
+                .metadata
+                .ner_labels(&logits, b, max_len, num_labels, row.offsets.len());
+        out.push(decode_entities(&predicted, &row.offsets, &row.words, text));
     }
-    out
+    Ok(out)
 }
 
 /// Batched sequence classification (emotion): tokenize, pad, one run, then
@@ -316,29 +474,32 @@ fn tag_inner(texts: &[&str]) -> Vec<Vec<(String, String, usize, usize)>> {
 /// 2-D classification head via [`run_2d`]. Graceful degrade to empty on any
 /// missing-model / tokenizer / shape error.
 fn classify_inner(texts: &[&str]) -> Vec<Vec<f64>> {
-    if texts.is_empty() {
-        return Vec::new();
-    }
-    let empty = || vec![Vec::new(); texts.len()];
+    texts
+        .chunks(256)
+        .flat_map(|chunk| {
+            classify_inner_checked(chunk).unwrap_or_else(|_| vec![Vec::new(); chunk.len()])
+        })
+        .collect()
+}
 
-    let model = match emotion_model() {
-        Some(m) => m,
-        None => return empty(),
-    };
-    let (rows, max_len) = match tokenize(model, texts, false) {
-        Some(r) => r,
-        None => return empty(),
-    };
-    let inputs = match build_inputs(model, &rows, max_len) {
+fn classify_inner_checked(texts: &[&str]) -> std::result::Result<Vec<Vec<f64>>, ModelFailure> {
+    if texts.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let model = emotion_model()?;
+    let (rows, max_len) = tokenize(&model, texts, false)?;
+    let inputs = match build_inputs(&model, &rows, max_len) {
         Some(i) => i,
-        None => return empty(),
+        None => return Err(ModelFailure::execution("model_tokenization_or_input_limit")),
     };
-    let (num_classes, logits) = match run_2d(model, inputs) {
-        Some(o) => o,
-        None => return empty(),
-    };
+    let (num_classes, logits) = run_2d(&model, inputs, rows.len())?;
     (0..rows.len())
-        .map(|b| softmax(&logits[b * num_classes..(b + 1) * num_classes]))
+        .map(|b| {
+            model
+                .metadata
+                .probabilities(&logits[b * num_classes..(b + 1) * num_classes])
+        })
         .collect()
 }
 
@@ -348,22 +509,30 @@ fn classify_inner(texts: &[&str]) -> Vec<Vec<f64>> {
 /// head via [`run_2d`]. Graceful degrade to empty on any missing-model / tokenizer
 /// / shape error.
 fn classify_pairs_inner(pairs: &[(&str, &str)]) -> Vec<Vec<f64>> {
-    if pairs.is_empty() {
-        return Vec::new();
-    }
-    let empty = || vec![Vec::new(); pairs.len()];
+    pairs
+        .chunks(256)
+        .flat_map(|chunk| {
+            classify_pairs_inner_checked(chunk).unwrap_or_else(|_| vec![Vec::new(); chunk.len()])
+        })
+        .collect()
+}
 
-    let model = match nli_model() {
-        Some(m) => m,
-        None => return empty(),
-    };
+fn classify_pairs_inner_checked(
+    pairs: &[(&str, &str)],
+) -> std::result::Result<Vec<Vec<f64>>, ModelFailure> {
+    if pairs.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let model = nli_model()?;
     let mut rows: Vec<Row> = Vec::with_capacity(pairs.len());
     let mut max_len = 0usize;
     for &(premise, hypothesis) in pairs {
         let encoding = match model.tokenizer.encode((premise, hypothesis), true) {
             Ok(e) => e,
-            Err(_) => return empty(),
+            Err(_) => return Err(ModelFailure::execution("model_tokenization_or_input_limit")),
         };
+        model.metadata.validate_tokens(encoding.len())?;
         let ids: Vec<i64> = encoding.get_ids().iter().map(|&id| id as i64).collect();
         let mask: Vec<i64> = encoding
             .get_attention_mask()
@@ -377,22 +546,70 @@ fn classify_pairs_inner(pairs: &[(&str, &str)]) -> Vec<Vec<f64>> {
             mask,
             type_ids,
             offsets: Vec::new(),
+            words: Vec::new(),
         });
     }
-    let inputs = match build_inputs(model, &rows, max_len) {
+    let inputs = match build_inputs(&model, &rows, max_len) {
         Some(i) => i,
-        None => return empty(),
+        None => return Err(ModelFailure::execution("model_tokenization_or_input_limit")),
     };
-    let (num_classes, logits) = match run_2d(model, inputs) {
-        Some(o) => o,
-        None => return empty(),
-    };
+    let (num_classes, logits) = run_2d(&model, inputs, rows.len())?;
     (0..rows.len())
-        .map(|b| softmax(&logits[b * num_classes..(b + 1) * num_classes]))
+        .map(|b| {
+            model
+                .metadata
+                .probabilities(&logits[b * num_classes..(b + 1) * num_classes])
+        })
         .collect()
 }
 
 impl InferenceBackend for TractBackend {
+    fn model_identity(&self, kind: ModelKind) -> Result<ModelIdentity, ModelFailure> {
+        Ok(configured_model(slot_for_kind(kind), kind)?
+            .metadata
+            .identity
+            .clone())
+    }
+
+    fn embed_checked(&self, texts: &[&str]) -> std::result::Result<Vec<Vec<f64>>, ModelFailure> {
+        super::checked::validate_texts(texts, 256)?;
+        embed_inner_checked(texts)
+    }
+    fn classify_checked(&self, texts: &[&str]) -> std::result::Result<Vec<Vec<f64>>, ModelFailure> {
+        super::checked::validate_texts(texts, 256)?;
+        classify_inner_checked(texts)
+    }
+    fn tag_batch_checked(
+        &self,
+        texts: &[&str],
+    ) -> std::result::Result<Vec<super::NerSpans>, ModelFailure> {
+        super::checked::validate_texts(texts, 256)?;
+        tag_inner_checked(texts)
+    }
+    fn classify_pairs_checked(
+        &self,
+        pairs: &[(&str, &str)],
+    ) -> std::result::Result<Vec<Vec<f64>>, ModelFailure> {
+        super::checked::validate_texts(
+            &pairs.iter().flat_map(|(a, b)| [*a, *b]).collect::<Vec<_>>(),
+            512,
+        )?;
+        classify_pairs_inner_checked(pairs)
+    }
+
+    fn check_model(
+        &self,
+        kind: super::checked::ModelKind,
+    ) -> std::result::Result<(), super::checked::ModelFailure> {
+        match kind {
+            ModelKind::Embedding => sbert_model(),
+            ModelKind::Ner => ner_model(),
+            ModelKind::Emotion => emotion_model(),
+            ModelKind::Nli => nli_model(),
+        }
+        .map(|_| ())
+    }
+
     fn embed(&self, texts: &[&str]) -> Vec<Vec<f64>> {
         embed_inner(texts)
     }
@@ -401,7 +618,7 @@ impl InferenceBackend for TractBackend {
         tag_inner(&[text]).into_iter().next().unwrap_or_default()
     }
 
-    fn tag_batch(&self, texts: &[&str]) -> Vec<Vec<(String, String, usize, usize)>> {
+    fn tag_batch(&self, texts: &[&str]) -> Vec<super::NerSpans> {
         tag_inner(texts)
     }
 

@@ -1,0 +1,42 @@
+{
+  "cache": {
+    "budgetBytes": 16777216,
+    "entries": 160,
+    "recomputedGrammarScenes": 0,
+    "recomputedMetricsScenes": 0,
+    "recomputedScenes": 0,
+    "recomputedWorldScenes": 0,
+    "retainedBytes": 835102,
+    "reusedScenes": 160
+  },
+  "finalMatchesFresh": true,
+  "fixture": "benchmark-novel-v1",
+  "fullMs": [
+    423.427708,
+    407.89529200000004,
+    406.59000000000003,
+    404.151416,
+    404.439792
+  ],
+  "iterations": 5,
+  "memoryScope": "cache retained payload and dependency metadata estimate; use OS process peak RSS separately; excludes current input/report, allocator bookkeeping and runtime models",
+  "method": "Each iteration resets identical input before timing; full analysis clears scene retention but does not reset process-wide regex/dictionary initialization. Compilation excluded.",
+  "profile": "release; default features; no ONNX models",
+  "reorderMs": [
+    1.543875,
+    1.4974159999999999,
+    1.4413340000000001,
+    1.474,
+    1.4313749999999998
+  ],
+  "scenes": 160,
+  "singleSceneEditMs": [
+    23.357666,
+    22.690875,
+    22.341292,
+    22.431333000000002,
+    22.430542000000003
+  ],
+  "utf8BytesAtStart": 474880,
+  "wordsAtStart": 85280
+}

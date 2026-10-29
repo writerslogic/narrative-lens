@@ -5,30 +5,143 @@ use std::collections::HashMap;
 use napi_derive::napi;
 
 use crate::continuity::{
-    anachronism, causal_engine, coreference, entity, epistemic_engine, gap_analysis,
-    mental_model, timeline, world_state,
+    anachronism, author_knowledge, causal_engine, coreference, entity, epistemic_engine,
+    gap_analysis, mental_model, ner, timeline, world_state,
 };
+
+#[napi(
+    js_name = "analyzeAuthorKnowledge",
+    ts_args_type = "manuscript: import('./manuscript').Manuscript, propositions: import('./standalone.generated').AuthorProposition[], events: import('./standalone.generated').AuthorKnowledgeEvent[]",
+    ts_return_type = "import('./standalone.generated').AnalyzeAuthorKnowledgeResult"
+)]
+pub fn analyze_author_knowledge(
+    manuscript: serde_json::Value,
+    propositions: serde_json::Value,
+    events: serde_json::Value,
+) -> napi::Result<serde_json::Value> {
+    let manuscript = serde_json::from_value(manuscript)
+        .map_err(|_| napi::Error::from_reason("invalid manuscript object"))?;
+    let propositions: Vec<author_knowledge::AuthorProposition> =
+        serde_json::from_value(propositions)
+            .map_err(|_| napi::Error::from_reason("invalid author propositions"))?;
+    let events: Vec<author_knowledge::AuthorKnowledgeEvent> = serde_json::from_value(events)
+        .map_err(|_| napi::Error::from_reason("invalid author knowledge events"))?;
+    let ledger = author_knowledge::analyze_author_knowledge(&manuscript, &propositions, &events)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    serde_json::to_value(ledger).map_err(|error| napi::Error::from_reason(error.to_string()))
+}
+
+#[napi(
+    js_name = "trackWorldStateCurrent",
+    ts_args_type = "scenes: string[], characters: string[], options?: Partial<import('./standalone.generated').WorldStateOptions>",
+    ts_return_type = "import('./standalone.generated').TrackWorldStateCurrentResult"
+)]
+pub fn track_world_state_current(
+    scenes: Vec<String>,
+    characters: Vec<String>,
+    options: Option<serde_json::Value>,
+) -> napi::Result<serde_json::Value> {
+    let options: world_state::WorldStateOptions =
+        serde_json::from_value(options.unwrap_or_else(|| serde_json::json!({})))
+            .map_err(|_| napi::Error::from_reason("invalid world state options"))?;
+    let scenes: Vec<&str> = scenes.iter().map(String::as_str).collect();
+    let characters: Vec<&str> = characters.iter().map(String::as_str).collect();
+    let result = world_state::track_world_state_current(&scenes, &characters, &options)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    serde_json::to_value(result).map_err(|error| napi::Error::from_reason(error.to_string()))
+}
 
 /// Analyze a scene's tokens for anachronistic words given a target historical year.
 /// Returns empty if target_year is 0 (no target set).
 #[napi(
     js_name = "analyzeScene",
-    ts_return_type = "Array<{ word: string; introducedYear: number; targetYear: number; sceneId: number }>"
+    ts_return_type = "import('./standalone.generated').AnalyzeSceneResult"
 )]
 pub fn analyze_scene(
     tokens: Vec<String>,
-    target_year: i32,
-    scene_id: u32,
+    target_year: f64,
+    scene_id: f64,
 ) -> napi::Result<serde_json::Value> {
-    let result = anachronism::analyze_scene(&tokens, target_year, scene_id as usize);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let result = anachronism::analyze_scene_checked(
+        &tokens,
+        super::signed_integer(target_year)?,
+        super::unsigned_index(scene_id)?,
+    )
+    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result.items)
 }
 
-/// Build a causal graph over scenes and analyze plot coherence, counterfactuals,
-/// and plot holes.
+#[napi(
+    js_name = "analyzeSceneChecked",
+    ts_return_type = "import('./standalone.generated').AnalyzeSceneCheckedResult"
+)]
+pub fn analyze_scene_checked(
+    tokens: Vec<String>,
+    target_year: f64,
+    scene_id: f64,
+) -> napi::Result<serde_json::Value> {
+    let result = anachronism::analyze_scene_checked(
+        &tokens,
+        super::signed_integer(target_year)?,
+        super::unsigned_index(scene_id)?,
+    )
+    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
+}
+
+#[napi(
+    js_name = "analyzeHistoricalCatalogue",
+    ts_args_type = "manuscript: import('./manuscript').Manuscript, catalogue: import('./standalone.generated').HistoricalEntry[], usages: import('./standalone.generated').HistoricalUsage[], targetYear: number, toleranceYears: number",
+    ts_return_type = "import('./standalone.generated').AnalyzeHistoricalCatalogueResult"
+)]
+pub fn analyze_historical_catalogue(
+    manuscript: serde_json::Value,
+    catalogue: serde_json::Value,
+    usages: serde_json::Value,
+    target_year: f64,
+    tolerance_years: f64,
+) -> napi::Result<serde_json::Value> {
+    let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
+    let catalogue: Vec<anachronism::HistoricalEntry> =
+        super::decode_input(catalogue, "invalid historical catalogue")?;
+    let usages: Vec<anachronism::HistoricalUsage> =
+        super::decode_input(usages, "invalid historical usages")?;
+    let result = anachronism::analyze_historical_catalogue(
+        &manuscript,
+        &catalogue,
+        &usages,
+        super::signed_integer(target_year)?,
+        super::unsigned_index(tolerance_years)? as u32,
+    )
+    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
+}
+
+#[napi(
+    js_name = "extractNamedEntities",
+    ts_return_type = "import('./standalone.generated').ExtractNamedEntitiesResult"
+)]
+pub fn extract_named_entities(texts: Vec<String>) -> napi::Result<serde_json::Value> {
+    let texts: Vec<_> = texts.iter().map(String::as_str).collect();
+    let result = ner::ner_extract_entities_batch_checked(&texts)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
+}
+
+#[napi(
+    js_name = "extractPersons",
+    ts_return_type = "import('./standalone.generated').ExtractPersonsResult"
+)]
+pub fn extract_persons(scenes: Vec<String>) -> napi::Result<serde_json::Value> {
+    let result = ner::ner_extract_persons_checked(&scenes)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
+}
+
+/// Build lexical association candidates; causal mechanisms require author input.
 #[napi(
     js_name = "analyzeCausality",
-    ts_return_type = "{ events: Array<{ id: number; scene: number; description: string; agent: string | null; eventType: 'Action' | 'Reaction' | 'Consequence' | 'Discovery' | 'Decision' | 'External' }>; links: Array<{ cause: number; effect: number; strength: number; linkType: 'Necessary' | 'Enabling' | 'Triggering' | 'Coincidental' }>; counterfactuals: Array<{ removedEvent: number; question: string; consequences: Array<string>; plotNecessity: number }>; plotHoles: Array<{ scene: number; description: string; problem: string; causalGap: string; suggestion: string }>; causalDensity: number; longestChain: number; plotCoherence: number; structuralInsights: Array<string> }"
+    ts_return_type = "import('./standalone.generated').AnalyzeCausalityResult"
 )]
 pub fn analyze_causality(
     scenes: Vec<String>,
@@ -36,8 +149,49 @@ pub fn analyze_causality(
 ) -> napi::Result<serde_json::Value> {
     let scenes: Vec<&str> = scenes.iter().map(String::as_str).collect();
     let characters: Vec<&str> = characters.iter().map(String::as_str).collect();
-    let result = causal_engine::analyze_causality(&scenes, &characters);
+    let result = causal_engine::analyze_causality_checked(&scenes, &characters)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+#[napi(
+    js_name = "analyzeAuthorCausality",
+    ts_args_type = "manuscript: import('./manuscript').Manuscript, nodes: import('./standalone.generated').AuthorCausalNode[], interventions: import('./standalone.generated').AuthorIntervention[]",
+    ts_return_type = "import('./standalone.generated').AnalyzeAuthorCausalityResult"
+)]
+pub fn analyze_author_causality(
+    manuscript: serde_json::Value,
+    nodes: serde_json::Value,
+    interventions: serde_json::Value,
+) -> napi::Result<serde_json::Value> {
+    let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
+    let nodes: Vec<causal_engine::AuthorCausalNode> =
+        super::decode_input(nodes, "invalid author causal nodes")?;
+    let interventions: Vec<causal_engine::AuthorIntervention> =
+        super::decode_input(interventions, "invalid author interventions")?;
+    let result = causal_engine::analyze_author_causality(&manuscript, &nodes, &interventions)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
+}
+
+#[napi(
+    js_name = "buildAuthorMentalModel",
+    ts_args_type = "manuscript: import('./manuscript').Manuscript, propositions: import('./standalone.generated').AuthorProposition[], events: import('./standalone.generated').AuthorKnowledgeEvent[]",
+    ts_return_type = "import('./standalone.generated').BuildAuthorMentalModelResult"
+)]
+pub fn build_author_mental_model(
+    manuscript: serde_json::Value,
+    propositions: serde_json::Value,
+    events: serde_json::Value,
+) -> napi::Result<serde_json::Value> {
+    let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
+    let propositions: Vec<author_knowledge::AuthorProposition> =
+        super::decode_input(propositions, "invalid author propositions")?;
+    let events: Vec<author_knowledge::AuthorKnowledgeEvent> =
+        super::decode_input(events, "invalid author knowledge events")?;
+    let result = mental_model::build_author_mental_model(&manuscript, &propositions, &events)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
 }
 
 fn parse_entity_type(kind: &str) -> napi::Result<entity::EntityType> {
@@ -46,9 +200,7 @@ fn parse_entity_type(kind: &str) -> napi::Result<entity::EntityType> {
         "setting" => Ok(entity::EntityType::Setting),
         "symbol" => Ok(entity::EntityType::Symbol),
         "other" => Ok(entity::EntityType::Other),
-        _ => Err(napi::Error::from_reason(format!(
-            "unknown entity kind: {kind}"
-        ))),
+        _ => Err(napi::Error::from_reason("unknown entity kind")),
     }
 }
 
@@ -56,7 +208,7 @@ fn parse_entity_type(kind: &str) -> napi::Result<entity::EntityType> {
 /// entities of the given `kind` ("character", "setting", "symbol", or "other").
 #[napi(
     js_name = "resolveEntities",
-    ts_return_type = "Array<{ id: string; canonical: string; kind: 'character' | 'setting' | 'symbol' | 'other'; aliases: Array<string>; mentionCount: number; confidence: number; provenance: 'ai_derived' | 'user_edited' }>"
+    ts_return_type = "import('./standalone.generated').ResolveEntitiesResult"
 )]
 pub fn resolve_entities(
     mentions: Vec<(String, Vec<f64>)>,
@@ -67,7 +219,8 @@ pub fn resolve_entities(
         .into_iter()
         .map(|(surface, context)| entity::Mention::new(surface, context))
         .collect();
-    let result = entity::resolve(&mentions, kind);
+    let result = entity::resolve_checked(&mentions, kind)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
@@ -77,12 +230,14 @@ pub fn resolve_entities(
 /// automatic result.
 #[napi(
     js_name = "resolveEntitiesWithCorrections",
-    ts_return_type = "Array<{ id: string; canonical: string; kind: 'character' | 'setting' | 'symbol' | 'other'; aliases: Array<string>; mentionCount: number; confidence: number; provenance: 'ai_derived' | 'user_edited' }>"
+    ts_return_type = "import('./standalone.generated').ResolveEntitiesWithCorrectionsResult"
 )]
 pub fn resolve_entities_with_corrections(
     mentions: Vec<(String, Vec<f64>)>,
     kind: String,
-    #[napi(ts_arg_type = "Array<{ surface: string; action: { kind: 'assign'; canonical: string } | { kind: 'reject' } }>")]
+    #[napi(
+        ts_arg_type = "Array<{ surface: string; action: { kind: 'assign'; canonical: string } | { kind: 'reject' } }>"
+    )]
     corrections: Vec<serde_json::Value>,
 ) -> napi::Result<serde_json::Value> {
     let kind = parse_entity_type(&kind)?;
@@ -94,8 +249,9 @@ pub fn resolve_entities_with_corrections(
         .into_iter()
         .map(serde_json::from_value)
         .collect::<Result<_, _>>()
-        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
-    let result = entity::resolve_with_corrections(&mentions, kind, &corrections);
+        .map_err(|_| napi::Error::from_reason("invalid entity corrections"))?;
+    let result = entity::resolve_with_corrections_checked(&mentions, kind, &corrections)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
@@ -103,7 +259,7 @@ pub fn resolve_entities_with_corrections(
 /// ironies, revelations/twists) across scenes.
 #[napi(
     js_name = "buildMentalModel",
-    ts_return_type = "{ trajectory: Array<{ afterScene: number; beliefs: Array<{ id: number; subject: string; proposition: string; confidence: number; establishedAt: number; lastReinforced: number; matchesTruth: boolean | null; category: 'Identity' | 'Motivation' | 'Allegiance' | 'EventCause' | 'Prediction' | 'WorldRule' | 'EmotionalState' | 'Capability'; salience: number; sourceReliability: number; inferenceChain: Array<number> }>; invalidated: Array<{ id: number; subject: string; proposition: string; confidence: number; establishedAt: number; lastReinforced: number; matchesTruth: boolean | null; category: 'Identity' | 'Motivation' | 'Allegiance' | 'EventCause' | 'Prediction' | 'WorldRule' | 'EmotionalState' | 'Capability'; salience: number; sourceReliability: number; inferenceChain: Array<number> }>; introduced: Array<{ id: number; subject: string; proposition: string; confidence: number; establishedAt: number; lastReinforced: number; matchesTruth: boolean | null; category: 'Identity' | 'Motivation' | 'Allegiance' | 'EventCause' | 'Prediction' | 'WorldRule' | 'EmotionalState' | 'Capability'; salience: number; sourceReliability: number; inferenceChain: Array<number> }>; beliefGap: number; gapDelta: number; activeIronies: Array<{ knowledge: string; ignorantCharacter: string; establishedAt: number; resolvedAt: number | null; tension: number }>; archetypeDivergence: number }>; revelations: Array<{ scene: number; magnitude: number; affectedBeliefs: Array<string>; eventType: 'Revelation' | 'Twist' | 'Confirmation' | 'Complication' | 'DramaticIronyEstablished' | 'DramaticIronyResolved'; preparationScore: number }>; twists: Array<{ scene: number; magnitude: number; affectedBeliefs: Array<string>; eventType: 'Revelation' | 'Twist' | 'Confirmation' | 'Complication' | 'DramaticIronyEstablished' | 'DramaticIronyResolved'; preparationScore: number }>; stasisZones: Array<[number, number]>; gapCurve: Array<number>; managementScore: number; dramaticIronies: Array<{ knowledge: string; ignorantCharacter: string; establishedAt: number; resolvedAt: number | null; tension: number }>; archetypeDivergencePeaks: Array<[number, number, string]>; narratorReliability: { overallScore: number; unreliabilityEvidence: Array<[number, string]>; intentional: boolean }; inferenceChains: Array<{ conclusionId: number; premiseIds: Array<number>; strength: number; description: string }>; readerExperience: Array<{ scene: number; noteType: string; description: string; craftImplication: string }>; engagementDiagnosis: string }"
+    ts_return_type = "import('./standalone.generated').BuildMentalModelResult"
 )]
 pub fn build_mental_model(
     scenes: Vec<String>,
@@ -115,7 +271,8 @@ pub fn build_mental_model(
     let characters: Vec<&str> = characters.iter().map(String::as_str).collect();
     let pov_characters: Vec<&str> = pov_characters.iter().map(String::as_str).collect();
     let theme_keywords: Vec<&str> = theme_keywords.iter().map(String::as_str).collect();
-    let result = mental_model::build_mental_model(&scenes, &characters, &pov_characters, &theme_keywords);
+    let result =
+        mental_model::build_mental_model(&scenes, &characters, &pov_characters, &theme_keywords);
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
@@ -125,40 +282,41 @@ pub fn build_mental_model(
 /// unresolved ironies `(description, scene)`.
 #[napi(
     js_name = "analyzeGaps",
-    ts_return_type = "{ gaps: Array<{ gapType: 'MissingScene' | 'MissingBeat' | 'MissingEmotionalTransition' | 'MissingInformationReveal' | 'UnderdevelopedRelationship' | 'UnresolvedSubplot' | 'UnmotivatedAction'; description: string; location: { afterScene: number; beforeScene: number | null; affectedCharacters: Array<string> }; suggestion: string }>; totalGapCount: number }"
+    ts_return_type = "import('./standalone.generated').AnalyzeGapsResult"
 )]
 pub fn analyze_gaps(
-    broken_promises: Vec<(String, u32)>,
-    consequenceless_decisions: Vec<(String, u32)>,
-    stall_zones: Vec<(u32, u32)>,
-    unresolved_ironies: Vec<(String, u32)>,
-    total_scenes: u32,
-    climax_scene: u32,
+    broken_promises: Vec<(String, f64)>,
+    consequenceless_decisions: Vec<(String, f64)>,
+    stall_zones: Vec<(f64, f64)>,
+    unresolved_ironies: Vec<(String, f64)>,
+    total_scenes: f64,
+    climax_scene: f64,
 ) -> napi::Result<serde_json::Value> {
     let broken_promises: Vec<(String, usize)> = broken_promises
         .into_iter()
-        .map(|(d, s)| (d, s as usize))
-        .collect();
+        .map(|(d, s)| Ok((d, super::unsigned_index(s)?)))
+        .collect::<napi::Result<_>>()?;
     let consequenceless_decisions: Vec<(String, usize)> = consequenceless_decisions
         .into_iter()
-        .map(|(c, s)| (c, s as usize))
-        .collect();
+        .map(|(c, s)| Ok((c, super::unsigned_index(s)?)))
+        .collect::<napi::Result<_>>()?;
     let stall_zones: Vec<(usize, usize)> = stall_zones
         .into_iter()
-        .map(|(a, b)| (a as usize, b as usize))
-        .collect();
+        .map(|(a, b)| Ok((super::unsigned_index(a)?, super::unsigned_index(b)?)))
+        .collect::<napi::Result<_>>()?;
     let unresolved_ironies: Vec<(String, usize)> = unresolved_ironies
         .into_iter()
-        .map(|(d, s)| (d, s as usize))
-        .collect();
-    let result = gap_analysis::analyze_gaps(
+        .map(|(d, s)| Ok((d, super::unsigned_index(s)?)))
+        .collect::<napi::Result<_>>()?;
+    let result = gap_analysis::analyze_gaps_checked(
         &broken_promises,
         &consequenceless_decisions,
         &stall_zones,
         &unresolved_ironies,
-        total_scenes as usize,
-        climax_scene as usize,
-    );
+        super::unsigned_index(total_scenes)?,
+        super::unsigned_index(climax_scene)?,
+    )
+    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
@@ -166,7 +324,7 @@ pub fn analyze_gaps(
 /// asymmetries, revelations, and the suspense curve.
 #[napi(
     js_name = "trackEpistemics",
-    ts_return_type = "{ facts: Array<{ id: number; content: string; establishedScene: number; importance: number }>; characterStates: Record<string, { character: string; knows: Array<number>; believesFalse: Array<number>; uncertainAbout: Array<number> }>; asymmetries: Array<{ scene: number; readerAdvantage: number; characterAdvantage: number; totalHiddenBits: number; dramaticIronyIntensity: number }>; revelations: Array<{ scene: number; factId: number; revealedTo: string; bitsRevealed: number; dramaticEffect: string }>; suspenseCurve: Array<{ scene: number; suspenseLevel: number; source: string }>; peakSuspenseScene: number; informationDensity: number; manipulationScore: number; epistemicInsights: Array<string> }"
+    ts_return_type = "import('./standalone.generated').TrackEpistemicsResult"
 )]
 pub fn track_epistemics(
     scenes: Vec<String>,
@@ -176,18 +334,54 @@ pub fn track_epistemics(
     let scenes: Vec<&str> = scenes.iter().map(String::as_str).collect();
     let characters: Vec<&str> = characters.iter().map(String::as_str).collect();
     let pov_characters: Vec<&str> = pov_characters.iter().map(String::as_str).collect();
-    let result = epistemic_engine::track_epistemics(&scenes, &characters, &pov_characters);
+    let result = epistemic_engine::track_epistemics_checked(&scenes, &characters, &pov_characters)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+#[napi(
+    js_name = "analyzeAuthorEpistemics",
+    ts_args_type = "manuscript: import('./manuscript').Manuscript, propositions: import('./standalone.generated').AuthorProposition[], events: import('./standalone.generated').AuthorKnowledgeEvent[], queries: import('./standalone.generated').AuthorEpistemicQuery[]",
+    ts_return_type = "import('./standalone.generated').AnalyzeAuthorEpistemicsResult"
+)]
+pub fn analyze_author_epistemics(
+    manuscript: serde_json::Value,
+    propositions: serde_json::Value,
+    events: serde_json::Value,
+    queries: serde_json::Value,
+) -> napi::Result<serde_json::Value> {
+    let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
+    let propositions: Vec<author_knowledge::AuthorProposition> =
+        super::decode_input(propositions, "invalid author propositions")?;
+    let events: Vec<author_knowledge::AuthorKnowledgeEvent> =
+        super::decode_input(events, "invalid author knowledge events")?;
+    let queries: Vec<epistemic_engine::AuthorEpistemicQuery> =
+        super::decode_input(queries, "invalid author epistemic queries")?;
+    let result =
+        epistemic_engine::analyze_author_epistemics(&manuscript, &propositions, &events, &queries)
+            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
 }
 
 /// Build the timeline projection: the given `(documentId, text)` documents, in
 /// the order supplied, each tagged with its first detected time hint.
 #[napi(
     js_name = "buildTimeline",
-    ts_return_type = "Array<{ documentId: string; order: number; timeHint: string | null; chronologyKey: string | null; lane: string | null; label: string | null; notes: string | null }>"
+    ts_args_type = "documents: Array<[string, string]>, overrides?: import('./standalone.generated').TimelineOverride[]",
+    ts_return_type = "import('./standalone.generated').BuildTimelineResult"
 )]
-pub fn build_timeline(documents: Vec<(String, String)>) -> napi::Result<serde_json::Value> {
-    let result = timeline::build_timeline(&documents);
+pub fn build_timeline(
+    documents: Vec<(String, String)>,
+    overrides: Option<serde_json::Value>,
+) -> napi::Result<serde_json::Value> {
+    let mut result = timeline::build_timeline_checked(&documents)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    if let Some(overrides) = overrides {
+        let overrides: Vec<timeline::TimelineOverride> =
+            super::decode_input(overrides, "invalid timeline overrides")?;
+        timeline::apply_overrides_checked(&mut result, &overrides)
+            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    }
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
@@ -195,7 +389,7 @@ pub fn build_timeline(documents: Vec<(String, String)>) -> napi::Result<serde_js
 /// (facts, continuity violations, character knowledge, information flow).
 #[napi(
     js_name = "trackWorldState",
-    ts_return_type = "{ snapshots: Array<{ afterScene: number; facts: Array<{ CharacterAt: { character: string; location: string } } | { CharacterPossesses: { character: string; object: string } } | { CharacterKnows: { character: string; information: string } } | { CharacterWitnessed: { character: string; event: string } } | { CoLocated: { characterA: string; characterB: string } } | { CommunicationVector: { from: string; to: string; content: string } } | { ObjectAt: { object: string; location: string } } | { PhysicalConstraint: { character: string; constraint: string } } | { TemporalOrdering: { before: string; after: string } }>; newFacts: Array<{ CharacterAt: { character: string; location: string } } | { CharacterPossesses: { character: string; object: string } } | { CharacterKnows: { character: string; information: string } } | { CharacterWitnessed: { character: string; event: string } } | { CoLocated: { characterA: string; characterB: string } } | { CommunicationVector: { from: string; to: string; content: string } } | { ObjectAt: { object: string; location: string } } | { PhysicalConstraint: { character: string; constraint: string } } | { TemporalOrdering: { before: string; after: string } }>; invalidatedFacts: Array<{ CharacterAt: { character: string; location: string } } | { CharacterPossesses: { character: string; object: string } } | { CharacterKnows: { character: string; information: string } } | { CharacterWitnessed: { character: string; event: string } } | { CoLocated: { characterA: string; characterB: string } } | { CommunicationVector: { from: string; to: string; content: string } } | { ObjectAt: { object: string; location: string } } | { PhysicalConstraint: { character: string; constraint: string } } | { TemporalOrdering: { before: string; after: string } }> }>; violations: Array<{ scene: number; violationType: 'ImpossibleKnowledge' | 'ImpossibleLocation' | 'ObjectContinuity' | 'TemporalParadox' | 'UnestablishedRelationship' | 'PhysicalImpossibility'; description: string; proof: string; severity: number; fixSuggestion: string }>; characterKnowledge: Array<{ character: string; knows: Array<string>; witnessed: Array<string>; toldBy: Array<[string, string]>; locationsVisited: Array<[number, string]>; currentLocation: string | null }>; locationTimeline: Array<[number, string, Array<string>]>; informationFlow: Array<[number, string, string, string]>; continuityScore: number; worldComplexity: number }"
+    ts_return_type = "import('./standalone.generated').TrackWorldStateResult"
 )]
 pub fn track_world_state(
     scenes: Vec<String>,
@@ -203,16 +397,20 @@ pub fn track_world_state(
 ) -> napi::Result<serde_json::Value> {
     let scenes: Vec<&str> = scenes.iter().map(String::as_str).collect();
     let characters: Vec<&str> = characters.iter().map(String::as_str).collect();
-    let result = world_state::track_world_state(&scenes, &characters);
+    let result = world_state::track_world_state_checked(&scenes, &characters)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
 /// Resolve pronoun references to character names within a scene. `gender_map`
-/// (character name -> "male"/"female"/"unknown") is inferred from `scene_text`
-/// alone when omitted.
+/// (character name -> "male"/"female"/"neutral"/"unknown") is inferred from
+/// `scene_text` alone when omitted; they/them binds only to a character hinted
+/// "neutral". Cast entries that prefix one another ("Hester", "Hester Prynne")
+/// form one alias group, and `resolvedTo` names the entry the antecedent
+/// literally matched. Narrative pronoun chains continue across quoted dialogue.
 #[napi(
     js_name = "resolveCoreferences",
-    ts_return_type = "{ mentions: Array<{ text: string; resolvedTo: string | null; start: number; isPronoun: boolean; confidence: number }>; characterMentions: Record<string, number>; pronounResolutionRate: number }"
+    ts_return_type = "import('./standalone.generated').ResolveCoreferencesResult"
 )]
 pub fn resolve_coreferences(
     scene_text: String,
@@ -221,13 +419,20 @@ pub fn resolve_coreferences(
 ) -> napi::Result<serde_json::Value> {
     let known_characters: Vec<&str> = known_characters.iter().map(String::as_str).collect();
     let resolver = coreference::CoreferenceResolver::new();
-    let result = resolver.resolve(&scene_text, &known_characters, gender_map.as_ref());
+    let result = resolver
+        .resolve_checked(&scene_text, &known_characters, gender_map.as_ref())
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
 /// Scan multiple scenes to infer a gender ("male"/"female"/"unknown") for each
-/// named character, from pronoun proximity.
-#[napi(js_name = "buildCharacterGenderMap", ts_return_type = "Record<string, string>")]
+/// named character. A gendered honorific ("Mrs.", "Sir") or a listed given name
+/// decides without textual evidence; otherwise pronoun proximity decides, and
+/// characters with too few nearby pronouns stay "unknown". Never emits "neutral".
+#[napi(
+    js_name = "buildCharacterGenderMap",
+    ts_return_type = "Record<string, string>"
+)]
 pub fn build_character_gender_map(
     scenes: Vec<String>,
     characters: Vec<String>,
@@ -235,6 +440,25 @@ pub fn build_character_gender_map(
     let scenes: Vec<&str> = scenes.iter().map(String::as_str).collect();
     let characters: Vec<&str> = characters.iter().map(String::as_str).collect();
     let resolver = coreference::CoreferenceResolver::new();
-    let result = resolver.build_character_gender_map(&scenes, &characters);
+    let result = resolver
+        .build_character_gender_map_checked(&scenes, &characters)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+#[napi(
+    js_name = "resolveAuthorCoreference",
+    ts_args_type = "manuscript: import('./manuscript').Manuscript, links: import('./standalone.generated').AuthorCoreferenceLink[]",
+    ts_return_type = "import('./standalone.generated').ResolveAuthorCoreferenceResult"
+)]
+pub fn resolve_author_coreference(
+    manuscript: serde_json::Value,
+    links: serde_json::Value,
+) -> napi::Result<serde_json::Value> {
+    let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
+    let links: Vec<coreference::AuthorCoreferenceLink> =
+        super::decode_input(links, "invalid author coreference links")?;
+    let result = coreference::resolve_author_coreference(&manuscript, &links)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
 }

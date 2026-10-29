@@ -1,14 +1,24 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::sync::OnceLock;
 
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::Topo;
 use serde::{Deserialize, Serialize};
 
+use super::author_knowledge::AuthorSource;
 use crate::craft::lexicon::WordMatcher;
 use crate::substrate::utils::split_sentences;
+use crate::{
+    Error, Result,
+    manuscript::{
+        Evidence, Manuscript,
+        author_source::validate_sources,
+        config::{validate_id, validate_name},
+    },
+};
 
 /// A narrative event node in the causal graph.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CausalEvent {
@@ -19,6 +29,7 @@ pub struct CausalEvent {
     pub event_type: CausalEventType,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CausalEventType {
     Action,
@@ -30,6 +41,7 @@ pub enum CausalEventType {
 }
 
 /// A causal link between events.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CausalLink {
@@ -39,8 +51,10 @@ pub struct CausalLink {
     pub link_type: CausalLinkType,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CausalLinkType {
+    Association,
     Necessary,
     Enabling,
     Triggering,
@@ -48,6 +62,7 @@ pub enum CausalLinkType {
 }
 
 /// A counterfactual: "What if event X hadn't happened?"
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Counterfactual {
@@ -58,6 +73,7 @@ pub struct Counterfactual {
 }
 
 /// A plot hole: weak or broken causal chain.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlotHole {
@@ -68,9 +84,14 @@ pub struct PlotHole {
     pub suggestion: String,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CausalAnalysisResult {
+    #[serde(default)]
+    pub availability: crate::substrate::utils::AnalysisAvailability,
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
     pub events: Vec<CausalEvent>,
     pub links: Vec<CausalLink>,
     pub counterfactuals: Vec<Counterfactual>,
@@ -114,26 +135,113 @@ macro_rules! causal_markers {
     };
 }
 
-causal_markers!(decision_markers, "decided", "chose", "resolved", "determined", "opted",
-    "elected", "made up his mind", "made up her mind", "made the decision");
-causal_markers!(consequence_markers, "because", "as a result", "therefore", "consequently",
-    "which caused", "leading to", "thus", "hence", "owing to", "due to this", "this meant",
-    "the result was", "in consequence");
-causal_markers!(discovery_markers, "discovered", "realized", "found out", "learned that",
-    "revealed", "uncovered", "noticed", "saw that", "understood", "became aware",
-    "it turned out", "the truth was");
-causal_markers!(reaction_markers, "in response", "reacted", "flinched", "gasped", "screamed",
-    "laughed", "cried", "trembled", "froze", "staggered", "recoiled", "startled");
-causal_markers!(external_markers, "the weather", "the storm", "lightning", "earthquake",
-    "coincidentally", "by chance", "it happened that", "fate", "luck");
-causal_markers!(necessary_markers, "because of", "without which", "only because",
-    "had it not been", "impossible without", "required");
-causal_markers!(trigger_markers, "finally", "at last", "the last straw", "triggered",
-    "snapped", "that was when", "the moment");
-causal_markers!(coincidental_markers, "coincidentally", "by chance", "happened to",
-    "it so happened", "luck would have it", "just then");
-causal_markers!(enabling_markers, "allowed", "enabled", "made possible", "opened the way",
-    "created the conditions", "set the stage");
+causal_markers!(
+    decision_markers,
+    "decided",
+    "chose",
+    "resolved",
+    "determined",
+    "opted",
+    "elected",
+    "made up his mind",
+    "made up her mind",
+    "made the decision"
+);
+causal_markers!(
+    consequence_markers,
+    "because",
+    "as a result",
+    "therefore",
+    "consequently",
+    "which caused",
+    "leading to",
+    "thus",
+    "hence",
+    "owing to",
+    "due to this",
+    "this meant",
+    "the result was",
+    "in consequence"
+);
+causal_markers!(
+    discovery_markers,
+    "discovered",
+    "realized",
+    "found out",
+    "learned that",
+    "revealed",
+    "uncovered",
+    "noticed",
+    "saw that",
+    "understood",
+    "became aware",
+    "it turned out",
+    "the truth was"
+);
+causal_markers!(
+    reaction_markers,
+    "in response",
+    "reacted",
+    "flinched",
+    "gasped",
+    "screamed",
+    "laughed",
+    "cried",
+    "trembled",
+    "froze",
+    "staggered",
+    "recoiled",
+    "startled"
+);
+causal_markers!(
+    external_markers,
+    "the weather",
+    "the storm",
+    "lightning",
+    "earthquake",
+    "coincidentally",
+    "by chance",
+    "it happened that",
+    "fate",
+    "luck"
+);
+causal_markers!(
+    necessary_markers,
+    "because of",
+    "without which",
+    "only because",
+    "had it not been",
+    "impossible without",
+    "required"
+);
+causal_markers!(
+    trigger_markers,
+    "finally",
+    "at last",
+    "the last straw",
+    "triggered",
+    "snapped",
+    "that was when",
+    "the moment"
+);
+causal_markers!(
+    coincidental_markers,
+    "coincidentally",
+    "by chance",
+    "happened to",
+    "it so happened",
+    "luck would have it",
+    "just then"
+);
+causal_markers!(
+    enabling_markers,
+    "allowed",
+    "enabled",
+    "made possible",
+    "opened the way",
+    "created the conditions",
+    "set the stage"
+);
 
 fn classify_sentence(sentence: &str) -> CausalEventType {
     let lower = sentence.to_lowercase();
@@ -203,33 +311,33 @@ fn sentences_share_content(a: &str, b: &str, characters: &[&str]) -> bool {
     shared >= 2
 }
 
-/// Determine link type from sentence text and context.
+/// Lexical marker tiers are association weights, not causal probabilities.
 fn classify_link(cause_sentence: &str, effect_sentence: &str) -> (CausalLinkType, f64) {
     let lower_effect = effect_sentence.to_lowercase();
 
     // Necessary: strong causal language
     if necessary_markers().is_match(&lower_effect) {
-        return (CausalLinkType::Necessary, 0.9);
+        return (CausalLinkType::Association, 0.9);
     }
 
     // Triggering: final trigger language
     if trigger_markers().is_match(&lower_effect) {
-        return (CausalLinkType::Triggering, 0.7);
+        return (CausalLinkType::Association, 0.7);
     }
 
     // Coincidental: coincidence language
     if coincidental_markers().is_match(&lower_effect) {
-        return (CausalLinkType::Coincidental, 0.3);
+        return (CausalLinkType::Association, 0.3);
     }
 
     // Check cause sentence for weak causal implication
     let lower_cause = cause_sentence.to_lowercase();
     if enabling_markers().is_match(&lower_cause) || enabling_markers().is_match(&lower_effect) {
-        return (CausalLinkType::Enabling, 0.5);
+        return (CausalLinkType::Association, 0.5);
     }
 
     // Default: enabling with moderate strength
-    (CausalLinkType::Enabling, 0.6)
+    (CausalLinkType::Association, 0.6)
 }
 
 /// Compute longest path in DAG using topological sort.
@@ -249,24 +357,52 @@ fn longest_path_dag(graph: &DiGraph<usize, f64>) -> usize {
     dist.values().copied().max().unwrap_or(0)
 }
 
-/// BFS downstream from a node, returning all reachable node indices.
-fn bfs_downstream(graph: &DiGraph<usize, f64>, start: NodeIndex) -> HashSet<NodeIndex> {
-    let mut visited = HashSet::new();
-    let mut queue = VecDeque::new();
-    queue.push_back(start);
-    while let Some(node) = queue.pop_front() {
-        for neighbor in graph.neighbors_directed(node, petgraph::Direction::Outgoing) {
-            if visited.insert(neighbor) {
-                queue.push_back(neighbor);
-            }
+pub fn analyze_causality_checked(
+    scenes: &[&str],
+    characters: &[&str],
+) -> Result<CausalAnalysisResult> {
+    if scenes.len() > 10_000 || characters.len() > 256 {
+        return Err(Error::InvalidInput(
+            "causal input exceeds scene/cast limits".into(),
+        ));
+    }
+    let mut bytes = 0usize;
+    for scene in scenes {
+        bytes = bytes
+            .checked_add(scene.len())
+            .filter(|n| *n <= 64 * 1024 * 1024)
+            .ok_or_else(|| Error::InvalidInput("causal source exceeds64MiB".into()))?;
+        if scene.len() > 16 * 1024 * 1024 {
+            return Err(Error::InvalidInput("causal scene exceeds16MiB".into()));
         }
     }
-    visited
+    for character in characters {
+        validate_name(character)?;
+    }
+    analyze_causality_inner(scenes, characters)
 }
 
 pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysisResult {
+    analyze_causality_checked(scenes, characters).unwrap_or_else(|error| CausalAnalysisResult {
+        availability: crate::substrate::utils::AnalysisAvailability::Unavailable,
+        diagnostics: vec![error.to_string()],
+        events: Vec::new(),
+        links: Vec::new(),
+        counterfactuals: Vec::new(),
+        plot_holes: Vec::new(),
+        causal_density: 0.0,
+        longest_chain: 0,
+        plot_coherence: 0.0,
+        structural_insights: Vec::new(),
+    })
+}
+
+fn analyze_causality_inner(
+    scenes: &[&str],
+    characters: &[&str],
+) -> crate::Result<CausalAnalysisResult> {
     if scenes.is_empty() {
-        return CausalAnalysisResult {
+        return Ok(CausalAnalysisResult {
             events: Vec::new(),
             links: Vec::new(),
             counterfactuals: Vec::new(),
@@ -275,7 +411,9 @@ pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysis
             longest_chain: 0,
             plot_coherence: 0.0,
             structural_insights: Vec::new(),
-        };
+            availability: crate::substrate::utils::AnalysisAvailability::Partial,
+            diagnostics: vec!["lexical_associations_not_causal_proof".into()],
+        });
     }
 
     // --- Phase 1: Event Extraction ---
@@ -294,6 +432,11 @@ pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysis
             let event_type = classify_sentence(sentence);
             let agent = find_agent(sentence, characters).map(|s| s.to_string());
 
+            if events.len() == 10_000 {
+                return Err(crate::Error::InvalidInput(
+                    "causal candidate count exceeds10000".into(),
+                ));
+            }
             let id = events.len();
             events.push(CausalEvent {
                 id,
@@ -308,7 +451,7 @@ pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysis
     }
 
     if events.is_empty() {
-        return CausalAnalysisResult {
+        return Ok(CausalAnalysisResult {
             events: Vec::new(),
             links: Vec::new(),
             counterfactuals: Vec::new(),
@@ -317,7 +460,9 @@ pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysis
             longest_chain: 0,
             plot_coherence: 0.0,
             structural_insights: Vec::new(),
-        };
+            availability: crate::substrate::utils::AnalysisAvailability::Partial,
+            diagnostics: vec!["lexical_associations_not_causal_proof".into()],
+        });
     }
 
     // --- Phase 2: Causal Link Detection ---
@@ -402,10 +547,12 @@ pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysis
     // and the scene Y event references consequences, link them.
     let mut char_actions: HashMap<String, Vec<usize>> = HashMap::new();
     for evt in &events {
-        if (evt.event_type == CausalEventType::Action || evt.event_type == CausalEventType::Decision)
-            && let Some(ref agent) = evt.agent {
-                char_actions.entry(agent.clone()).or_default().push(evt.id);
-            }
+        if (evt.event_type == CausalEventType::Action
+            || evt.event_type == CausalEventType::Decision)
+            && let Some(ref agent) = evt.agent
+        {
+            char_actions.entry(agent.clone()).or_default().push(evt.id);
+        }
     }
 
     for evt in &events {
@@ -416,20 +563,22 @@ pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysis
             continue;
         }
         if let Some(ref agent) = evt.agent
-            && let Some(prior_actions) = char_actions.get(agent) {
-                // Find the latest action by this character before this event's scene
-                if let Some(&cause_id) = prior_actions
-                    .iter().rfind(|&&aid| events[aid].scene < evt.scene)
-                {
-                    links.push(CausalLink {
-                        cause: cause_id,
-                        effect: evt.id,
-                        strength: 0.5,
-                        link_type: CausalLinkType::Enabling,
-                    });
-                    linked_effects.insert(evt.id);
-                }
+            && let Some(prior_actions) = char_actions.get(agent)
+        {
+            // Find the latest action by this character before this event's scene
+            if let Some(&cause_id) = prior_actions
+                .iter()
+                .rfind(|&&aid| events[aid].scene < evt.scene)
+            {
+                links.push(CausalLink {
+                    cause: cause_id,
+                    effect: evt.id,
+                    strength: 0.5,
+                    link_type: CausalLinkType::Association,
+                });
+                linked_effects.insert(evt.id);
             }
+        }
     }
 
     // --- Phase 3: Build petgraph for analysis ---
@@ -448,116 +597,9 @@ pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysis
         }
     }
 
-    // --- Phase 4: Counterfactual Simulation ---
-    let mut counterfactuals: Vec<Counterfactual> = Vec::new();
-
-    // Find events with high out-degree (significant events)
-    let mut out_degrees: Vec<(usize, usize)> = events
-        .iter()
-        .map(|e| {
-            let idx = node_map[&e.id];
-            let out = graph
-                .neighbors_directed(idx, petgraph::Direction::Outgoing)
-                .count();
-            (e.id, out)
-        })
-        .collect();
-    out_degrees.sort_by_key(|x| std::cmp::Reverse(x.1));
-
     let total_events = events.len();
-    // Simulate counterfactuals for top events (up to 10)
-    for &(event_id, out_deg) in out_degrees.iter().take(10) {
-        if out_deg == 0 {
-            break;
-        }
-        let start = node_map[&event_id];
-        let downstream = bfs_downstream(&graph, start);
-        let plot_necessity = downstream.len() as f64 / total_events as f64;
-
-        let consequences: Vec<String> = downstream
-            .iter()
-            .take(5)
-            .filter_map(|&ni| {
-                let eid = graph[ni];
-                events.get(eid).map(|e| e.description.clone())
-            })
-            .collect();
-
-        let evt = &events[event_id];
-        let question = format!(
-            "What if \"{}\" hadn't happened?",
-            crate::substrate::utils::truncate_str(&evt.description, 60)
-        );
-
-        counterfactuals.push(Counterfactual {
-            removed_event: event_id,
-            question,
-            consequences,
-            plot_necessity,
-        });
-    }
-
-    counterfactuals.sort_by(|a, b| {
-        b.plot_necessity
-            .partial_cmp(&a.plot_necessity)
-            .unwrap_or(std::cmp::Ordering::Equal)
-    });
-
-    // --- Phase 5: Plot Hole Detection ---
-    let mut plot_holes: Vec<PlotHole> = Vec::new();
-
-    // Events with no incoming links (except in scene 0)
-    for evt in &events {
-        if evt.scene == 0 {
-            continue;
-        }
-        let idx = node_map[&evt.id];
-        let in_degree = graph
-            .neighbors_directed(idx, petgraph::Direction::Incoming)
-            .count();
-        if in_degree == 0 {
-            // Only flag significant events (not trivial actions)
-            if evt.event_type == CausalEventType::Consequence
-                || evt.event_type == CausalEventType::Reaction
-                || evt.event_type == CausalEventType::Discovery
-            {
-                plot_holes.push(PlotHole {
-                    scene: evt.scene,
-                    description: crate::substrate::utils::truncate_str(&evt.description, 80).to_string(),
-                    problem: "Event has no causal origin".to_string(),
-                    causal_gap: format!(
-                        "\"{}\" happens but nothing in the story caused it",
-                        crate::substrate::utils::truncate_str(&evt.description, 50)
-                    ),
-                    suggestion: "Establish a prior event that leads to this, or acknowledge the randomness explicitly.".to_string(),
-                });
-            }
-        }
-    }
-
-    // Coincidental links with high importance (out-degree > 1)
-    for link in &links {
-        if link.link_type == CausalLinkType::Coincidental {
-            let effect_idx = node_map[&link.effect];
-            let out = graph
-                .neighbors_directed(effect_idx, petgraph::Direction::Outgoing)
-                .count();
-            if out >= 1 {
-                let evt = &events[link.effect];
-                plot_holes.push(PlotHole {
-                    scene: evt.scene,
-                    description: crate::substrate::utils::truncate_str(&evt.description, 80).to_string(),
-                    problem: "Important event relies on coincidence".to_string(),
-                    causal_gap: format!(
-                        "\"{}\" depends on coincidence but drives {} downstream events",
-                        crate::substrate::utils::truncate_str(&evt.description, 50),
-                        out
-                    ),
-                    suggestion: "Replace the coincidence with a character-driven cause to strengthen narrative logic.".to_string(),
-                });
-            }
-        }
-    }
+    let counterfactuals = Vec::new();
+    let plot_holes = Vec::new();
 
     // --- Phase 6: Scoring ---
     let causal_density = if total_events > 0 {
@@ -566,7 +608,10 @@ pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysis
         0.0
     };
 
-    let events_with_cause = linked_effects.len();
+    let events_with_cause = linked_effects
+        .iter()
+        .filter(|&&id| events[id].scene != 0)
+        .count();
     // Scene 0 events don't need a cause
     let scene0_events = events.iter().filter(|e| e.scene == 0).count();
     let need_cause = total_events.saturating_sub(scene0_events);
@@ -578,94 +623,19 @@ pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysis
 
     let longest_chain = longest_path_dag(&graph);
 
-    // --- Phase 7: Structural Insights ---
-    let mut structural_insights: Vec<String> = Vec::new();
-
-    let chain_count = {
-        // Count events with out-degree > 0 and in-degree == 0 (chain starts)
-        events
-            .iter()
-            .filter(|e| {
-                let idx = node_map[&e.id];
-                let in_d = graph
-                    .neighbors_directed(idx, petgraph::Direction::Incoming)
-                    .count();
-                let out_d = graph
-                    .neighbors_directed(idx, petgraph::Direction::Outgoing)
-                    .count();
-                in_d == 0 && out_d > 0
-            })
-            .count()
-    };
-
-    structural_insights.push(format!(
-        "Your plot has {} causal chains. The longest runs {} events deep. \
-         Deeper chains create more satisfying narrative logic.",
-        chain_count, longest_chain
-    ));
-
-    if !plot_holes.is_empty() {
-        let first_hole = &plot_holes[0];
-        structural_insights.push(format!(
-            "Scene {} contains an event with no causal origin: \"{}\". \
-             Either establish a cause earlier or acknowledge the randomness in-story.",
-            first_hole.scene, first_hole.description
-        ));
-    }
-
-    // Load-bearing events
-    if let Some(top) = counterfactuals.first() {
-        let evt = &events[top.removed_event];
-        let downstream_count = (top.plot_necessity * total_events as f64).round() as usize;
-        structural_insights.push(format!(
-            "Removing \"{}\" from the story would eliminate {} downstream consequences. \
-             This is a load-bearing event; protect it in revision.",
-            crate::substrate::utils::truncate_str(&evt.description, 50),
-            downstream_count
-        ));
-    }
-
-    // Character agency insight
-    let mut char_decision_counts: HashMap<&str, usize> = HashMap::new();
-    for evt in &events {
-        if evt.event_type == CausalEventType::Decision
-            && let Some(ref agent) = evt.agent {
-                let idx = node_map[&evt.id];
-                let out_d = graph
-                    .neighbors_directed(idx, petgraph::Direction::Outgoing)
-                    .count();
-                if out_d > 0 {
-                    // Find matching character name
-                    if let Some(&c) = characters.iter().find(|&&c| c == agent.as_str()) {
-                        *char_decision_counts.entry(c).or_insert(0) += 1;
-                    }
-                }
-            }
-    }
-    if let Some((best_char, count)) = char_decision_counts.iter().max_by_key(|(_, v)| *v)
-        && *count > 0 {
-            structural_insights.push(format!(
-                "{}'s arc has {} decision points that cause later events. \
-                 This creates strong character agency.",
-                best_char, count
-            ));
-        }
-
-    // Density insight
-    if causal_density < 0.5 {
-        structural_insights.push(
-            "Causal density is low. Many events feel disconnected. \
-             Consider adding explicit cause-effect language to link events together."
-                .to_string(),
-        );
-    } else if causal_density > 1.5 {
-        structural_insights.push(
-            "Causal density is high. The plot is tightly woven with strong narrative logic."
-                .to_string(),
-        );
-    }
-
-    CausalAnalysisResult {
+    let structural_insights = vec![format!(
+        "Lexical association graph: {} candidate events, {} associations, longest path {}. These do not establish causal necessity, plot quality or character agency.",
+        events.len(),
+        links.len(),
+        longest_chain
+    )];
+    Ok(CausalAnalysisResult {
+        availability: crate::substrate::utils::AnalysisAvailability::Partial,
+        diagnostics: vec![
+            "lexical_associations_not_causal_proof".into(),
+            "counterfactuals_and_plot_holes_require_explicit_model".into(),
+            "legacy_density_and_coherence_are_lexical_graph_descriptors_only".into(),
+        ],
         events,
         links,
         counterfactuals,
@@ -674,7 +644,267 @@ pub fn analyze_causality(scenes: &[&str], characters: &[&str]) -> CausalAnalysis
         longest_chain,
         plot_coherence,
         structural_insights,
+    })
+}
+
+pub const MAX_AUTHOR_CAUSAL_NODES: usize = 10_000;
+pub const MAX_AUTHOR_CAUSAL_EDGES: usize = 30_000;
+pub const MAX_AUTHOR_CAUSAL_BYTES: usize = 4 * 1024 * 1024;
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(
+    tag = "kind",
+    rename_all = "snake_case",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum AuthorCausalMechanism {
+    Fixed { value: bool },
+    All { parents: Vec<String> },
+    Any { parents: Vec<String> },
+    Not { parent: String },
+}
+
+impl AuthorCausalMechanism {
+    fn parents(&self) -> &[String] {
+        match self {
+            Self::Fixed { .. } => &[],
+            Self::All { parents } | Self::Any { parents } => parents,
+            Self::Not { parent } => std::slice::from_ref(parent),
+        }
     }
+    fn evaluate(&self, values: &BTreeMap<&str, bool>) -> bool {
+        match self {
+            Self::Fixed { value } => *value,
+            Self::All { parents } => parents.iter().all(|p| values[p.as_str()]),
+            Self::Any { parents } => parents.iter().any(|p| values[p.as_str()]),
+            Self::Not { parent } => !values[parent.as_str()],
+        }
+    }
+    fn canonical(&self) -> Self {
+        let mut mechanism = self.clone();
+        if let Self::All { parents } | Self::Any { parents } = &mut mechanism {
+            parents.sort();
+        }
+        mechanism
+    }
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct AuthorCausalNode {
+    pub id: String,
+    pub mechanism: AuthorCausalMechanism,
+    pub evidence: AuthorSource,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct AuthorIntervention {
+    pub node_id: String,
+    pub value: bool,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthorCausalValue {
+    pub id: String,
+    pub mechanism: AuthorCausalMechanism,
+    pub baseline: bool,
+    pub intervened: bool,
+    pub evidence: Evidence,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthorCausalEdge {
+    pub cause_id: String,
+    pub effect_id: String,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthorCausalChange {
+    pub node_id: String,
+    pub before: bool,
+    pub after: bool,
+    pub direct_intervention: bool,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthorCausalResult {
+    pub document_id: String,
+    pub availability: crate::substrate::utils::AnalysisAvailability,
+    pub diagnostics: Vec<String>,
+    pub nodes: Vec<AuthorCausalValue>,
+    pub edges: Vec<AuthorCausalEdge>,
+    pub topological_order: Vec<String>,
+    pub interventions: Vec<AuthorIntervention>,
+    pub changes: Vec<AuthorCausalChange>,
+}
+
+/// Evaluate one joint intervention on supplied deterministic Boolean mechanisms.
+/// Incoming mechanisms of intervened nodes are replaced by constants; other
+/// mechanisms remain unchanged. Sources locate author model assertions, not
+/// independently established causes or probabilities about the manuscript.
+pub fn analyze_author_causality(
+    manuscript: &Manuscript,
+    nodes: &[AuthorCausalNode],
+    interventions: &[AuthorIntervention],
+) -> Result<AuthorCausalResult> {
+    manuscript.validate()?;
+    let invalid = |message: &str| Error::InvalidInput(message.into());
+    if nodes.len() > MAX_AUTHOR_CAUSAL_NODES || interventions.len() > MAX_AUTHOR_CAUSAL_NODES {
+        return Err(invalid(
+            "author causal model exceeds10000 nodes/interventions",
+        ));
+    }
+    let mut by_id = BTreeMap::new();
+    let mut metadata = 0usize;
+    let mut edges = Vec::new();
+    let mut parents_total = 0usize;
+    for node in nodes {
+        validate_id(&node.id)?;
+        if by_id.insert(node.id.as_str(), node).is_some() {
+            return Err(invalid("author causal node IDs must be unique"));
+        }
+        let parents = node.mechanism.parents();
+        if !matches!(node.mechanism, AuthorCausalMechanism::Fixed { .. })
+            && !(1..=32).contains(&parents.len())
+        {
+            return Err(invalid("author causal mechanisms require1..32 parents"));
+        }
+        parents_total += parents.len();
+        if parents_total > MAX_AUTHOR_CAUSAL_EDGES {
+            return Err(invalid("author causal model exceeds30000 edges"));
+        }
+        let mut unique = BTreeSet::new();
+        for parent in parents {
+            validate_id(parent)?;
+            if !unique.insert(parent) {
+                return Err(invalid("author causal parents must be unique"));
+            }
+        }
+        metadata = metadata
+            .checked_add(
+                node.id.len()
+                    + parents.iter().map(String::len).sum::<usize>()
+                    + node.evidence.scene_id.len()
+                    + node.evidence.quote.len(),
+            )
+            .filter(|n| *n <= MAX_AUTHOR_CAUSAL_BYTES)
+            .ok_or_else(|| invalid("author causal metadata exceeds4MiB"))?;
+    }
+    let mut overrides = BTreeMap::new();
+    for intervention in interventions {
+        validate_id(&intervention.node_id)?;
+        if !by_id.contains_key(intervention.node_id.as_str())
+            || overrides
+                .insert(intervention.node_id.as_str(), intervention.value)
+                .is_some()
+        {
+            return Err(invalid(
+                "author interventions require unique known node IDs",
+            ));
+        }
+        metadata = metadata
+            .checked_add(intervention.node_id.len())
+            .filter(|n| *n <= MAX_AUTHOR_CAUSAL_BYTES)
+            .ok_or_else(|| invalid("author causal metadata exceeds4MiB"))?;
+    }
+    let mut indegree = BTreeMap::new();
+    let mut successors: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+    for node in nodes {
+        indegree.insert(node.id.as_str(), node.mechanism.parents().len());
+        for parent in node.mechanism.parents() {
+            if !by_id.contains_key(parent.as_str()) {
+                return Err(invalid("author causal parent references an unknown node"));
+            }
+            successors.entry(parent).or_default().push(&node.id);
+            edges.push(AuthorCausalEdge {
+                cause_id: parent.clone(),
+                effect_id: node.id.clone(),
+            });
+        }
+    }
+    let mut ready: BTreeSet<&str> = indegree
+        .iter()
+        .filter_map(|(id, degree)| (*degree == 0).then_some(*id))
+        .collect();
+    let mut order = Vec::with_capacity(nodes.len());
+    while let Some(id) = ready.pop_first() {
+        order.push(id);
+        for child in successors.get(id).into_iter().flatten() {
+            let degree = indegree.get_mut(child).expect("all graph nodes indexed");
+            *degree -= 1;
+            if *degree == 0 {
+                ready.insert(child);
+            }
+        }
+    }
+    if order.len() != nodes.len() {
+        return Err(invalid("author causal mechanisms must be acyclic"));
+    }
+    let evidence = validate_sources(
+        manuscript,
+        &nodes.iter().map(|node| &node.evidence).collect::<Vec<_>>(),
+    )?;
+    let mut evidence: BTreeMap<_, _> = nodes
+        .iter()
+        .zip(evidence)
+        .map(|(node, evidence)| (node.id.as_str(), evidence))
+        .collect();
+    let mut baseline = BTreeMap::new();
+    let mut intervened = BTreeMap::new();
+    for id in &order {
+        let node = by_id[id];
+        baseline.insert(*id, node.mechanism.evaluate(&baseline));
+        let value = overrides
+            .get(id)
+            .copied()
+            .unwrap_or_else(|| node.mechanism.evaluate(&intervened));
+        intervened.insert(*id, value);
+    }
+    let mut values = Vec::with_capacity(nodes.len());
+    let mut changes = Vec::new();
+    for (id, node) in by_id {
+        let before = baseline[id];
+        let after = intervened[id];
+        if before != after {
+            changes.push(AuthorCausalChange {
+                node_id: id.into(),
+                before,
+                after,
+                direct_intervention: overrides.contains_key(id),
+            });
+        }
+        values.push(AuthorCausalValue {
+            id: id.into(),
+            mechanism: node.mechanism.canonical(),
+            baseline: before,
+            intervened: after,
+            evidence: evidence.remove(id).expect("all sources validated"),
+        });
+    }
+    edges.sort_by(|a, b| {
+        a.cause_id
+            .cmp(&b.cause_id)
+            .then_with(|| a.effect_id.cmp(&b.effect_id))
+    });
+    Ok(AuthorCausalResult {
+        document_id: manuscript.document_id.clone(), availability: crate::substrate::utils::AnalysisAvailability::Complete,
+        diagnostics: vec!["Author-supplied Boolean mechanisms only; joint interventions replace incoming equations. No causal mechanisms, probabilities, necessity or plot quality are inferred from prose.".into()],
+        nodes: values, edges, topological_order: order.into_iter().map(str::to_owned).collect(),
+        interventions: overrides.into_iter().map(|(id,value)| AuthorIntervention { node_id: id.into(), value }).collect(), changes,
+    })
 }
 
 #[cfg(test)]
@@ -685,7 +915,10 @@ mod tests {
     fn classify_sentence_uses_whole_word_markers() {
         // Substring/negation forms must not misclassify: "unresolved" is not a
         // decision, "adopted" does not contain decision marker "opted".
-        assert_eq!(classify_sentence("she resolved to leave"), CausalEventType::Decision);
+        assert_eq!(
+            classify_sentence("she resolved to leave"),
+            CausalEventType::Decision
+        );
         assert_ne!(
             classify_sentence("the conflict remained unresolved"),
             CausalEventType::Decision
@@ -768,10 +1001,14 @@ mod tests {
                      As a result, the economy collapsed. Therefore the rebellion began.";
         let result = analyze_causality(&[scene], &["king"]);
 
-        // The war declaration should be identified as load-bearing
-        if !result.counterfactuals.is_empty() {
-            assert!(result.counterfactuals[0].plot_necessity > 0.0);
-        }
+        assert!(result.counterfactuals.is_empty());
+        assert!(result.plot_holes.is_empty());
+        assert!(
+            result
+                .links
+                .iter()
+                .all(|link| link.link_type == CausalLinkType::Association)
+        );
     }
 
     #[test]

@@ -1,5 +1,5 @@
-//! Thematic-argument extraction is reserved for the reasoner;
-//! the keyword heuristic was removed as measured-unreliable.
+//! Automatic thematic-argument extraction remains unavailable. Source-validated
+//! author evidence maps are supported without inferred thematic truth or grades.
 
 use std::collections::HashMap;
 
@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 // Types
 // ---------------------------------------------------------------------------
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ThematicThesis {
@@ -20,6 +21,7 @@ pub struct ThematicThesis {
     pub synthesis: Option<String>,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum EvidenceValence {
     Supporting,
@@ -28,6 +30,7 @@ pub enum EvidenceValence {
     Transcending,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum EvidenceDelivery {
     CharacterAction { character: String, decision: String },
@@ -36,8 +39,10 @@ pub enum EvidenceDelivery {
     Narration,
     Symbolism { symbol: String },
     StructuralParallel { parallel_scene: usize },
+    StructuralParallelById { scene_id: String },
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ThematicEvidence {
@@ -50,6 +55,7 @@ pub struct ThematicEvidence {
     pub character: Option<String>,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CharacterThematicRole {
@@ -62,6 +68,7 @@ pub struct CharacterThematicRole {
     pub thematic_arc: Option<(String, String)>,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ThemeInteractionType {
     Reinforcing,
@@ -70,6 +77,7 @@ pub enum ThemeInteractionType {
     Subsumes,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ThemeInteraction {
@@ -79,6 +87,7 @@ pub struct ThemeInteraction {
     pub key_scenes: Vec<usize>,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ThematicNote {
@@ -87,9 +96,15 @@ pub struct ThematicNote {
     pub suggestion: Option<String>,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ThematicArgumentResult {
+    #[serde(default)]
+    pub availability: crate::substrate::utils::AnalysisAvailability,
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
+
     pub theses: Vec<ThematicThesis>,
     pub evidence: Vec<ThematicEvidence>,
     pub character_roles: Vec<CharacterThematicRole>,
@@ -123,6 +138,8 @@ pub fn track_thematic_argument(
     _genre: &str,
 ) -> ThematicArgumentResult {
     ThematicArgumentResult {
+        availability: crate::substrate::utils::AnalysisAvailability::Unavailable,
+        diagnostics: vec!["thematic_argument_not_implemented".into()],
         theses: Vec::new(),
         evidence: Vec::new(),
         character_roles: Vec::new(),
@@ -137,6 +154,321 @@ pub fn track_thematic_argument(
         propaganda_risk: 0.0,
         thematic_notes: Vec::new(),
     }
+}
+
+pub use crate::craft::annotations::AuthorAnnotationCoverage;
+use crate::{
+    manuscript::{Evidence, Manuscript, config::validate_id},
+    structure::author_events::AuthorSource,
+};
+use std::collections::{BTreeMap, BTreeSet};
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct AuthorThematicThesis {
+    pub id: String,
+    pub statement: String,
+    #[serde(default)]
+    pub opposes: Vec<String>,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct AuthorThematicAnnotation {
+    pub id: String,
+    pub thesis_id: String,
+    pub source: AuthorSource,
+    pub valence: EvidenceValence,
+    pub delivery: EvidenceDelivery,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnnotatedThematicEvidence {
+    pub id: String,
+    pub thesis_id: String,
+    pub source: Evidence,
+    pub valence: EvidenceValence,
+    pub delivery: EvidenceDelivery,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThematicThesisSummary {
+    pub thesis_id: String,
+    pub evidence_count: usize,
+    pub valence_counts: BTreeMap<String, usize>,
+    pub delivery_counts: BTreeMap<String, usize>,
+    pub scene_ids: Vec<String>,
+    pub character_counts: BTreeMap<String, usize>,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThematicAnnotationResult {
+    pub document_id: String,
+    pub availability: crate::substrate::utils::AnalysisAvailability,
+    pub diagnostics: Vec<String>,
+    pub theses: Vec<AuthorThematicThesis>,
+    pub evidence: Vec<AnnotatedThematicEvidence>,
+    pub summaries: Vec<ThematicThesisSummary>,
+    pub oppositions: Vec<(String, String)>,
+    pub unassessed_thesis_ids: Vec<String>,
+    pub scene_coverage: Vec<AuthorAnnotationCoverage>,
+}
+
+fn valence_label(value: &EvidenceValence) -> &'static str {
+    match value {
+        EvidenceValence::Supporting => "Supporting",
+        EvidenceValence::Contradicting => "Contradicting",
+        EvidenceValence::Complicating => "Complicating",
+        EvidenceValence::Transcending => "Transcending",
+    }
+}
+fn delivery_label(value: &EvidenceDelivery) -> &'static str {
+    match value {
+        EvidenceDelivery::CharacterAction { .. } => "CharacterAction",
+        EvidenceDelivery::PlotConsequence { .. } => "PlotConsequence",
+        EvidenceDelivery::Dialogue { .. } => "Dialogue",
+        EvidenceDelivery::Narration => "Narration",
+        EvidenceDelivery::Symbolism { .. } => "Symbolism",
+        EvidenceDelivery::StructuralParallel { .. }
+        | EvidenceDelivery::StructuralParallelById { .. } => "StructuralParallel",
+    }
+}
+
+/// Aggregate author-labelled thematic evidence without judging thematic truth,
+/// intent, earned conclusions or editorial quality. IDs remain stable on scene
+/// reorder; evidence/scene lists project the current presentation order only.
+/// At most 10,000 combined theses, evidence records and input opposition links
+/// are accepted; duplicate links still consume the input budget.
+pub fn analyze_thematic_annotations(
+    manuscript: &Manuscript,
+    theses: &[AuthorThematicThesis],
+    annotations: &[AuthorThematicAnnotation],
+) -> crate::Result<ThematicAnnotationResult> {
+    use crate::craft::annotations as shared;
+    let records = theses.len().saturating_add(annotations.len());
+    let events = theses.iter().try_fold(records, |total, thesis| {
+        total
+            .checked_add(thesis.opposes.len())
+            .filter(|count| *count <= crate::structure::author_events::MAX_AUTHOR_EVENTS)
+            .ok_or_else(|| shared::invalid("thematic records and opposition links exceed 10000"))
+    })?;
+    let mut budget = shared::AnnotationBudget::new(manuscript, events)?;
+    let order = shared::order(manuscript);
+    let mut ids = BTreeSet::new();
+    let mut thesis_map = BTreeMap::new();
+    for thesis in theses {
+        validate_id(&thesis.id)?;
+        shared::validate_text(&thesis.statement)?;
+        if !ids.insert(thesis.id.as_str()) {
+            return Err(shared::invalid("annotation IDs must be unique"));
+        }
+        if thesis.opposes.len() > 10000 {
+            return Err(shared::invalid(
+                "thematic opposition link count exceeds 10000",
+            ));
+        }
+        budget.add(&thesis.id)?;
+        budget.add(&thesis.statement)?;
+        let mut opposes = BTreeSet::new();
+        for other in &thesis.opposes {
+            validate_id(other)?;
+            budget.add(other)?;
+            opposes.insert(other.clone());
+        }
+        thesis_map.insert(
+            thesis.id.clone(),
+            AuthorThematicThesis {
+                id: thesis.id.clone(),
+                statement: thesis.statement.clone(),
+                opposes: opposes.into_iter().collect(),
+            },
+        );
+    }
+    let mut oppositions = BTreeSet::new();
+    for thesis in thesis_map.values() {
+        for other in &thesis.opposes {
+            if other == &thesis.id || !thesis_map.contains_key(other) {
+                return Err(shared::invalid(
+                    "thematic opposition requires a different known thesis",
+                ));
+            }
+            let pair = if thesis.id < *other {
+                (thesis.id.clone(), other.clone())
+            } else {
+                (other.clone(), thesis.id.clone())
+            };
+            oppositions.insert(pair);
+        }
+    }
+    let mut normalized_delivery = Vec::new();
+    let mut sources = Vec::new();
+    for annotation in annotations {
+        validate_id(&annotation.id)?;
+        validate_id(&annotation.thesis_id)?;
+        if !ids.insert(annotation.id.as_str()) {
+            return Err(shared::invalid("annotation IDs must be unique"));
+        }
+        if !thesis_map.contains_key(&annotation.thesis_id) {
+            return Err(shared::invalid(
+                "thematic evidence references an unknown thesis",
+            ));
+        }
+        budget.add(&annotation.id)?;
+        budget.add(&annotation.thesis_id)?;
+        budget.source(&annotation.source)?;
+        let delivery = match &annotation.delivery {
+            EvidenceDelivery::CharacterAction {
+                character,
+                decision,
+            } => {
+                budget.add(character)?;
+                shared::validate_text(decision)?;
+                budget.add(decision)?;
+                EvidenceDelivery::CharacterAction {
+                    character: shared::character(manuscript, character)?,
+                    decision: decision.clone(),
+                }
+            }
+            EvidenceDelivery::Dialogue { speaker } => {
+                budget.add(speaker)?;
+                EvidenceDelivery::Dialogue {
+                    speaker: shared::character(manuscript, speaker)?,
+                }
+            }
+            EvidenceDelivery::PlotConsequence { cause } => {
+                shared::validate_text(cause)?;
+                budget.add(cause)?;
+                annotation.delivery.clone()
+            }
+            EvidenceDelivery::Symbolism { symbol } => {
+                shared::validate_text(symbol)?;
+                budget.add(symbol)?;
+                annotation.delivery.clone()
+            }
+            EvidenceDelivery::StructuralParallelById { scene_id } => {
+                validate_id(scene_id)?;
+                budget.add(scene_id)?;
+                if !order.contains_key(scene_id.as_str()) || scene_id == &annotation.source.scene_id
+                {
+                    return Err(shared::invalid(
+                        "parallel evidence requires a different known scene ID",
+                    ));
+                }
+                annotation.delivery.clone()
+            }
+            EvidenceDelivery::StructuralParallel { .. } => {
+                return Err(shared::invalid(
+                    "author thematic parallels require StructuralParallelById",
+                ));
+            }
+            EvidenceDelivery::Narration => EvidenceDelivery::Narration,
+        };
+        normalized_delivery.push(delivery);
+        sources.push(&annotation.source);
+    }
+    let validated = shared::validate(manuscript, &sources)?;
+    let mut evidence: Vec<_> = annotations
+        .iter()
+        .zip(validated)
+        .zip(normalized_delivery)
+        .map(
+            |((annotation, source), delivery)| AnnotatedThematicEvidence {
+                id: annotation.id.clone(),
+                thesis_id: annotation.thesis_id.clone(),
+                source,
+                valence: annotation.valence.clone(),
+                delivery,
+            },
+        )
+        .collect();
+    evidence.sort_by(|a, b| {
+        (
+            order[a.source.scene_id.as_str()],
+            a.source.range.byte_start,
+            &a.id,
+        )
+            .cmp(&(
+                order[b.source.scene_id.as_str()],
+                b.source.range.byte_start,
+                &b.id,
+            ))
+    });
+    let mut summaries: BTreeMap<_, _> = thesis_map
+        .keys()
+        .map(|id| {
+            (
+                id.clone(),
+                ThematicThesisSummary {
+                    thesis_id: id.clone(),
+                    evidence_count: 0,
+                    valence_counts: BTreeMap::new(),
+                    delivery_counts: BTreeMap::new(),
+                    scene_ids: Vec::new(),
+                    character_counts: BTreeMap::new(),
+                },
+            )
+        })
+        .collect();
+    let mut seen_scenes = BTreeSet::new();
+    for annotation in &evidence {
+        let summary = summaries
+            .get_mut(&annotation.thesis_id)
+            .expect("validated thesis link");
+        summary.evidence_count += 1;
+        *summary
+            .valence_counts
+            .entry(valence_label(&annotation.valence).into())
+            .or_insert(0) += 1;
+        *summary
+            .delivery_counts
+            .entry(delivery_label(&annotation.delivery).into())
+            .or_insert(0) += 1;
+        if seen_scenes.insert((
+            annotation.thesis_id.as_str(),
+            annotation.source.scene_id.as_str(),
+        )) {
+            summary.scene_ids.push(annotation.source.scene_id.clone());
+        }
+        let actor = match &annotation.delivery {
+            EvidenceDelivery::CharacterAction { character, .. } => Some(character),
+            EvidenceDelivery::Dialogue { speaker } => Some(speaker),
+            _ => None,
+        };
+        if let Some(actor) = actor {
+            *summary.character_counts.entry(actor.clone()).or_insert(0) += 1;
+        }
+    }
+    drop(seen_scenes);
+    let unassessed_thesis_ids = summaries
+        .values()
+        .filter(|summary| summary.evidence_count == 0)
+        .map(|summary| summary.thesis_id.clone())
+        .collect();
+    let scene_coverage = shared::coverage(
+        manuscript,
+        &evidence.iter().map(|item| &item.source).collect::<Vec<_>>(),
+    );
+    Ok(ThematicAnnotationResult {
+        document_id: manuscript.document_id.clone(),
+        availability: crate::substrate::utils::AnalysisAvailability::Complete,
+        diagnostics: vec![
+            "author_supplied_thematic_labels;automatic_truth_and_quality_unassessed".into(),
+        ],
+        theses: thesis_map.into_values().collect(),
+        evidence,
+        summaries: summaries.into_values().collect(),
+        oppositions: oppositions.into_iter().collect(),
+        unassessed_thesis_ids,
+        scene_coverage,
+    })
 }
 
 // ---------------------------------------------------------------------------

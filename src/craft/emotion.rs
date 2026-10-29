@@ -16,8 +16,8 @@ pub const EKMAN_LABELS: &[&str] = &[
     "anger", "disgust", "fear", "joy", "neutral", "sadness", "surprise",
 ];
 
-/// Set the directory searched for the emotion model (`emotion-onnx/`).
-/// Must be called before the first classification. No-op on wasm (no filesystem).
+/// Set the explicit model root containing `emotion-onnx/`.
+/// Replaces or retries the native model; a no-op on wasm.
 pub fn set_model_directory(path: &str) {
     onnx::set_emotion_model_directory(path);
 }

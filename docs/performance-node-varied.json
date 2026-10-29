@@ -1,0 +1,99 @@
+{
+  "fixture": "benchmark-novel-v2-xorshift32-20261027",
+  "iterations": 5,
+  "wordsAtStart": 104455,
+  "utf8BytesAtStart": 571260,
+  "profile": "debug native addon; no ONNX models",
+  "platform": "darwin",
+  "arch": "arm64",
+  "node": "v26.8.1",
+  "full": [
+    {
+      "totalMs": 919.293333,
+      "inputConversionMs": 1.0488329999999983,
+      "timerTicks": 366,
+      "maxTimerGapMs": 4.15583300000003,
+      "findings": 10
+    },
+    {
+      "totalMs": 838.204,
+      "inputConversionMs": 0.9157090000001062,
+      "timerTicks": 334,
+      "maxTimerGapMs": 2.692207999999937,
+      "findings": 10
+    },
+    {
+      "totalMs": 832.6737500000002,
+      "inputConversionMs": 0.9237499999999272,
+      "timerTicks": 331,
+      "maxTimerGapMs": 2.804583999999977,
+      "findings": 10
+    },
+    {
+      "totalMs": 833.1649170000001,
+      "inputConversionMs": 0.9279590000001008,
+      "timerTicks": 335,
+      "maxTimerGapMs": 3.131915999999819,
+      "findings": 10
+    },
+    {
+      "totalMs": 831.2172500000001,
+      "inputConversionMs": 0.9348329999997986,
+      "timerTicks": 333,
+      "maxTimerGapMs": 3.158582999999453,
+      "findings": 10
+    }
+  ],
+  "incremental": [
+    {
+      "totalMs": 114.73525000000006,
+      "inputConversionMs": 0.9344999999999573,
+      "timerTicks": 45,
+      "maxTimerGapMs": 3.1128749999998035,
+      "findings": 10
+    },
+    {
+      "totalMs": 114.84529199999997,
+      "inputConversionMs": 0.9660000000001219,
+      "timerTicks": 45,
+      "maxTimerGapMs": 2.529417000000194,
+      "findings": 10
+    },
+    {
+      "totalMs": 112.31283300000041,
+      "inputConversionMs": 0.9421250000000327,
+      "timerTicks": 44,
+      "maxTimerGapMs": 3.0403329999999187,
+      "findings": 10
+    },
+    {
+      "totalMs": 112.36491699999988,
+      "inputConversionMs": 0.9536670000002232,
+      "timerTicks": 45,
+      "maxTimerGapMs": 2.524417000000085,
+      "findings": 10
+    },
+    {
+      "totalMs": 112.04191699999956,
+      "inputConversionMs": 0.9721669999998994,
+      "timerTicks": 45,
+      "maxTimerGapMs": 2.5231669999993755,
+      "findings": 10
+    }
+  ],
+  "cache": {
+    "budgetBytes": 16777216,
+    "entries": 160,
+    "recomputedGrammarScenes": 1,
+    "recomputedMetricsScenes": 1,
+    "recomputedScenes": 1,
+    "recomputedWorldScenes": 1,
+    "retainedBytes": 840528,
+    "reusedScenes": 159
+  },
+  "rssBeforeBytes": 60735488,
+  "rssAfterBytes": 143360000,
+  "processPeakRssKiB": 140000,
+  "memoryScope": "OS whole-process RSS; includes Node, native code, inputs, outputs and temporary work",
+  "method": "Identical input reset and context cleared before each full sample; process-wide native initialization and Node GC are not reset"
+}

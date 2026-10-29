@@ -1,0 +1,16 @@
+{
+  "production_source_hashes_unchanged": true,
+  "changed_hashed_files": [],
+  "initial_tracked_diff_preserved": true,
+  "versions": {
+    "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "node": "v26.8.1",
+    "macos": "27.0",
+    "cpu": "Apple M4",
+    "memory_bytes": "34359738368"
+  },
+  "node_addon_sha256": "4594f01a4472480ea285ce690a35fad1f5142b26b8f0a9000ab1d8683d840a7c",
+  "audit_files": 29,
+  "final_artifact_consistency_checked": true
+}

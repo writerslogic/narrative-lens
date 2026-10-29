@@ -108,6 +108,7 @@ const TENSION_WORDS: &[&str] = &[
     "rage",
 ];
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ForeshadowingItem {
@@ -204,7 +205,8 @@ fn has_nearby_resolution_verb(tokens: &[String], word: &str, window: usize) -> b
 /// Analyze foreshadowing setup-payoff arcs across scenes.
 ///
 /// `scenes_tokens`: pre-tokenized words for each scene.
-/// `total_scenes`: total number of scenes (should equal scenes_tokens.len()).
+/// `total_scenes` must equal `scenes_tokens.len()`; mismatched or fewer than
+/// three scenes return no findings.
 ///
 /// Returns a list of `ForeshadowingItem` with quality scores and suggestions.
 pub fn analyze_foreshadowing(
@@ -215,11 +217,11 @@ pub fn analyze_foreshadowing(
         "[foreshadow] analyze_foreshadowing — {} scenes",
         total_scenes
     );
-    if total_scenes < 3 {
+    if total_scenes < 3 || scenes_tokens.len() != total_scenes {
         return Vec::new();
     }
 
-    let n = scenes_tokens.len().min(total_scenes);
+    let n = scenes_tokens.len();
     let first_third = n / 3;
     let last_third_start = n - n / 3;
     let climax_start = n - n.max(7) / 7; // last ~15%
@@ -469,9 +471,10 @@ pub fn analyze_foreshadowing(
     // Sort by quality descending, then by setup_scene ascending
     results.sort_by(|a, b| {
         b.payoff_quality
-            .partial_cmp(&a.payoff_quality)
-            .unwrap_or(std::cmp::Ordering::Equal)
+            .total_cmp(&a.payoff_quality)
             .then_with(|| a.setup_scene.cmp(&b.setup_scene))
+            .then_with(|| a.payoff_scene.cmp(&b.payoff_scene))
+            .then_with(|| a.setup_term.cmp(&b.setup_term))
     });
 
     results
@@ -552,7 +555,9 @@ mod tests {
     fn test_overcrowded() {
         // Term mentioned 6+ times in setup
         let scenes = vec![
-            make_scene("The dagger was sharp. The dagger gleamed. She held the dagger tightly. The dagger was ancient. Another dagger reference. The dagger shone."),
+            make_scene(
+                "The dagger was sharp. The dagger gleamed. She held the dagger tightly. The dagger was ancient. Another dagger reference. The dagger shone.",
+            ),
             make_scene("The dagger again"),
             make_scene("More about the dagger here"),
             make_scene("Walking in the garden"),

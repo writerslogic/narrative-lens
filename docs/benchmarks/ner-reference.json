@@ -1,0 +1,30 @@
+{
+  "repository": "onnx-community/distilbert-NER-ONNX",
+  "revision": "3a19fe9404a4469d91aa3d551558a97f68872f67",
+  "upstream": {
+    "repository": "dslim/distilbert-NER",
+    "revision": "dfa2838a127384aabb82ed7719e16dab84c42a2a",
+    "license": "apache-2.0"
+  },
+  "exportLicenseNote": "Export README identifies the Apache-2.0 licensed upstream model; no separate export license field was declared.",
+  "modelPath": "onnx/model_quantized.onnx",
+  "modelBytes": 65772734,
+  "modelSha256": "9419a876387ff2bbe5f21ab7429c7bef93eac86c50353390d4d8fca6e4a210d8",
+  "tokenizerSha256": "cb26b43c98e8266ae3e99c2a583cf8315d73b33a17e6b20b4df7ff1f22392d34",
+  "configSha256": "f109facddb205dac712adf5877e4315fae62041bc0916fe808d92abdb594d1fe",
+  "labels": [
+    "O",
+    "B-PER",
+    "I-PER",
+    "B-ORG",
+    "I-ORG",
+    "B-LOC",
+    "I-LOC",
+    "B-MISC",
+    "I-MISC"
+  ],
+  "maxTokens": 512,
+  "paddingTokenId": 0,
+  "scope": "One pinned quantized DistilBERT export,trained for CoNLL/news. Literary transfer will be measured independently; no pretrained accuracy assumption.",
+  "sourceUrl": "https://huggingface.co/onnx-community/distilbert-NER-ONNX/tree/3a19fe9404a4469d91aa3d551558a97f68872f67"
+}

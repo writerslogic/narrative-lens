@@ -2,8 +2,6 @@
 /node_modules
 /dist
 *.node
-# Library crate: consumers resolve their own dependency versions.
-/Cargo.lock
 .DS_Store
 *.log
 npm-debug.log*
