@@ -1,9 +1,10 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::craft::lexicon::WordMatcher;
 use crate::substrate::utils::cosine_similarity;
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Genre {
     Literary,
     Thriller,
@@ -18,6 +19,7 @@ pub enum Genre {
     General,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GenreProfile {
@@ -372,6 +374,7 @@ pub fn get_genre_profile(genre: Genre) -> GenreProfile {
     }
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GenreFinding {
@@ -394,17 +397,50 @@ impl GenreFinding {
 
 /// Short semantic descriptions for each genre, used for SBERT cosine similarity.
 const GENRE_DESCRIPTIONS: &[(Genre, &str)] = &[
-    (Genre::Literary, "literary fiction with complex prose, introspective characters, ambiguous morality, slow-burn narrative, and thematic depth"),
-    (Genre::Thriller, "thriller with high stakes, danger, murder, conspiracy, chase sequences, escalating tension, and a ticking clock"),
-    (Genre::Mystery, "mystery with a detective, crime, clues, suspects, investigation, alibi, and a solution revealed at the end"),
-    (Genre::Romance, "romance with love, passion, desire, attraction, relationships, emotional connection, and a happy ending"),
-    (Genre::Fantasy, "fantasy with magic, kingdoms, quests, dragons, prophecy, sorcery, and an epic battle between good and evil"),
-    (Genre::SciFi, "science fiction with technology, space travel, aliens, robots, artificial intelligence, future worlds, and scientific speculation"),
-    (Genre::Horror, "horror with fear, dread, monsters, supernatural evil, blood, darkness, nightmares, and psychological terror"),
-    (Genre::HistoricalFiction, "historical fiction set in a specific past era with period-accurate details, historical events, and authentic atmosphere"),
-    (Genre::YoungAdult, "young adult fiction with teenage protagonists, coming of age, school, identity, first love, and family conflict"),
-    (Genre::ChildrensBook, "children's book with simple language, young characters, adventure, friendship, moral lessons, and wonder"),
-    (Genre::General, "general fiction with everyday characters, realistic settings, and universal human experiences"),
+    (
+        Genre::Literary,
+        "literary fiction with complex prose, introspective characters, ambiguous morality, slow-burn narrative, and thematic depth",
+    ),
+    (
+        Genre::Thriller,
+        "thriller with high stakes, danger, murder, conspiracy, chase sequences, escalating tension, and a ticking clock",
+    ),
+    (
+        Genre::Mystery,
+        "mystery with a detective, crime, clues, suspects, investigation, alibi, and a solution revealed at the end",
+    ),
+    (
+        Genre::Romance,
+        "romance with love, passion, desire, attraction, relationships, emotional connection, and a happy ending",
+    ),
+    (
+        Genre::Fantasy,
+        "fantasy with magic, kingdoms, quests, dragons, prophecy, sorcery, and an epic battle between good and evil",
+    ),
+    (
+        Genre::SciFi,
+        "science fiction with technology, space travel, aliens, robots, artificial intelligence, future worlds, and scientific speculation",
+    ),
+    (
+        Genre::Horror,
+        "horror with fear, dread, monsters, supernatural evil, blood, darkness, nightmares, and psychological terror",
+    ),
+    (
+        Genre::HistoricalFiction,
+        "historical fiction set in a specific past era with period-accurate details, historical events, and authentic atmosphere",
+    ),
+    (
+        Genre::YoungAdult,
+        "young adult fiction with teenage protagonists, coming of age, school, identity, first love, and family conflict",
+    ),
+    (
+        Genre::ChildrensBook,
+        "children's book with simple language, young characters, adventure, friendship, moral lessons, and wonder",
+    ),
+    (
+        Genre::General,
+        "general fiction with everyday characters, realistic settings, and universal human experiences",
+    ),
 ];
 
 /// Attempt SBERT-based genre detection. Returns `None` if the model is unavailable.
@@ -843,12 +879,12 @@ pub fn evaluate_against_genre(
         );
         let msg = if velocity < profile.target_velocity_min {
             format!(
-                "Pacing velocity ({:.1}) is slower than typical for {}; scenes may drag.",
+                "Sentence length ({:.1} words) is shorter than typical for {}; review whether the fast pace is intended.",
                 velocity, profile.name
             )
         } else {
             format!(
-                "Pacing velocity ({:.1}) is faster than typical for {}; scenes may feel rushed.",
+                "Sentence length ({:.1} words) is longer than typical for {}; review whether the slower pace is intended.",
                 velocity, profile.name
             )
         };
@@ -872,14 +908,18 @@ pub fn evaluate_against_genre(
         let msg = if dialogue_ratio < profile.dialogue_ratio_min {
             format!(
                 "Dialogue ratio ({:.0}%) is below {} expectations ({:.0}%-{:.0}%); consider adding more dialogue.",
-                dialogue_ratio * 100.0, profile.name,
-                profile.dialogue_ratio_min * 100.0, profile.dialogue_ratio_max * 100.0
+                dialogue_ratio * 100.0,
+                profile.name,
+                profile.dialogue_ratio_min * 100.0,
+                profile.dialogue_ratio_max * 100.0
             )
         } else {
             format!(
                 "Dialogue ratio ({:.0}%) is above {} expectations ({:.0}%-{:.0}%); narrative may be dialogue-heavy.",
-                dialogue_ratio * 100.0, profile.name,
-                profile.dialogue_ratio_min * 100.0, profile.dialogue_ratio_max * 100.0
+                dialogue_ratio * 100.0,
+                profile.name,
+                profile.dialogue_ratio_min * 100.0,
+                profile.dialogue_ratio_max * 100.0
             )
         };
         findings.push(GenreFinding {

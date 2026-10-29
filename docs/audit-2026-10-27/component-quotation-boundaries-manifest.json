@@ -1,0 +1,43 @@
+{
+  "batch": "nested quotation boundary metadata for quote-local coreference",
+  "files": [
+    {
+      "path": "src/craft/dialogue.rs",
+      "base_sha256": "5087e37057564f561d68fe15f5824463edce57b2d05777e069e431ae5c4466b7",
+      "sha256": "5087e37057564f561d68fe15f5824463edce57b2d05777e069e431ae5c4466b7"
+    },
+    {
+      "path": "src/craft/dialogue/extraction.rs",
+      "base_sha256": "56ff77a66b2b09204dc4ce4a6f1913549c0a651011dbd82a7208976e77cd364a",
+      "sha256": "d5e7a2692a4e7c972a3f42fc9705716822562e9db619156893add86f59812b8a"
+    }
+  ],
+  "api": "pub(crate) QuotationScopes adds pub boundaries:Vec<usize>;same quotation_scopes(text) function",
+  "contract": [
+    "Sorted unique original byte positions for recognized structural openers,closers and repeated paragraph openers",
+    "Escaped marks and lexical apostrophes excluded",
+    "Unmatched actual opener positions included;diagnosed unmatched closer included",
+    "Maximal source spans/unclosed scope barriers retained;no dialogue span changes",
+    "640032 structural-delimiter budget prevents metadata allocation growth;tested-1/=/+1"
+  ],
+  "checks": {
+    "focused": {
+      "passed": 6,
+      "log": "component-quotation-boundaries-tests.log"
+    },
+    "regression": {
+      "passed": 30,
+      "log": "component-quotation-boundaries-regression.log"
+    },
+    "bindings_clippy": {
+      "passed": true,
+      "log": "component-quotation-boundaries-clippy.log"
+    }
+  },
+  "limits": "Boundaries segment potential scope;they do not identify speakers or quote-local antecedents themselves",
+  "external_api_change": "none",
+  "payload": {
+    "path": "component-quotation-boundaries-payload.tar.gz",
+    "sha256": "acf69dd9774f75c1598083d1f061b3303d9d5b13e3ecdd4ef08085732d585fca"
+  }
+}

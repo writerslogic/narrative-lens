@@ -1,6 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+use crate::{Error, Result, substrate::utils::AnalysisAvailability};
+
+pub const MAX_GAP_SCENES: usize = 10_000;
+pub const MAX_GAP_SIGNALS: usize = 10_000;
+pub const MAX_GAP_METADATA_BYTES: usize = 4 * 1024 * 1024;
+pub const MAX_GAP_DESCRIPTION_BYTES: usize = 4096;
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum GapType {
     MissingScene,
     MissingBeat,
@@ -11,6 +19,7 @@ pub enum GapType {
     UnmotivatedAction,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NarrativeGap {
@@ -20,6 +29,7 @@ pub struct NarrativeGap {
     pub suggestion: String,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GapLocation {
@@ -28,9 +38,14 @@ pub struct GapLocation {
     pub affected_characters: Vec<String>,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GapAnalysisResult {
+    #[serde(default)]
+    pub availability: AnalysisAvailability,
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
     pub gaps: Vec<NarrativeGap>,
     pub total_gap_count: usize,
 }
@@ -52,99 +67,144 @@ pub fn analyze_gaps(
     total_scenes: usize,
     climax_scene: usize,
 ) -> GapAnalysisResult {
-    let mut gaps = Vec::new();
+    analyze_gaps_checked(
+        broken_promises,
+        consequenceless_decisions,
+        stall_zones,
+        unresolved_ironies,
+        total_scenes,
+        climax_scene,
+    )
+    .unwrap_or_else(|error| GapAnalysisResult {
+        availability: AnalysisAvailability::Unavailable,
+        diagnostics: vec![error.to_string()],
+        gaps: Vec::new(),
+        total_gap_count: 0,
+    })
+}
 
-    // Broken promises -> MissingScene (need a payoff scene)
-    for (description, promise_scene) in broken_promises {
-        gaps.push(NarrativeGap {
-            gap_type: GapType::MissingScene,
-            description: format!("Broken promise: '{}' set up in scene {} has no payoff", description, promise_scene + 1),
-            location: GapLocation {
-                after_scene: *promise_scene,
-                before_scene: if *promise_scene < climax_scene {
-                    Some(climax_scene)
-                } else {
-                    None
-                },
-                affected_characters: Vec::new(),
-            },
-            suggestion: format!(
-                "Add a payoff scene that resolves the promise '{}'. Place it before the climax for maximum impact.",
-                description
-            ),
-        });
+/// Validates and projects supplied review signals. It does not discover gaps or
+/// establish author intent, consequences, character knowledge, or plot quality.
+pub fn analyze_gaps_checked(
+    broken_promises: &[(String, usize)],
+    consequenceless_decisions: &[(String, usize)],
+    stall_zones: &[(usize, usize)],
+    unresolved_ironies: &[(String, usize)],
+    total_scenes: usize,
+    climax_scene: usize,
+) -> Result<GapAnalysisResult> {
+    let count = [
+        broken_promises.len(),
+        consequenceless_decisions.len(),
+        stall_zones.len(),
+        unresolved_ironies.len(),
+    ]
+    .into_iter()
+    .try_fold(0usize, |total, len| total.checked_add(len))
+    .ok_or_else(|| Error::InvalidInput("gap signal count overflow".into()))?;
+    if total_scenes > MAX_GAP_SCENES
+        || count > MAX_GAP_SIGNALS
+        || (total_scenes == 0 && (count != 0 || climax_scene != 0))
+        || (total_scenes > 0 && climax_scene >= total_scenes)
+    {
+        return Err(Error::InvalidInput(
+            "gap scene/signal count or climax is out of bounds".into(),
+        ));
     }
-
-    // Consequenceless decisions -> MissingScene (need consequence scene)
+    let mut metadata = 0usize;
+    for (description, scene) in broken_promises.iter().chain(unresolved_ironies) {
+        if *scene >= total_scenes
+            || description.trim().is_empty()
+            || description.len() > MAX_GAP_DESCRIPTION_BYTES
+            || description.contains('\0')
+        {
+            return Err(Error::InvalidInput(
+                "gap description or scene is invalid".into(),
+            ));
+        }
+        metadata += description.len();
+    }
     for (character, scene) in consequenceless_decisions {
+        crate::manuscript::config::validate_name(character)?;
+        if *scene >= total_scenes {
+            return Err(Error::InvalidInput(
+                "gap decision scene is out of bounds".into(),
+            ));
+        }
+        metadata += character.len();
+    }
+    if metadata > MAX_GAP_METADATA_BYTES {
+        return Err(Error::InvalidInput(
+            "gap metadata exceeds byte limit".into(),
+        ));
+    }
+    for (start, end) in stall_zones {
+        if start >= end || *end >= total_scenes {
+            return Err(Error::InvalidInput(
+                "gap stall range must be increasing and within the manuscript".into(),
+            ));
+        }
+    }
+    let mut gaps = Vec::with_capacity(count);
+    for (description, scene) in broken_promises {
         gaps.push(NarrativeGap {
             gap_type: GapType::MissingScene,
-            description: format!(
-                "Decision by '{}' in scene {} has no visible consequences",
-                character, scene + 1
-            ),
-            location: GapLocation {
-                after_scene: *scene,
-                before_scene: Some((*scene + 2).min(total_scenes.saturating_sub(1))),
-                affected_characters: vec![character.clone()],
-            },
-            suggestion: format!(
-                "Add a scene showing the consequences of {}'s decision. Consequences should complicate their situation, not merely confirm the choice was right.",
-                character
-            ),
+            description: format!("Supplied unresolved promise candidate '{}' from scene {}", description, scene + 1),
+            location: GapLocation { after_scene: *scene,
+                before_scene: (*scene < climax_scene).then_some(climax_scene),
+                affected_characters: Vec::new() },
+            suggestion: "Review whether the promise is intentional, already resolved, or needs a payoff; choose placement using the intended story order.".into(),
         });
     }
-
-    // Stall zones -> MissingBeat (need something to happen)
+    for (character, scene) in consequenceless_decisions {
+        let before = (scene + 2).min(total_scenes - 1);
+        gaps.push(NarrativeGap {
+            gap_type: GapType::MissingScene,
+            description: format!("Supplied consequence-review candidate for '{}' in scene {}", character, scene + 1),
+            location: GapLocation { after_scene: *scene,
+                before_scene: (before > *scene).then_some(before),
+                affected_characters: vec![character.clone()] },
+            suggestion: "Review the decision's intended consequences, including delayed, implicit, or absent consequences, before adding a scene.".into(),
+        });
+    }
     for (start, end) in stall_zones {
-        let zone_length = end.saturating_sub(*start);
         gaps.push(NarrativeGap {
             gap_type: GapType::MissingBeat,
-            description: format!(
-                "Narrative stall zone spanning scenes {}-{} ({} scenes with no significant change)",
-                start + 1, end + 1, zone_length
-            ),
-            location: GapLocation {
-                after_scene: *start,
-                before_scene: Some(*end),
-                affected_characters: Vec::new(),
-            },
-            suggestion: format!(
-                "Insert a turning point or complication within scenes {}-{}. A reversal, revelation, or escalation will restore momentum.",
-                start + 1, end + 1
-            ),
+            description: format!("Supplied pacing-review range: scenes {}–{} ({} inclusive scenes)", start + 1, end + 1, end - start + 1),
+            location: GapLocation { after_scene: *start, before_scene: Some(*end), affected_characters: Vec::new() },
+            suggestion: "Review changes within this range and its intended pace before adding a turning point or complication.".into(),
         });
     }
-
-    // Unresolved ironies -> MissingInformationReveal (character needs to learn)
     for (description, scene) in unresolved_ironies {
         gaps.push(NarrativeGap {
             gap_type: GapType::MissingInformationReveal,
-            description: format!(
-                "Dramatic irony '{}' established in scene {} is never resolved; the character never learns the truth",
-                description, scene + 1
-            ),
-            location: GapLocation {
-                after_scene: *scene,
-                before_scene: Some(climax_scene),
-                affected_characters: Vec::new(),
-            },
-            suggestion: format!(
-                "Add a revelation scene where the character discovers the truth about '{}'. The later the reveal (closer to climax), the more devastating the impact.",
-                description
-            ),
+            description: format!("Supplied revelation-review candidate '{}' from scene {}", description, scene + 1),
+            location: GapLocation { after_scene: *scene,
+                before_scene: (*scene < climax_scene).then_some(climax_scene), affected_characters: Vec::new() },
+            suggestion: "Check explicit reader/character assertions and intended ambiguity; this signal does not prove a character needs to learn the truth.".into(),
         });
     }
-
-    // Sort by scene position (structural document order)
-    gaps.sort_by_key(|g| g.location.after_scene);
-
-    let total_gap_count = gaps.len();
-
-    GapAnalysisResult {
+    gaps.sort_by(|a, b| {
+        a.location
+            .after_scene
+            .cmp(&b.location.after_scene)
+            .then_with(|| a.location.before_scene.cmp(&b.location.before_scene))
+            .then_with(|| a.gap_type.cmp(&b.gap_type))
+            .then_with(|| a.description.cmp(&b.description))
+            .then_with(|| {
+                a.location
+                    .affected_characters
+                    .cmp(&b.location.affected_characters)
+            })
+    });
+    Ok(GapAnalysisResult {
+        availability: AnalysisAvailability::Partial,
+        diagnostics: vec![
+            "supplied_review_signals_only; no_independent_gap_or_author_intent_inference".into(),
+        ],
+        total_gap_count: gaps.len(),
         gaps,
-        total_gap_count,
-    }
+    })
 }
 
 #[cfg(test)]
@@ -173,10 +233,12 @@ mod tests {
         let result = analyze_gaps(&[], &decisions, &[], &[], 20, 15);
         assert_eq!(result.total_gap_count, 1);
         assert!(matches!(result.gaps[0].gap_type, GapType::MissingScene));
-        assert!(result.gaps[0]
-            .location
-            .affected_characters
-            .contains(&"Alice".to_string()));
+        assert!(
+            result.gaps[0]
+                .location
+                .affected_characters
+                .contains(&"Alice".to_string())
+        );
     }
 
     #[test]

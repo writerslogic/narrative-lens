@@ -1,0 +1,55 @@
+{
+  "origin": "Agent-authored untrained constant/Cast ONNX graphs; no downloaded weights or editorial labels",
+  "license": "Apache-2.0",
+  "generator": "scripts/generate_model_fixtures.py",
+  "files": {
+    "valid-nli.onnx": {
+      "bytes": 240,
+      "sha256": "d7f4d0f00ac39bbee247577aeb297c8ba06e9ed323e96191e3592c1a6813deb3"
+    },
+    "incompatible-nli.onnx": {
+      "bytes": 236,
+      "sha256": "a6b75d8f080e3e8f62025155efe89d15f215832ff2f96f364f333fc72f1870d2"
+    },
+    "failing-nli.onnx": {
+      "bytes": 281,
+      "sha256": "ae155206efccf1806c811a25b459c314799d5373dd6158eb9783a0e58181a76e"
+    },
+    "valid-emotion.onnx": {
+      "bytes": 256,
+      "sha256": "8f5304b7ee8182ff92c7e44c90363456710c34829faf0230225d500027334110"
+    },
+    "incompatible-emotion.onnx": {
+      "bytes": 252,
+      "sha256": "bebfc4c6a88fee761cafd3af1f5eb60211bc4fd5b9c6aca2b614c9491268ab44"
+    },
+    "failing-emotion.onnx": {
+      "bytes": 281,
+      "sha256": "ae155206efccf1806c811a25b459c314799d5373dd6158eb9783a0e58181a76e"
+    },
+    "valid-ner.onnx": {
+      "bytes": 270,
+      "sha256": "39fefe1e7572e45917a648e2fd4365c5bdf61b3848651334c0c6eadda7a1fe55"
+    },
+    "incompatible-ner.onnx": {
+      "bytes": 266,
+      "sha256": "47fd10e5d0bf9402d6ada29a83409d56acec2c4637f15900d779125bf7018858"
+    },
+    "failing-ner.onnx": {
+      "bytes": 281,
+      "sha256": "ae155206efccf1806c811a25b459c314799d5373dd6158eb9783a0e58181a76e"
+    },
+    "valid-embedding.onnx": {
+      "bytes": 242,
+      "sha256": "fb15272e45cf81a125d412e2bff4a80964b1e7bb18d5821cc10c0967553dbbdc"
+    },
+    "incompatible-embedding.onnx": {
+      "bytes": 236,
+      "sha256": "a6b75d8f080e3e8f62025155efe89d15f215832ff2f96f364f333fc72f1870d2"
+    },
+    "failing-embedding.onnx": {
+      "bytes": 281,
+      "sha256": "ae155206efccf1806c811a25b459c314799d5373dd6158eb9783a0e58181a76e"
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "status": "frozen",
+  "bases": {
+    "coreference": "13d92b0b27cc8ced3235d4a534f53f8dfdc19b51a94904cb088c0da783944c76",
+    "ner": "ad0ed78f7d43f2cd7cd0e80b9b872f333889d7ee761a7c1b7653c164509e37eb"
+  },
+  "files": [
+    {
+      "path": "src/continuity/coreference.rs",
+      "sha256": "8c885d6251aa3857ded23e9e9d0a0d2f7c78c91f207faa0e87f79acc3cc6c9f7"
+    },
+    {
+      "path": "src/continuity/ner.rs",
+      "sha256": "b2cd78267e0d8d99876637f22dabf810f5da4bc86f48c4caf4fdeeb33e39d917"
+    },
+    {
+      "path": "tests/component_continuity_persons.rs",
+      "sha256": "5341253c4509cd56725854039ce5a711a2abfba277864db5386af403338cb53a"
+    },
+    {
+      "path": "tests/component_continuity_scopes.rs",
+      "sha256": "1336f99fa98f09817502d98a28c9c9cf465083db8706fb04d7a624416ba0e56f"
+    }
+  ],
+  "checks": [
+    {
+      "command": "cargo test --locked --features bindings --test component_continuity_scopes --test component_continuity_chains --test component_continuity_resolution --test component_continuity_persons",
+      "passed": 19,
+      "log": "continuity-provenance-tests.log"
+    },
+    {
+      "command": "cargo test --locked --features bindings --lib continuity::coreference::tests",
+      "passed": 11,
+      "log": "continuity-provenance-unit.log"
+    },
+    {
+      "command": "cargo clippy --locked --features onnx,bindings --lib --test component_continuity_scopes --test component_continuity_persons --test component_continuity_chains --test component_continuity_resolution -- -D warnings",
+      "exit": 0,
+      "log": "continuity-provenance-clippy.log"
+    }
+  ],
+  "fixes": [
+    "PersonExtractionResult.model_entities retains exact raw entity rows from the same inference pass; no second model call",
+    "Coref reuses shared checked quotation scanner once per text, including gender hint inference",
+    "Structural quote boundaries split nested quote-local reference contexts; apostrophes/elisions/escapes no longer hide narrative antecedents",
+    "Shared malformed/unclosed scope diagnostics propagate to coreference; unknown dialogue speakers remain unassigned"
+  ],
+  "prerequisites_excluded": "continuity-quote-scope-prerequisites.json",
+  "prerequisite_archive": "crosscutting/component-quotation-boundaries-payload.tar.gz SHAacf69dd9774f75c1598083d1f061b3303d9d5b13e3ecdd4ef08085732d585fca",
+  "limits": [
+    "Shared scope grammar improves source interpretation,not automatic coreference truth",
+    "No semantic accuracy or coverage improvement claimed before independent development-only evaluation",
+    "Previously frozen chain/person stages available in immutable payloads for reproducible comparison"
+  ]
+}

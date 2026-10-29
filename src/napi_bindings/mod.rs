@@ -8,7 +8,7 @@
 //! file hand-write a `*Js` DTO + `From<CoreType>` impl per return type; the
 //! `craft`/`structure_bindings`/`continuity`/`substrate` submodules use a
 //! `serde_json::Value` JSON bridge instead, which scales to many-field nested
-//! return types at the cost of precise TypeScript typing -- see
+//! return types; explicit TypeScript overrides retain precise declarations. See
 //! `docs/INTEGRATION.md` for what's covered and what's deliberately not.
 //!
 //! `#[allow(dead_code)]` on the submodule declarations below: every `#[napi]`
@@ -28,9 +28,82 @@ mod continuity;
 #[allow(dead_code)]
 mod craft;
 #[allow(dead_code)]
+mod manuscript;
+#[allow(dead_code)]
 mod structure_bindings;
 #[allow(dead_code)]
 mod substrate;
+
+fn decode_input<T: serde::de::DeserializeOwned>(
+    value: serde_json::Value,
+    reason: &'static str,
+) -> napi::Result<T> {
+    serde_json::from_value(value).map_err(|_| napi::Error::from_reason(reason))
+}
+
+fn encode_result<T: serde::Serialize>(value: T) -> napi::Result<serde_json::Value> {
+    serde_json::to_value(value).map_err(|error| napi::Error::from_reason(error.to_string()))
+}
+
+fn unsigned_index(value: f64) -> napi::Result<usize> {
+    if !value.is_finite() || value.fract() != 0.0 || !(0.0..=u32::MAX as f64).contains(&value) {
+        return Err(napi::Error::from_reason(
+            "index must be an unsigned 32-bit integer",
+        ));
+    }
+    Ok(value as usize)
+}
+
+fn signed_integer(value: f64) -> napi::Result<i32> {
+    if !value.is_finite()
+        || value.fract() != 0.0
+        || !(i32::MIN as f64..=i32::MAX as f64).contains(&value)
+    {
+        return Err(napi::Error::from_reason(
+            "value must be a signed32-bit integer",
+        ));
+    }
+    Ok(value as i32)
+}
+
+fn finite_range(value: f64, min: f64, max: f64) -> napi::Result<f64> {
+    if !value.is_finite() || !(min..=max).contains(&value) {
+        return Err(napi::Error::from_reason(
+            "number is outside its supported finite range",
+        ));
+    }
+    Ok(value)
+}
+
+fn matching_lengths(lengths: &[usize]) -> napi::Result<()> {
+    if lengths
+        .first()
+        .is_some_and(|first| lengths.iter().any(|length| length != first))
+    {
+        return Err(napi::Error::from_reason(
+            "parallel input arrays must have equal lengths",
+        ));
+    }
+    Ok(())
+}
+
+fn bounded_texts<'a>(
+    texts: impl IntoIterator<Item = &'a str>,
+    max_items: usize,
+) -> napi::Result<()> {
+    let mut bytes = 0usize;
+    for (index, text) in texts.into_iter().enumerate() {
+        bytes = bytes
+            .checked_add(text.len())
+            .ok_or_else(|| napi::Error::from_reason("text byte limit exceeded"))?;
+        if index >= max_items || text.len() > 16 * 1024 * 1024 || bytes > 64 * 1024 * 1024 {
+            return Err(napi::Error::from_reason(
+                "text inputs exceed their item limit,16MiB per item or64MiB total",
+            ));
+        }
+    }
+    Ok(())
+}
 
 #[napi(object)]
 pub struct GradeLevelsJs {
@@ -47,6 +120,7 @@ pub struct ReadabilityResultJs {
     pub fkgl: f64,
     pub gunning_fog: f64,
     pub smog: f64,
+    pub smog_available: bool,
     pub ari: f64,
     pub coleman_liau: f64,
     pub flesch_ease: f64,
@@ -66,6 +140,7 @@ impl From<readability::ReadabilityResult> for ReadabilityResultJs {
             fkgl: r.fkgl,
             gunning_fog: r.gunning_fog,
             smog: r.smog,
+            smog_available: r.smog_available,
             ari: r.ari,
             coleman_liau: r.coleman_liau,
             flesch_ease: r.flesch_ease,
@@ -91,8 +166,9 @@ impl From<readability::ReadabilityResult> for ReadabilityResultJs {
 /// Compute readability metrics (FKGL, Gunning Fog, SMOG, ARI, Coleman-Liau,
 /// Flesch ease, Dale-Chall) for `text`.
 #[napi(js_name = "computeReadability")]
-pub fn compute_readability(text: String) -> ReadabilityResultJs {
-    readability::compute_readability(&text).into()
+pub fn compute_readability(text: String) -> napi::Result<ReadabilityResultJs> {
+    bounded_texts([text.as_str()], 1)?;
+    Ok(readability::compute_readability(&text).into())
 }
 
 #[napi(object)]
@@ -125,8 +201,9 @@ impl From<grammar::GrammarFinding> for GrammarFindingJs {
 /// Run the built-in grammar checks (duplicated words, stray whitespace,
 /// sentence-start capitalization) over `text`.
 #[napi(js_name = "checkGrammar")]
-pub fn check_grammar(text: String) -> Vec<GrammarFindingJs> {
-    grammar::check(&text).into_iter().map(Into::into).collect()
+pub fn check_grammar(text: String) -> napi::Result<Vec<GrammarFindingJs>> {
+    bounded_texts([text.as_str()], 1)?;
+    Ok(grammar::check(&text).into_iter().map(Into::into).collect())
 }
 
 /// List the names of the built-in narrative structure templates
@@ -142,14 +219,14 @@ mod tests {
 
     #[test]
     fn compute_readability_wraps_the_core_result() {
-        let js = compute_readability("The cat sat on the mat.".to_string());
+        let js = compute_readability("The cat sat on the mat.".to_string()).unwrap();
         assert!(js.word_count > 0);
         assert!(!js.grade_levels.fkgl.is_empty());
     }
 
     #[test]
     fn check_grammar_maps_finding_kind_to_a_stable_string() {
-        let findings = check_grammar("She was was tired.".to_string());
+        let findings = check_grammar("She was was tired.".to_string()).unwrap();
         assert!(findings.iter().any(|f| f.kind == "repetition"));
     }
 

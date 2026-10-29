@@ -1,17 +1,32 @@
 use serde::Serialize;
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ConfidenceBasis {
+    SampleAdequacy,
+    SignalAgreement,
+    HeuristicRule,
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SceneConfidence {
+    pub confidence_basis: ConfidenceBasis,
+    pub calibrated: bool,
     pub scene_id: usize,
     pub data_quality: f64,
     pub word_count_factor: f64,
     pub overall: f64,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadabilityConfidence {
+    pub confidence_basis: ConfidenceBasis,
+    pub calibrated: bool,
     pub fkgl_confidence: f64,
     pub overall: f64,
     pub sample_adequacy: f64,
@@ -19,7 +34,7 @@ pub struct ReadabilityConfidence {
 
 /// Compute confidence for analysis of a scene based on its text content.
 pub fn compute_scene_confidence(scene_text: &str, scene_id: usize) -> SceneConfidence {
-    let word_count = scene_text.split_whitespace().count();
+    let word_count = crate::substrate::text::word_slices(scene_text).count();
 
     let word_count_factor = if word_count >= 500 {
         1.0
@@ -31,20 +46,19 @@ pub fn compute_scene_confidence(scene_text: &str, scene_id: usize) -> SceneConfi
         0.3
     };
 
-    let total_chars = scene_text.len();
+    let total_chars = scene_text.chars().count();
     let data_quality = if total_chars == 0 {
         0.0
     } else {
-        let analyzable = scene_text
-            .chars()
-            .filter(|c| !c.is_whitespace() && !c.is_ascii_punctuation())
-            .count();
+        let analyzable = scene_text.chars().filter(|c| c.is_alphanumeric()).count();
         analyzable as f64 / total_chars as f64
     };
 
     let overall = (word_count_factor * data_quality).sqrt();
 
     SceneConfidence {
+        confidence_basis: ConfidenceBasis::SampleAdequacy,
+        calibrated: false,
         scene_id,
         data_quality,
         word_count_factor,
@@ -58,11 +72,61 @@ pub fn compute_finding_confidence(
     total_signals: usize,
     scene_confidence: f64,
 ) -> f64 {
+    compute_finding_confidence_checked(signal_count, total_signals, scene_confidence).unwrap_or(0.0)
+}
+
+pub fn compute_finding_confidence_checked(
+    signal_count: usize,
+    total_signals: usize,
+    scene_confidence: f64,
+) -> crate::Result<f64> {
+    if signal_count > total_signals
+        || !scene_confidence.is_finite()
+        || !(0.0..=1.0).contains(&scene_confidence)
+    {
+        return Err(crate::Error::InvalidInput(
+            "confidence requires a signal subset and finite scene index within0..=1".into(),
+        ));
+    }
     if total_signals == 0 {
-        return 0.0;
+        return Ok(0.0);
     }
     let agreement_ratio = signal_count as f64 / total_signals as f64;
-    agreement_ratio * 0.7 + scene_confidence * 0.3
+    Ok((agreement_ratio * 0.7 + scene_confidence * 0.3).clamp(0.0, 1.0))
+}
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FindingConfidenceMeasurement {
+    pub value: Option<f64>,
+    pub availability: crate::substrate::utils::AnalysisAvailability,
+    pub confidence_basis: ConfidenceBasis,
+    pub calibrated: bool,
+    pub signal_count: usize,
+    pub total_signals: usize,
+    pub scene_confidence: f64,
+}
+
+pub fn measure_finding_confidence(
+    signal_count: usize,
+    total_signals: usize,
+    scene_confidence: f64,
+) -> crate::Result<FindingConfidenceMeasurement> {
+    let value = compute_finding_confidence_checked(signal_count, total_signals, scene_confidence)?;
+    Ok(FindingConfidenceMeasurement {
+        value: (total_signals > 0).then_some(value),
+        availability: if total_signals > 0 {
+            crate::substrate::utils::AnalysisAvailability::Complete
+        } else {
+            crate::substrate::utils::AnalysisAvailability::Unavailable
+        },
+        confidence_basis: ConfidenceBasis::SignalAgreement,
+        calibrated: false,
+        signal_count,
+        total_signals,
+        scene_confidence,
+    })
 }
 
 /// Compute confidence for readability metrics based on sample size.
@@ -77,6 +141,8 @@ pub fn compute_readability_confidence(
     let fkgl_confidence = sample_adequacy;
 
     ReadabilityConfidence {
+        confidence_basis: ConfidenceBasis::SampleAdequacy,
+        calibrated: false,
         fkgl_confidence,
         overall: sample_adequacy,
         sample_adequacy,

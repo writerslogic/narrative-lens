@@ -1,0 +1,96 @@
+{
+  "status": "pending_not_integrated_user_requested_stop",
+  "worktree": "/Volumes/A/.codex-worktrees/narrative-lens-release-critical",
+  "files": [
+    {
+      "path": "src/continuity/entity.rs",
+      "previous_sha256": "8680c8fe106435573a33371509c74976c37397ab88c9acdefc0d1878eb1a5a5b",
+      "sha256": "b34beb05eeb9a3478690e1c86f850862be8f9ef661834a7aa6289d0186b63fcd"
+    },
+    {
+      "path": "src/continuity/coreference.rs",
+      "previous_sha256": "e28f5b2b8f8fa20d6e63e1a3be1a1dc65f272cbb9724fe7be847c457244145e7",
+      "sha256": "2c5daaff4ece0348500edddee512f9ee5b9de8956fa4e432ce657dbcf18b5167"
+    },
+    {
+      "path": "src/continuity/ner.rs",
+      "previous_sha256": "b2cd78267e0d8d99876637f22dabf810f5da4bc86f48c4caf4fdeeb33e39d917",
+      "sha256": "a95ab1cf2e38c228971beedbec99d3f2149881e960a1d0e9af6140c6942a4b21"
+    },
+    {
+      "path": "src/continuity/epistemic_engine.rs",
+      "previous_sha256": "e4429bfa6e16fb70de894830db8f5ab7695779b32223247ae8c2b5f42c0856fb",
+      "sha256": "39eb329f8fd5b2972b320d0803625f2c9b43ea9d00f65c13051fe6b55914c5a6"
+    },
+    {
+      "path": "src/continuity/causal_engine.rs",
+      "previous_sha256": "c9eae164c8c5e396df91d06b1440ae274055dac000088845e9997b96e58bd6c0",
+      "sha256": "e2e532f6c375a107c249fa75ce7b67f57f5fab29a0ff9c188767636012ae50f8"
+    },
+    {
+      "path": "tests/component_continuity_shared_names.rs",
+      "previous_sha256": null,
+      "sha256": "aae9d6c5433f9249d4ca0d1b05d77234a4d69b403b8b1503ebe08bd1f6eed28c"
+    }
+  ],
+  "checks": [
+    {
+      "log": "continuity-shared-names-tests.log",
+      "passed": 50,
+      "exit": 0,
+      "sha256": "1b66621da2bdcf35c2de2adbdc952e4f2100dddab019bd816a996f8d84323b6c"
+    },
+    {
+      "log": "continuity-shared-names-clippy.log",
+      "passed": null,
+      "exit": 0,
+      "sha256": "0434084768aa583b52c323608fcaee18ff03403bb5d43d26264e9d7c6824cdde"
+    },
+    {
+      "log": "continuity-shared-entity-unit.log",
+      "passed": 17,
+      "exit": 0,
+      "sha256": "dae53fab18372d82af719cbdb69deeefe9b97d823b8a9da0dd9467f9667b1094"
+    },
+    {
+      "log": "continuity-shared-coreference-unit.log",
+      "passed": 11,
+      "exit": 0,
+      "sha256": "6fc5de42d7070e9b729cb30688355ef8ccb5f5042f6ef52ce4a6cf7408d64caf"
+    },
+    {
+      "log": "continuity-shared-ner-unit.log",
+      "passed": 12,
+      "exit": 0,
+      "sha256": "4664ef60ecc3a6e4f45fa3686588abfc072da30b0e7c23814e8a4bf4b962560c"
+    },
+    {
+      "log": "continuity-shared-epistemic_engine-unit.log",
+      "passed": 10,
+      "exit": 0,
+      "sha256": "034fc1e998b3129bc4c6c0b54892befd332a6bc6091fd07ec390d2ea1b740241"
+    },
+    {
+      "log": "continuity-shared-causal_engine-unit.log",
+      "passed": 10,
+      "exit": 0,
+      "sha256": "ad573dafe6b9ab34c75c36090fc620d53467da4c9564369185cdde30a583c04a"
+    }
+  ],
+  "clippy_command": "cargo clippy --locked --features onnx,bindings --lib --test component_continuity_shared_names --test component_continuity_canonical --test component_continuity_entities --test component_continuity_persons --test component_continuity_epistemic --test component_continuity_reasoning -- -D warnings",
+  "fixes": [
+    "One bounded streaming Unicode/case-insensitive literal-name matcher now supplies coref,NER,epistemic and legacy causal paths; longest physical spans and ambiguous owner sets preserved",
+    "Causal substring references cannot invent Al actors or edges from wall/calm; exact named reference sets reused across candidate comparisons",
+    "Legacy causal agent is limited to supported main-subject prefix marker candidates; unsupported passives,reported decision roles and negation abstain",
+    "Causal significant-word overlap handles punctuation/Unicode words; remains lexical association,never causal proof"
+  ],
+  "public_contract_delta": "No new external shape beyond prior canonical/provenance archives; causal agent semantics narrowed and documented as hypothesis. Author Boolean DAG unchanged.",
+  "prerequisites_excluded": "continuity-quote-scope-prerequisites.json (crosscutting quotation-boundaries archiveacf69dd...)",
+  "pending": [
+    "Parent integration of canonical archive07ede... and this dependent batch; do not assume integrated",
+    "Parent adapters/generated contracts/full combined platform/runtime gate for pending source",
+    "Independent development-only canonical/alias pipeline accuracy evaluation; final holdout remains sealed",
+    "Automatic coref/NER/historical/causal semantics are not demonstrated8/10; no score or semantic accuracy inflation"
+  ],
+  "stop": "No new work will start. Resume only on renewed user authorization. No commits,pushes,paid services,or root production edits performed by this child."
+}

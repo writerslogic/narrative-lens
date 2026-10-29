@@ -1,0 +1,131 @@
+{
+  "identity": {
+    "repository": "sentence-transformers/all-MiniLM-L6-v2",
+    "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "license": "apache-2.0 (pinned upstream model-card metadata; not a separate license audit)",
+    "primaryModelCard": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/blob/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/README.md",
+    "modelSource": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model.onnx",
+    "tokenizerSource": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer.json",
+    "modelBytes": 90405214,
+    "modelSha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+    "upstreamTokenizerSha256": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+    "adaptedTokenizerSha256": "e14dac84c427069bfedcf976e4b13abe3adbbdb6a1d15779d4dcd6b7f649c523",
+    "upstreamTokenizerSettings": {
+      "padding": {
+        "strategy": {
+          "Fixed": 128
+        },
+        "direction": "Right",
+        "pad_to_multiple_of": null,
+        "pad_id": 0,
+        "pad_type_id": 0,
+        "pad_token": "[PAD]"
+      },
+      "truncation": {
+        "max_length": 128,
+        "strategy": "LongestFirst",
+        "stride": 0
+      }
+    },
+    "adaptation": "Only set tokenizer JSON padding and truncation to null; reserialize UTF-8 JSON. Unmodified upstream tokenizer remains incompatible with strict v1. Both manifests use maxTokens128, matching upstream tokenizer limit; overflow must error, not truncate.",
+    "fetches": {
+      "model": {
+        "source": "existing verification cache",
+        "downloadedBytes": 0
+      },
+      "tokenizer": {
+        "source": "existing verification cache",
+        "downloadedBytes": 0
+      }
+    },
+    "manifests": {
+      "upstream": {
+        "schemaVersion": 1,
+        "kind": "embedding",
+        "profile": "hugging_face_masked_mean_v1",
+        "modelSha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+        "tokenizerSha256": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+        "maxTokens": 128,
+        "paddingTokenId": 0,
+        "labels": []
+      },
+      "adapted": {
+        "schemaVersion": 1,
+        "kind": "embedding",
+        "profile": "hugging_face_masked_mean_v1",
+        "modelSha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+        "tokenizerSha256": "e14dac84c427069bfedcf976e4b13abe3adbbdb6a1d15779d4dcd6b7f649c523",
+        "maxTokens": 128,
+        "paddingTokenId": 0,
+        "labels": []
+      }
+    }
+  },
+  "reference": {
+    "runtime": "Python ONNX Runtime CPUExecutionProvider",
+    "python": "3.11.14",
+    "versions": {
+      "onnxruntime": "1.27.0",
+      "tokenizers": "0.23.3",
+      "numpy": "2.4.6"
+    },
+    "buildInfo": "ORT Build Info: git-branch=HEAD, git-commit-id=8f0278c77b, fp8-kv-cache=1, build type=Release",
+    "providers": [
+      "CPUExecutionProvider"
+    ],
+    "loadMs": 69.3842499749735,
+    "inputs": [
+      {
+        "name": "input_ids",
+        "shape": [
+          "batch_size",
+          "sequence_length"
+        ],
+        "type": "tensor(int64)"
+      },
+      {
+        "name": "attention_mask",
+        "shape": [
+          "batch_size",
+          "sequence_length"
+        ],
+        "type": "tensor(int64)"
+      },
+      {
+        "name": "token_type_ids",
+        "shape": [
+          "batch_size",
+          "sequence_length"
+        ],
+        "type": "tensor(int64)"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "last_hidden_state",
+        "shape": [
+          "batch_size",
+          "sequence_length",
+          384
+        ],
+        "type": "tensor(float)"
+      }
+    ],
+    "upstreamFixedPaddingVsAdaptedMaxAbs": 6.353313272700056e-07
+  },
+  "predeclaredTolerances": {
+    "native": {
+      "atol": 2e-05,
+      "rtol": 0.0002,
+      "maxCosineDistance": 1e-06
+    },
+    "wasi": {
+      "atol": 0.0002,
+      "rtol": 0.002,
+      "maxCosineDistance": 1e-05
+    }
+  },
+  "comparisons": {},
+  "upstreamStrictRejections": {},
+  "scope": "One official float32 MiniLM ONNX export; kernel/tokenizer/masking/profile checks only. Adapted tokenizer is separately pinned and never substituted silently. No editorial-accuracy or broad model-compatibility claim."
+}

@@ -1,0 +1,116 @@
+{
+  "batch": "defined voice stylometry and grounded dialogue cues",
+  "files": [
+    {
+      "path": "src/craft/measurements.rs",
+      "base_sha256": null,
+      "sha256": "f8304c1e7bdbaf4e179e04013ace3d125bd6a5682ab7d68ee3cee0670bcf47cf"
+    },
+    {
+      "path": "src/craft/voice.rs",
+      "base_sha256": "9880eb110c65cbded5d43775ad6009f45dff16eb9141e59f80449322e76b6c31",
+      "sha256": "41969cf06d17fd1ceb4006f4415c236f6ca970157d5ac34fd4d09f804c96cb5a"
+    },
+    {
+      "path": "src/craft/dialogue_realism.rs",
+      "base_sha256": "eea3cd4d542a1c7719cd08f9424090eecc3b5d88ab6ae99581b97a6ef718e430",
+      "sha256": "f492544c5e305af7d3b0a66dbe138f9a2632ca862b386eb5fce046a0e69b8732"
+    },
+    {
+      "path": "tests/component_style.rs",
+      "base_sha256": null,
+      "sha256": "cf1642d1f6960bd09cdcd4fc4cda0a40d6d900eb30993ced993998d6f7ef436f"
+    }
+  ],
+  "module_insertions": [
+    {
+      "path": "src/craft/mod.rs",
+      "line": "pub(crate) mod measurements;"
+    }
+  ],
+  "checks": {
+    "red": {
+      "failed": 5,
+      "log": "component-style-red.log"
+    },
+    "focused": {
+      "passed": 11,
+      "log": "component-style-tests.log"
+    },
+    "existing": {
+      "voice_passed": 17,
+      "realism_passed": 4,
+      "log": "component-style-existing.log"
+    },
+    "bindings_clippy": {
+      "passed": true,
+      "log": "component-style-clippy.log"
+    }
+  },
+  "commands": [
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --test component_style",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --lib craft::voice",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo test --locked --lib craft::dialogue_realism",
+    "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting cargo clippy --locked --features bindings --lib --test component_style -- -D warnings"
+  ],
+  "fixes": [
+    "No ngrams crossing supplied turn boundaries",
+    "Blank/zero-word turns excluded from feature denominators with explicit input/eligible sample counts",
+    "Curly apostrophes normalize for stylometry, never original cue ranges",
+    "Recurring phrases are excluded as unique when used even once by another supplied speaker",
+    "Finite/range/label/resource validation for external profiles and text APIs",
+    "BTree word-order cosine deterministic; zero-word voices never rank as equal identities",
+    "Source cue ranges in original turn byte/UTF16 coordinates; exact whole-word matching, actual scenes, no scene0 invention",
+    "No automatic power/realism/info-dump or identical-speaker verdicts from word-frequency proxies"
+  ],
+  "public_checked": [
+    "build_voice_profile_checked",
+    "compare_voices_checked",
+    "measure_voice_drift_checked",
+    "measure_voice_drift_from_text_checked",
+    "analyze_character_voices_checked",
+    "analyze_dialogue_realism_checked"
+  ],
+  "new_types": [
+    "VoiceSampleCounts",
+    "VoiceProfileMeasurement",
+    "DialogueSampleCoverage",
+    "CharacterVoiceSample",
+    "DialogueCueKind",
+    "DialogueCue"
+  ],
+  "new_fields": {
+    "VoiceAnalysisResult": [
+      "availability",
+      "diagnostics",
+      "samples"
+    ],
+    "VoiceDrift": [
+      "availability",
+      "diagnostics"
+    ],
+    "DialogueRealismResult": [
+      "availability",
+      "diagnostics",
+      "realism_assessed",
+      "sample",
+      "voice_samples",
+      "voice_comparison_availability",
+      "cues",
+      "exposition_cue_count"
+    ]
+  },
+  "limits": [
+    "Numeric distances/formality indices are defined uncalibrated stylometry, not validated editorial realism or character identity",
+    "Type/token ratio varies with sample length; no demonstrated out-of-sample speaker accuracy",
+    "Legacy overall_realism=0.5 and info_dump_count=0 are explicitly unassessed placeholders; inspect realism_assessed=false and cues instead",
+    "Unknown speakers excluded from profiles but source cues retained and sample coverage disclosed",
+    "16MiB/turn,64MiB total,10000 turns,256 unique cast,128-byte names,20000 cues; bounds checked-1/=/+1"
+  ],
+  "readiness": {
+    "defined_stylometry": "focused/regression verified,confidence4",
+    "lexical_cues": "exact spans verified,confidence4",
+    "automatic_editorial_realism": "U;not claimed",
+    "speaker_identity_accuracy": "U;parent independent evaluation separate"
+  }
+}

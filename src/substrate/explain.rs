@@ -1,3 +1,6 @@
+use super::confidence::ConfidenceBasis;
+
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExplainedFinding {
@@ -8,6 +11,8 @@ pub struct ExplainedFinding {
     pub evidence: String,
     pub suggestion: String,
     pub confidence: f64,
+    pub confidence_basis: ConfidenceBasis,
+    pub calibrated: bool,
 }
 
 pub fn explain_readability(
@@ -33,6 +38,8 @@ pub fn explain_readability(
             ),
             suggestion: "Shorten sentences and replace multisyllabic words in exposition passages."
                 .into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: clamp_confidence((fkgl - target_max) / 3.0 + 0.5),
         })
     } else if fkgl < target_min {
@@ -51,6 +58,8 @@ pub fn explain_readability(
             ),
             suggestion: "Consider varying sentence length and using more precise vocabulary."
                 .into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: clamp_confidence((target_min - fkgl) / 3.0 + 0.5),
         })
     } else {
@@ -79,6 +88,8 @@ pub fn explain_pacing(
             suggestion:
                 "Break long sentences into shorter ones, especially during high-tension moments."
                     .into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: clamp_confidence((velocity - 30.0) / 10.0 + 0.6),
         })
     } else if is_talking_head {
@@ -94,6 +105,8 @@ pub fn explain_pacing(
             ),
             evidence: format!("Dialogue ratio: {}%", pct),
             suggestion: "Add beats of physical action, setting detail, or internal thought between dialogue lines.".into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: clamp_confidence(dialogue_ratio),
         })
     } else {
@@ -127,6 +140,8 @@ pub fn explain_tension(
                 tension, flat_start, flat_end
             ),
             suggestion: "Introduce a new obstacle, reveal information, or raise the stakes.".into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: clamp_confidence(0.5 + flat_count as f64 * 0.1),
         })
     } else if prev_tension > 0.0 && (prev_tension - tension) > 0.3 {
@@ -144,6 +159,8 @@ pub fn explain_tension(
                 prev_tension, tension, prev_tension - tension
             ),
             suggestion: "If this drop is unintentional, add a subplot thread or lingering threat to maintain engagement.".into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: clamp_confidence(0.5 + (prev_tension - tension)),
         })
     } else if total_scenes > 0 && max_tension < 0.6 {
@@ -164,6 +181,8 @@ pub fn explain_tension(
             ),
             suggestion:
                 "Build toward a climactic confrontation or revelation in the final quarter.".into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: clamp_confidence(0.4 + (0.6 - max_tension)),
         })
     } else {
@@ -199,6 +218,8 @@ pub fn explain_tone_shift(
             evidence: format!("Tone: {} -> {} at scene {}", from_tone, to_tone, scene_id),
             suggestion: "Bridge the tonal change with a transitional beat or motivating event."
                 .into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: 0.7,
         })
     } else {
@@ -213,6 +234,8 @@ pub fn explain_tone_shift(
             ),
             evidence: format!("Tone: {} -> {} at scene {}", from_tone, to_tone, scene_id),
             suggestion: "Verify the shift serves the narrative arc; unintentional shifts can jar the reader.".into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: 0.5,
         })
     }
@@ -244,6 +267,8 @@ pub fn explain_white_room(
             suggestion:
                 "Weave in at least two senses per scene; smell and touch are especially immersive."
                     .into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: clamp_confidence(0.8 - density / 10.0),
         })
     } else {
@@ -265,6 +290,8 @@ pub fn explain_show_dont_tell(issue_type: &str, snippet: &str) -> ExplainedFindi
             suggestion:
                 "Replace the named emotion with a physical reaction or action that implies it."
                     .into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: 0.75,
         },
         "filter_word" => ExplainedFinding {
@@ -277,6 +304,8 @@ pub fn explain_show_dont_tell(issue_type: &str, snippet: &str) -> ExplainedFindi
                 .to_string(),
             evidence: snippet.into(),
             suggestion: "Remove the filter word and state the observation directly.".into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: 0.8,
         },
         "diluted_action" => ExplainedFinding {
@@ -287,6 +316,8 @@ pub fn explain_show_dont_tell(issue_type: &str, snippet: &str) -> ExplainedFindi
                 .into(),
             evidence: snippet.into(),
             suggestion: "Replace 'started to/began to' with the direct action verb.".into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: 0.85,
         },
         _ => ExplainedFinding {
@@ -299,6 +330,8 @@ pub fn explain_show_dont_tell(issue_type: &str, snippet: &str) -> ExplainedFindi
             ),
             evidence: snippet.into(),
             suggestion: "Review this passage for opportunities to show rather than tell.".into(),
+            confidence_basis: ConfidenceBasis::HeuristicRule,
+            calibrated: false,
             confidence: 0.5,
         },
     }

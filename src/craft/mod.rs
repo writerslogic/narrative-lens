@@ -1,9 +1,11 @@
+pub(crate) mod annotations;
 pub mod dialogue;
 pub mod dialogue_realism;
 pub mod emotion;
 pub mod grammar;
 pub mod lexical;
 pub mod lexicon;
+pub(crate) mod measurements;
 pub mod pacing;
 pub mod prose_quality;
 pub mod readability;

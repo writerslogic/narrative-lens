@@ -1,0 +1,167 @@
+{
+  "annotationOrigin": "Agent-authored engineering case; no human editorial validation.",
+  "manuscript": {
+    "documentId": "authored-knowledge",
+    "knownCharacters": [
+      "Alice",
+      "Bob",
+      "reader"
+    ],
+    "scenes": [
+      {
+        "id": "hidden",
+        "text": "😀 Alice hid the key."
+      },
+      {
+        "id": "lie",
+        "text": "Alice told Bob that the key was lost."
+      },
+      {
+        "id": "discovery",
+        "text": "Bob found the key. Nobody knew whether the door was open."
+      }
+    ]
+  },
+  "propositions": [
+    {
+      "id": "hidden-key",
+      "description": "Alice hid the key",
+      "truth": "true",
+      "evidence": {
+        "sceneId": "hidden",
+        "utf16Start": 3,
+        "utf16End": 21,
+        "quote": "Alice hid the key."
+      }
+    },
+    {
+      "id": "open-door",
+      "description": "The door is open",
+      "truth": "unknown",
+      "evidence": {
+        "sceneId": "discovery",
+        "utf16Start": 19,
+        "utf16End": 57,
+        "quote": "Nobody knew whether the door was open."
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": "alice-knows",
+      "sequence": 1,
+      "propositionId": "hidden-key",
+      "action": {
+        "kind": "know",
+        "actor": {
+          "kind": "character",
+          "characterId": "Alice"
+        },
+        "value": true
+      },
+      "evidence": {
+        "sceneId": "hidden",
+        "utf16Start": 3,
+        "utf16End": 21,
+        "quote": "Alice hid the key."
+      }
+    },
+    {
+      "id": "named-reader-believes",
+      "sequence": 2,
+      "propositionId": "hidden-key",
+      "action": {
+        "kind": "believe",
+        "actor": {
+          "kind": "character",
+          "characterId": "reader"
+        },
+        "value": false
+      },
+      "evidence": {
+        "sceneId": "hidden",
+        "utf16Start": 3,
+        "utf16End": 21,
+        "quote": "Alice hid the key."
+      }
+    },
+    {
+      "id": "lie-to-bob",
+      "sequence": 3,
+      "propositionId": "hidden-key",
+      "action": {
+        "kind": "communicate",
+        "sender": {
+          "kind": "character",
+          "characterId": "Alice"
+        },
+        "recipient": {
+          "kind": "character",
+          "characterId": "Bob"
+        },
+        "value": false,
+        "uptake": "belief"
+      },
+      "evidence": {
+        "sceneId": "lie",
+        "utf16Start": 0,
+        "utf16End": 37,
+        "quote": "Alice told Bob that the key was lost."
+      }
+    },
+    {
+      "id": "reader-uncertain",
+      "sequence": 4,
+      "propositionId": "hidden-key",
+      "action": {
+        "kind": "uncertain",
+        "actor": {
+          "kind": "reader"
+        }
+      },
+      "evidence": {
+        "sceneId": "lie",
+        "utf16Start": 0,
+        "utf16End": 37,
+        "quote": "Alice told Bob that the key was lost."
+      }
+    },
+    {
+      "id": "reader-learns",
+      "sequence": 5,
+      "propositionId": "hidden-key",
+      "action": {
+        "kind": "know",
+        "actor": {
+          "kind": "reader"
+        },
+        "value": true
+      },
+      "evidence": {
+        "sceneId": "discovery",
+        "utf16Start": 0,
+        "utf16End": 18,
+        "quote": "Bob found the key."
+      }
+    },
+    {
+      "id": "alice-believes",
+      "sequence": 6,
+      "propositionId": "hidden-key",
+      "action": {
+        "kind": "believe",
+        "actor": {
+          "kind": "character",
+          "characterId": "Alice"
+        },
+        "value": true
+      },
+      "evidence": {
+        "sceneId": "discovery",
+        "utf16Start": 0,
+        "utf16End": 18,
+        "quote": "Bob found the key."
+      }
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+[
+  {
+    "id": "narrative-lens@0.1.0",
+    "name": "narrative-lens",
+    "version": "0.1.0",
+    "size": 4801068,
+    "unpackedSize": 19783483,
+    "shasum": "7753f682a9972cc5bffae8bcbfefabc0409d7611",
+    "integrity": "sha512-ABOLuB9lsc5GmuSoMz/0Y304FjITaJVORDOUz/MVA9kDejSR0T+jMrIodwYzaAU0HhszM8OzkKdYtQK/O/ayzA==",
+    "filename": "narrative-lens-0.1.0.tgz",
+    "files": [
+      {
+        "path": ".bestpractices.json",
+        "size": 15807,
+        "mode": 420
+      },
+      {
+        "path": "CHANGELOG.md",
+        "size": 297,
+        "mode": 420
+      },
+      {
+        "path": "CODE_OF_CONDUCT.md",
+        "size": 1854,
+        "mode": 420
+      },
+      {
+        "path": "CONTRIBUTING.md",
+        "size": 2621,
+        "mode": 420
+      },
+      {
+        "path": "LICENSE",
+        "size": 11348,
+        "mode": 420
+      },
+      {
+        "path": "README.md",
+        "size": 8202,
+        "mode": 420
+      },
+      {
+        "path": "SECURITY.md",
+        "size": 3182,
+        "mode": 420
+      },
+      {
+        "path": "cliff.toml",
+        "size": 1355,
+        "mode": 420
+      },
+      {
+        "path": "index.d.ts",
+        "size": 39067,
+        "mode": 420
+      },
+      {
+        "path": "index.js",
+        "size": 40598,
+        "mode": 420
+      },
+      {
+        "path": "index.mjs",
+        "size": 1944,
+        "mode": 420
+      },
+      {
+        "path": "manuscript.d.ts",
+        "size": 952,
+        "mode": 420
+      },
+      {
+        "path": "manuscript.generated.d.ts",
+        "size": 6082,
+        "mode": 420
+      },
+      {
+        "path": "narrative-lens.darwin-arm64.node",
+        "size": 19648376,
+        "mode": 493
+      },
+      {
+        "path": "package.json",
+        "size": 1798,
+        "mode": 420
+      }
+    ],
+    "entryCount": 15,
+    "bundled": []
+  }
+]

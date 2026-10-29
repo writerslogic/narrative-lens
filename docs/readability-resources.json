@@ -1,0 +1,22 @@
+{
+  "source": "https://raw.githubusercontent.com/words/dale-chall/cc171e5a515ef67818fa17308dfceff38a21efa4/index.js",
+  "commit": "cc171e5a515ef67818fa17308dfceff38a21efa4",
+  "packageVersion": "2.0.1",
+  "upstreamSha256": "a3138244a1ee3fcaadc0874ead8ef6e5a900d18def33a7691abd415c7575e1c0",
+  "resource": "src/craft/data/dale_chall_1995.txt",
+  "resourceSha256": "a282093264fd0cf121352b145ce13974441748f10aab15c684fc482cfa398269",
+  "wordCount": 2942,
+  "license": "MIT",
+  "licenseFile": "src/craft/data/dale_chall.LICENSE",
+  "licenseSha256": "9966260ba3ea9d6a5f839297dca80ddc99735a34b4ae82811cac7b956d2e3afd",
+  "transformation": "Literal data array parsed without execution; sorted lexicographically, one unchanged entry per LF-terminated line. No words added or removed.",
+  "sourceClaim": "Upstream describes list as The New Dale-Chall (1995); no independent reconstruction of printed edition.",
+  "hashConvention": "Canonical LF file bytes; CRLF checkout translation normalized for verification.",
+  "smogReference": {
+    "url": "https://ogg.osu.edu/media/documents/health_lit/WRRSMOG_Readability_Formula_G._Harry_McLaughlin__1969_.pdf",
+    "sha256": "bf8c3b5ba77dc272b2231d89bb300dc271d2aad990478a1a6920ddcd3ff1d92f",
+    "paper": "G. Harry McLaughlin, SMOG Grading, Journal of Reading, May1969, pages639\u2013646",
+    "formula": "Table1, equation(d), page643: g =3.1291+1.0430*sqrt(p), p=polysyllabic occurrences in30 sampled sentences.",
+    "sampling": "Three disjoint blocks of10 complete sentences at beginning, center and end; automatic English segmentation/syllables remain heuristic."
+  }
+}

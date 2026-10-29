@@ -3,14 +3,53 @@
 use napi_derive::napi;
 
 use crate::structure::{
-    foreshadow, genre, genre_compliance, narrative_entropy, opening_analysis, promise_payoff,
-    structure, thematic_argument, theme,
+    author_events, foreshadow, genre, genre_compliance, narrative_entropy, opening_analysis,
+    promise_payoff, structure, thematic_argument, theme,
 };
+
+#[napi(
+    js_name = "analyzeThematicAnnotations",
+    ts_args_type = "manuscript: import('./manuscript').Manuscript, theses: import('./standalone.generated').AuthorThematicThesis[], annotations: import('./standalone.generated').AuthorThematicAnnotation[]",
+    ts_return_type = "import('./standalone.generated').AnalyzeThematicAnnotationsResult"
+)]
+pub fn analyze_thematic_annotations(
+    manuscript: serde_json::Value,
+    theses: serde_json::Value,
+    annotations: serde_json::Value,
+) -> napi::Result<serde_json::Value> {
+    let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
+    let theses: Vec<thematic_argument::AuthorThematicThesis> =
+        super::decode_input(theses, "invalid author thematic theses")?;
+    let annotations: Vec<thematic_argument::AuthorThematicAnnotation> =
+        super::decode_input(annotations, "invalid author thematic annotations")?;
+    let result =
+        thematic_argument::analyze_thematic_annotations(&manuscript, &theses, &annotations)
+            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
+}
+
+#[napi(
+    js_name = "analyzePromiseEvents",
+    ts_args_type = "manuscript: import('./manuscript').Manuscript, events: import('./standalone.generated').AuthorPromiseEvent[]",
+    ts_return_type = "import('./standalone.generated').AnalyzePromiseEventsResult"
+)]
+pub fn analyze_promise_events(
+    manuscript: serde_json::Value,
+    events: serde_json::Value,
+) -> napi::Result<serde_json::Value> {
+    let manuscript = serde_json::from_value(manuscript)
+        .map_err(|_| napi::Error::from_reason("invalid manuscript object"))?;
+    let events: Vec<author_events::AuthorPromiseEvent> = serde_json::from_value(events)
+        .map_err(|_| napi::Error::from_reason("invalid author promise events"))?;
+    let ledger = author_events::analyze_promise_events(&manuscript, &events)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    serde_json::to_value(ledger).map_err(|error| napi::Error::from_reason(error.to_string()))
+}
 
 /// Look up a built-in narrative structure template by name.
 #[napi(
     js_name = "getStructureTemplate",
-    ts_return_type = "{ name: string; description: string; beats: Array<{ name: string; targetPct: number; tolerance: number; required: boolean; description: string }>; flexibility: number }"
+    ts_return_type = "import('./standalone.generated').GetStructureTemplateResult"
 )]
 pub fn get_structure_template(name: String) -> napi::Result<serde_json::Value> {
     let result = structure::get_structure_template(&name)
@@ -21,7 +60,7 @@ pub fn get_structure_template(name: String) -> napi::Result<serde_json::Value> {
 /// Score how well a set of scene tensions/purposes matches a structure template.
 #[napi(
     js_name = "validateStructure",
-    ts_return_type = "{ template: string; healthPct: number; matchedBeats: Array<string>; missingBeats: Array<string>; beatDetails: Array<{ beatName: string; expectedPct: number; actualPct: number; matched: boolean; confidence: number }>; suggestedTemplate: string }"
+    ts_return_type = "import('./standalone.generated').ValidateStructureResult"
 )]
 pub fn validate_structure(
     template_name: String,
@@ -46,40 +85,45 @@ pub fn suggest_best_template(
 /// Analyze foreshadowing setup-payoff arcs across scenes.
 #[napi(
     js_name = "analyzeForeshadowing",
-    ts_return_type = "Array<{ setupTerm: string; setupScene: number; payoffScene: number | null; setupCount: number; payoffCount: number; payoffQuality: number; status: string; suggestion: string }>"
+    ts_return_type = "import('./standalone.generated').AnalyzeForeshadowingResult"
 )]
 pub fn analyze_foreshadowing(
     scenes_tokens: Vec<Vec<String>>,
-    total_scenes: u32,
+    total_scenes: f64,
 ) -> napi::Result<serde_json::Value> {
-    let result = foreshadow::analyze_foreshadowing(scenes_tokens, total_scenes as usize);
+    let result =
+        foreshadow::analyze_foreshadowing(scenes_tokens, super::unsigned_index(total_scenes)?);
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
 /// Build the promise-payoff ledger from analysis data.
 #[napi(
     js_name = "buildPromisePayoffLedger",
-    ts_return_type = "{ promises: Array<{ id: number; description: string; scene: number; promiseType: 'OpeningHook' | { GenreContract: string } | { CharacterIntroduction: string } | { ChekhovsGun: string } | { Foreshadowing: string } | { RelationshipSetup: [string, string] } | { ThematicQuestion: string } | { StructuralBeat: string } | { ExplicitQuestion: string } | { TimedThreat: string } | { RecurringMotif: string } | { CharacterGoal: [string, string] }; explicitness: number; status: 'Outstanding' | { Fulfilled: { quality: number } } | { PartiallyFulfilled: { completeness: number } } | 'Broken' | { Subverted: { satisfaction: number } } | { Overpaid: { excess: number } } | { Deferred: { newDeadline: number | null } }; payoffScene: number | null; payoffQuality: number | null; investment: number; urgency: number; parent: number | null; children: Array<number>; weight: number }>; unearnedPayoffs: Array<{ description: string; scene: number; magnitude: number; reason: string }>; cascadePayoffs: Array<{ scene: number; promisesResolved: Array<number>; elegance: number }>; fulfillmentRatio: number; brokenCount: number; unearnedCount: number; weightedHealth: number; actBreakdown: Array<{ act: number; promisesMade: number; promisesFulfilled: number; netBalance: number; outstandingWeight: number }>; investmentCurve: Array<number>; maxNestingDepth: number; gratificationDelays: Array<{ promiseId: number; delayScenes: number; delayWords: number; withinGenreNorm: boolean; tensionMaintained: number }>; overpaidMoments: Array<[number, number]>; contractNotes: Array<{ promiseId: number; noteType: string; description: string; urgency: number; suggestion: string | null }>; readerTrustAssessment: string }"
+    ts_return_type = "import('./standalone.generated').BuildPromisePayoffLedgerResult"
 )]
 pub fn build_promise_payoff_ledger(
     scenes: Vec<String>,
-    scene_word_counts: Vec<u32>,
+    scene_word_counts: Vec<f64>,
     genre: String,
-    foreshadowing_items: Vec<(String, u32, bool)>,
-    character_first_appearances: Vec<(String, u32)>,
+    foreshadowing_items: Vec<(String, f64, bool)>,
+    character_first_appearances: Vec<(String, f64)>,
     structure_template: String,
-    total_scenes: u32,
+    total_scenes: f64,
 ) -> napi::Result<serde_json::Value> {
     let scene_refs: Vec<&str> = scenes.iter().map(|s| s.as_str()).collect();
-    let word_counts: Vec<usize> = scene_word_counts.iter().map(|&c| c as usize).collect();
+    super::matching_lengths(&[scenes.len(), scene_word_counts.len()])?;
+    let word_counts: Vec<usize> = scene_word_counts
+        .into_iter()
+        .map(super::unsigned_index)
+        .collect::<napi::Result<_>>()?;
     let foreshadowing: Vec<(String, usize, bool)> = foreshadowing_items
         .into_iter()
-        .map(|(desc, scene, resolved)| (desc, scene as usize, resolved))
-        .collect();
+        .map(|(desc, scene, resolved)| Ok((desc, super::unsigned_index(scene)?, resolved)))
+        .collect::<napi::Result<_>>()?;
     let characters: Vec<(String, usize)> = character_first_appearances
         .into_iter()
-        .map(|(name, scene)| (name, scene as usize))
-        .collect();
+        .map(|(name, scene)| Ok((name, super::unsigned_index(scene)?)))
+        .collect::<napi::Result<_>>()?;
     let result = promise_payoff::build_promise_payoff_ledger(
         &scene_refs,
         &word_counts,
@@ -87,7 +131,7 @@ pub fn build_promise_payoff_ledger(
         &foreshadowing,
         &characters,
         &structure_template,
-        total_scenes as usize,
+        super::unsigned_index(total_scenes)?,
     );
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
@@ -95,21 +139,21 @@ pub fn build_promise_payoff_ledger(
 /// Track the thematic argument across the manuscript.
 #[napi(
     js_name = "trackThematicArgument",
-    ts_return_type = "{ theses: Array<{ id: number; statement: string; confidence: number; isPrimary: boolean; antithesis: string | null; synthesis: string | null }>; evidence: Array<{ scene: number; thesisId: number; valence: 'Supporting' | 'Contradicting' | 'Complicating' | 'Transcending'; delivery: { CharacterAction: { character: string; decision: string } } | { PlotConsequence: { cause: string } } | { Dialogue: { speaker: string } } | 'Narration' | { Symbolism: { symbol: string } } | { StructuralParallel: { parallel_scene: number } }; content: string; weight: number; character: string | null }>; characterRoles: Array<{ character: string; thesisId: number; position: 'Supporting' | 'Contradicting' | 'Complicating' | 'Transcending'; articulacy: number; fairHearing: number; thematicArc: [string, string] | null }>; themeInteractions: Array<{ themeA: number; themeB: number; interactionType: 'Reinforcing' | 'Tensioning' | 'Independent' | 'Subsumes'; keyScenes: Array<number> }>; dialecticalScore: number; deliveryDistribution: Record<string, number>; embodiedRatio: number; conclusionEarned: number; evidenceBalance: number; argumentStrength: number; actEvolution: Array<[number, string]>; propagandaRisk: number; thematicNotes: Array<{ noteType: string; description: string; suggestion: string | null }> }"
+    ts_return_type = "import('./standalone.generated').TrackThematicArgumentResult"
 )]
 pub fn track_thematic_argument(
     scenes: Vec<String>,
     themes: Vec<(String, f64)>,
     characters: Vec<String>,
-    character_decisions: Vec<(String, u32, String)>,
+    character_decisions: Vec<(String, f64, String)>,
     genre: String,
 ) -> napi::Result<serde_json::Value> {
     let scene_refs: Vec<&str> = scenes.iter().map(|s| s.as_str()).collect();
     let character_refs: Vec<&str> = characters.iter().map(|s| s.as_str()).collect();
     let decisions: Vec<(String, usize, String)> = character_decisions
         .into_iter()
-        .map(|(name, scene, decision)| (name, scene as usize, decision))
-        .collect();
+        .map(|(name, scene, decision)| Ok((name, super::unsigned_index(scene)?, decision)))
+        .collect::<napi::Result<_>>()?;
     let result = thematic_argument::track_thematic_argument(
         &scene_refs,
         &themes,
@@ -123,25 +167,41 @@ pub fn track_thematic_argument(
 /// Analyze the opening pages of a manuscript for hook strength and agent appeal.
 #[napi(
     js_name = "analyzeOpening",
-    ts_return_type = "{ hookType: 'Action' | 'Question' | 'Voice' | 'Situation' | 'Character' | 'Image' | null; hookScore: number; firstLineQuality: number; firstParagraphQuality: number; backstoryRatio: number; voiceEstablishment: number; engagementTrajectory: Array<number>; promisesMade: Array<string>; charactersIntroduced: number; worldEstablished: boolean; genreAlignment: number; readOnPrediction: number; firstLineWordCount: number; paragraphWordCounts: Array<number>; dialogueOnsetParagraph: number | null; issues: Array<string>; strengths: Array<string>; agentPerspective: string; firstLineFeedback: string; revisionSuggestion: string }"
+    ts_return_type = "import('./standalone.generated').AnalyzeOpeningResult"
 )]
 pub fn analyze_opening(
     text: String,
     genre: String,
     full_manuscript_voice_fingerprint: Option<Vec<f64>>,
 ) -> napi::Result<serde_json::Value> {
-    let result = opening_analysis::analyze_opening(
-        &text,
-        &genre,
-        full_manuscript_voice_fingerprint.as_deref(),
-    );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let mut result = opening_analysis::analyze_opening_checked(&text, &genre, None)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    if full_manuscript_voice_fingerprint.is_some_and(|values| !values.is_empty()) {
+        result.diagnostics.push("legacy_voice_vector_has_no_declared_feature_contract;use_analyzeOpeningChecked_with_typed_baseline".into());
+    }
+    super::encode_result(result)
+}
+
+#[napi(
+    js_name = "analyzeOpeningChecked",
+    ts_args_type = "text: string, genre: string, baseline?: import('./standalone.generated').CharacterVoiceProfile",
+    ts_return_type = "import('./standalone.generated').AnalyzeOpeningResult"
+)]
+pub fn analyze_opening_checked(
+    text: String,
+    genre: String,
+    baseline: Option<super::craft::CharacterVoiceProfileInput>,
+) -> napi::Result<serde_json::Value> {
+    let baseline = baseline.map(super::craft::to_character_voice_profile);
+    let result = opening_analysis::analyze_opening_checked(&text, &genre, baseline.as_ref())
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
 }
 
 /// Check a manuscript's compliance with genre conventions.
 #[napi(
     js_name = "checkGenreCompliance",
-    ts_return_type = "{ genre: string; conventions: Array<{ name: string; description: string; status: 'Met' | 'PartiallyMet' | 'NotMet' | 'Subverted'; evidence: string }>; presentCount: number; absentCount: number; isGenreBlend: boolean; secondaryGenres: Array<string>; deviations: Array<string>; strengths: Array<string> }"
+    ts_return_type = "import('./standalone.generated').CheckGenreComplianceResult"
 )]
 pub fn check_genre_compliance(
     genre: String,
@@ -151,23 +211,42 @@ pub fn check_genre_compliance(
     protagonist_survives: bool,
     character_growth: bool,
     worldbuilding_present: bool,
-    word_count: u32,
+    word_count: f64,
     structure_health: f64,
     tension_arc_shape: String,
 ) -> napi::Result<serde_json::Value> {
-    let result = genre_compliance::check_genre_compliance(
+    let result = genre_compliance::check_genre_compliance_checked(
         &genre,
-        has_hea,
-        has_solution,
-        has_ticking_clock,
-        protagonist_survives,
-        character_growth,
-        worldbuilding_present,
-        word_count as usize,
-        structure_health,
-        &tension_arc_shape,
-    );
+        &genre_compliance::GenreEvidence {
+            has_hea: Some(has_hea),
+            has_solution: Some(has_solution),
+            has_ticking_clock: Some(has_ticking_clock),
+            protagonist_survives: Some(protagonist_survives),
+            character_growth: Some(character_growth),
+            worldbuilding_present: Some(worldbuilding_present),
+            word_count: Some(super::unsigned_index(word_count)?),
+            structure_health: Some(structure_health),
+            tension_arc_shape: Some(tension_arc_shape),
+            ..Default::default()
+        },
+    )
+    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+#[napi(
+    js_name = "checkGenreComplianceChecked",
+    ts_args_type = "genre: string, evidence: Partial<import('./standalone.generated').GenreEvidence>",
+    ts_return_type = "import('./standalone.generated').CheckGenreComplianceResult"
+)]
+pub fn check_genre_compliance_checked(
+    genre: String,
+    evidence: serde_json::Value,
+) -> napi::Result<serde_json::Value> {
+    let evidence = super::decode_input(evidence, "invalid genre evidence")?;
+    let result = genre_compliance::check_genre_compliance_checked(&genre, &evidence)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
 }
 
 /// Compute narrative entropy (information-pacing) across the manuscript.
@@ -175,7 +254,7 @@ pub fn check_genre_compliance(
 // typed as `Array<unknown>` rather than inlining the self-referential union.
 #[napi(
     js_name = "computeNarrativeEntropy",
-    ts_return_type = "{ questions: Array<{ id: number; question: string; isCdq: boolean; thread: 'MainPlot' | { Subplot: string } | { CharacterArc: string } | { Relationship: [string, string] } | { Mystery: string }; introducedAt: number; resolvedAt: number | null; outcomes: Array<{ description: string; probability: number; realized: boolean }> }>; entropyCurve: Array<{ scene: number; perQuestionEntropy: Array<[number, number]>; compositeEntropy: number; entropyRate: number; entropyAcceleration: number; informationGain: number; conditionalEntropies: Array<[number, number, number]> }>; cdqEntropyCurve: Array<number>; entropyRateCurve: Array<number>; redundantScenes: Array<[number, string]>; subplotIntegration: number; pacingScore: number; pacingDiagnosis: 'WellPaced' | { Predictable: { plateauScene: number } } | { Chaotic: { spikeScenes: Array<number> } } | { Rushed: { dropScene: number; dropMagnitude: number } } | { Unresolved: { finalEntropy: number; unresolvedQuestions: Array<string> } } | { Mixed: Array<unknown> }; complexityCurve: Array<number>; pacingFeedback: Array<{ sceneRange: [number, number]; issue: string; readerExperience: string; fix: string }>; overallPacingAssessment: string }"
+    ts_return_type = "import('./standalone.generated').ComputeNarrativeEntropyResult"
 )]
 pub fn compute_narrative_entropy(
     scenes: Vec<String>,
@@ -185,20 +264,56 @@ pub fn compute_narrative_entropy(
     character_arcs: Vec<(String, String)>,
 ) -> napi::Result<serde_json::Value> {
     let scene_refs: Vec<&str> = scenes.iter().map(|s| s.as_str()).collect();
-    let result = narrative_entropy::compute_narrative_entropy(
+    let result = narrative_entropy::compute_narrative_entropy_checked(
         &scene_refs,
         &themes,
         &structure_template,
         &genre,
         &character_arcs,
-    );
+    )
+    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+#[napi(
+    js_name = "measureNarrativeUncertainty",
+    ts_args_type = "manuscript: import('./manuscript').Manuscript, observations: import('./standalone.generated').SuppliedUncertainty[]",
+    ts_return_type = "import('./standalone.generated').MeasureNarrativeUncertaintyResult"
+)]
+pub fn measure_narrative_uncertainty(
+    manuscript: serde_json::Value,
+    observations: serde_json::Value,
+) -> napi::Result<serde_json::Value> {
+    let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
+    let observations: Vec<narrative_entropy::SuppliedUncertainty> =
+        super::decode_input(observations, "invalid uncertainty observations")?;
+    let result = narrative_entropy::measure_narrative_uncertainty(&manuscript, &observations)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
+}
+
+#[napi(
+    js_name = "measureSemanticNovelty",
+    ts_args_type = "embeddings: number[][], options?: Partial<import('./standalone.generated').SemanticNoveltyOptions>",
+    ts_return_type = "import('./standalone.generated').MeasureSemanticNoveltyResult"
+)]
+pub fn measure_semantic_novelty(
+    embeddings: Vec<Vec<f64>>,
+    options: Option<serde_json::Value>,
+) -> napi::Result<serde_json::Value> {
+    let options = super::decode_input(
+        options.unwrap_or_else(|| serde_json::json!({})),
+        "invalid semantic novelty options",
+    )?;
+    let result = narrative_entropy::measure_semantic_novelty(&embeddings, &options)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
 }
 
 /// Map a writer-declared genre label to a canonical genre, if recognized.
 #[napi(
     js_name = "genreFromLabel",
-    ts_return_type = "'Literary' | 'Thriller' | 'Mystery' | 'Romance' | 'Fantasy' | 'SciFi' | 'Horror' | 'HistoricalFiction' | 'YoungAdult' | 'ChildrensBook' | 'General' | null"
+    ts_return_type = "import('./standalone.generated').GenreFromLabelResult"
 )]
 pub fn genre_from_label(label: String) -> napi::Result<serde_json::Value> {
     let result = genre::genre_from_label(&label);
@@ -209,7 +324,7 @@ pub fn genre_from_label(label: String) -> napi::Result<serde_json::Value> {
 /// model is available, degrading to the keyword/prose-stats heuristic otherwise.
 #[napi(
     js_name = "detectGenre",
-    ts_return_type = "'Literary' | 'Thriller' | 'Mystery' | 'Romance' | 'Fantasy' | 'SciFi' | 'Horror' | 'HistoricalFiction' | 'YoungAdult' | 'ChildrensBook' | 'General'"
+    ts_return_type = "import('./standalone.generated').DetectGenreResult"
 )]
 pub fn detect_genre(
     themes: Vec<String>,
@@ -225,7 +340,7 @@ pub fn detect_genre(
 /// available, falling back to the label/theme-driven `detectGenre` otherwise.
 #[napi(
     js_name = "detectGenreSmart",
-    ts_return_type = "'Literary' | 'Thriller' | 'Mystery' | 'Romance' | 'Fantasy' | 'SciFi' | 'Horror' | 'HistoricalFiction' | 'YoungAdult' | 'ChildrensBook' | 'General'"
+    ts_return_type = "import('./standalone.generated').DetectGenreSmartResult"
 )]
 pub fn detect_genre_smart(
     sample_text: String,
@@ -242,7 +357,7 @@ pub fn detect_genre_smart(
 /// Evaluate manuscript metrics against a genre's expected quantitative profile.
 #[napi(
     js_name = "evaluateAgainstGenre",
-    ts_return_type = "Array<{ metric: string; value: number; expectedMin: number; expectedMax: number; severity: string; message: string }>"
+    ts_return_type = "import('./standalone.generated').EvaluateAgainstGenreResult"
 )]
 pub fn evaluate_against_genre(
     genre_label: String,
@@ -250,8 +365,8 @@ pub fn evaluate_against_genre(
     velocity: f64,
     dialogue_ratio: f64,
     tension_variance: f64,
-    tonal_whiplash_count: u32,
-    word_count: u32,
+    tonal_whiplash_count: f64,
+    word_count: f64,
 ) -> napi::Result<serde_json::Value> {
     let genre = genre::genre_from_label(&genre_label).ok_or_else(|| {
         napi::Error::from_reason(format!("Unknown genre label: '{}'", genre_label))
@@ -262,8 +377,8 @@ pub fn evaluate_against_genre(
         velocity,
         dialogue_ratio,
         tension_variance,
-        tonal_whiplash_count as usize,
-        word_count as usize,
+        super::unsigned_index(tonal_whiplash_count)?,
+        super::unsigned_index(word_count)?,
     );
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
@@ -271,7 +386,7 @@ pub fn evaluate_against_genre(
 /// Get the expected quantitative profile for a genre, by label.
 #[napi(
     js_name = "getGenreProfile",
-    ts_return_type = "{ genre: 'Literary' | 'Thriller' | 'Mystery' | 'Romance' | 'Fantasy' | 'SciFi' | 'Horror' | 'HistoricalFiction' | 'YoungAdult' | 'ChildrensBook' | 'General'; name: string; targetFkglMin: number; targetFkglMax: number; targetVelocityMin: number; targetVelocityMax: number; dialogueRatioMin: number; dialogueRatioMax: number; tensionVarianceMin: number; tonalWhiplashTolerance: number; acceptsNonlinear: boolean; requiresResolution: boolean; wordCountMin: number; wordCountMax: number; expectedScenesPer80k: [number, number]; expectedAvgSceneLength: [number, number]; maxAcceptableAdverbDensity: number; expectedCharacterCount: [number, number]; expectedAttributionRate: [number, number]; minProtagonistAgencyGrowth: number; tensionWeight: number; expectedTensionArc: string; climaxPositionRange: [number, number]; expectedVocabSophistication: [number, number]; expositionTolerance: number }"
+    ts_return_type = "import('./standalone.generated').GetGenreProfileResult"
 )]
 pub fn get_genre_profile(genre_label: String) -> napi::Result<serde_json::Value> {
     let genre = genre::genre_from_label(&genre_label).ok_or_else(|| {
@@ -282,7 +397,10 @@ pub fn get_genre_profile(genre_label: String) -> napi::Result<serde_json::Value>
 }
 
 /// Detect themes using SBERT if available, falling back to keyword detection.
-#[napi(js_name = "detectThemesSmart", ts_return_type = "Array<Record<string, number>>")]
+#[napi(
+    js_name = "detectThemesSmart",
+    ts_return_type = "import('./standalone.generated').DetectThemesSmartResult"
+)]
 pub fn detect_themes_smart(
     scenes: Vec<String>,
     scenes_tokens: Vec<Vec<String>>,
@@ -294,7 +412,7 @@ pub fn detect_themes_smart(
 /// Analyze how detected themes evolve and resolve across the manuscript.
 #[napi(
     js_name = "analyzeResolution",
-    ts_return_type = "Array<{ themeName: string; act1Presence: number; act2Presence: number; act3Presence: number; isResolved: boolean; status: string; quartilePresence: Array<number>; chapterCurve: Array<number>; peakChapter: number; consistency: number; momentum: number; momentumLabel: string }>"
+    ts_return_type = "import('./standalone.generated').AnalyzeResolutionResult"
 )]
 pub fn analyze_resolution(
     scene_themes: Vec<std::collections::HashMap<String, f64>>,

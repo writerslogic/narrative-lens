@@ -1,0 +1,68 @@
+{
+  "details": {
+    "crossBlockCosineMean": -0.027340317951609433,
+    "dim": 100,
+    "documents": 320,
+    "inputBytes": 220000,
+    "neighborPreview": [
+      [
+        "lexemebaaa",
+        0.9910572072824236
+      ],
+      [
+        "lexemefbaa",
+        0.9843357827271259
+      ],
+      [
+        "lexemecaaa",
+        0.9663103200486944
+      ]
+    ],
+    "tokens": 20000,
+    "vectorFingerprint": "f231462b91d7bcbe",
+    "vocab": 2500,
+    "withinBlockCosineMean": 0.5546812462514787
+  },
+  "medianMs": 67.444417,
+  "memoryScope": "Rust allocator requested live bytes above pre-call live allocation; excludes caller corpus, allocator metadata, stack, binary, OS RSS, non-Rust allocations; includes construction intermediates and retained output",
+  "method": "spelling: cold first call then warmed samples of 20 queries; embeddings: identical generated corpus per sample after one tiny initialization warmup; no model runtime",
+  "mode": "embedding",
+  "profile": "release; default features; one process; allocation accounting enabled; compilation excluded",
+  "samples": [
+    {
+      "allocationCalls": 51646,
+      "ms": 68.423625,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 67.348041,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 67.885167,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 67.11954200000001,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    },
+    {
+      "allocationCalls": 51646,
+      "ms": 67.444417,
+      "peakAdditionalRequestedBytes": 11945240,
+      "retainedAdditionalRequestedBytes": 2385888,
+      "totalRequestedBytes": 38419696
+    }
+  ]
+}

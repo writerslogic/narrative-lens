@@ -4,6 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FindingKind {
@@ -13,6 +14,7 @@ pub enum FindingKind {
     Capitalization,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GrammarFinding {
     pub kind: FindingKind,
@@ -24,15 +26,55 @@ pub struct GrammarFinding {
 }
 
 pub fn check(text: &str) -> Vec<GrammarFinding> {
+    check_bounded(text, usize::MAX).0
+}
+
+pub(crate) fn check_bounded(text: &str, limit: usize) -> (Vec<GrammarFinding>, bool) {
+    check_selected(text, limit, &Selection::default())
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Selection {
+    pub repetition: bool,
+    pub spelling: bool,
+    pub whitespace: bool,
+    pub dictionary: std::sync::Arc<std::collections::BTreeSet<String>>,
+}
+impl Default for Selection {
+    fn default() -> Self {
+        Self {
+            repetition: true,
+            spelling: true,
+            whitespace: true,
+            dictionary: Default::default(),
+        }
+    }
+}
+pub(crate) fn check_selected(
+    text: &str,
+    limit: usize,
+    selection: &Selection,
+) -> (Vec<GrammarFinding>, bool) {
     let mut findings = Vec::new();
+    if !(selection.repetition || selection.spelling || selection.whitespace) {
+        return (findings, false);
+    }
+    let offsets = crate::substrate::offsets::OffsetIndex::new(text)
+        .expect("grammar text fits offset coordinates");
     let words = word_spans(text);
 
     for pair in words.windows(2) {
+        if findings.len() > limit {
+            break;
+        }
         let (a, b) = (&pair[0], &pair[1]);
-        if a.word.eq_ignore_ascii_case(b.word) && separator_is_only_space(text, a.end, b.start) {
+        if selection.repetition
+            && a.word.eq_ignore_ascii_case(b.word)
+            && separator_is_only_space(text, a.end, b.start)
+        {
             findings.push(finding(
                 FindingKind::Repetition,
-                text,
+                &offsets,
                 b.start,
                 b.end,
                 format!("Repeated word ‘{}’.", b.word),
@@ -42,17 +84,22 @@ pub fn check(text: &str) -> Vec<GrammarFinding> {
     }
 
     for span in &words {
+        if findings.len() > limit {
+            break;
+        }
         let lower = span.word.to_lowercase();
         let looks_like_name = span.word.chars().next().is_some_and(char::is_uppercase);
         let possessive_or_contraction = span.word.contains(['\'', '’']);
-        if span.word.chars().count() >= 3
+        if selection.spelling
+            && !selection.dictionary.contains(&lower)
+            && span.word.chars().count() >= 3
             && !looks_like_name
             && !possessive_or_contraction
             && crate::substrate::wordfreq::zipf_frequency(&lower) == 0.0
         {
             findings.push(finding(
                 FindingKind::Spelling,
-                text,
+                &offsets,
                 span.start,
                 span.end,
                 format!("‘{}’ is not in the local dictionary.", span.word),
@@ -63,8 +110,8 @@ pub fn check(text: &str) -> Vec<GrammarFinding> {
 
     let bytes = text.as_bytes();
     let mut index = 0;
-    while index + 1 < bytes.len() {
-        if bytes[index] == b' ' && bytes[index + 1] == b' ' {
+    while index + 1 < bytes.len() && findings.len() <= limit {
+        if selection.whitespace && bytes[index] == b' ' && bytes[index + 1] == b' ' {
             let start = index + 1;
             let mut end = start;
             while end < bytes.len() && bytes[end] == b' ' {
@@ -72,7 +119,7 @@ pub fn check(text: &str) -> Vec<GrammarFinding> {
             }
             findings.push(finding(
                 FindingKind::Whitespace,
-                text,
+                &offsets,
                 start,
                 end,
                 "Multiple spaces.".into(),
@@ -84,8 +131,10 @@ pub fn check(text: &str) -> Vec<GrammarFinding> {
         }
     }
 
+    let limited = findings.len() > limit;
+    findings.truncate(limit);
     findings.sort_by_key(|item| (item.utf16_start, item.utf16_end));
-    findings
+    (findings, limited)
 }
 
 struct WordSpan<'a> {
@@ -131,7 +180,7 @@ fn separator_is_only_space(text: &str, start: usize, end: usize) -> bool {
 
 fn finding(
     kind: FindingKind,
-    text: &str,
+    offsets: &crate::substrate::offsets::OffsetIndex<'_>,
     start: usize,
     end: usize,
     message: String,
@@ -139,9 +188,12 @@ fn finding(
 ) -> GrammarFinding {
     GrammarFinding {
         kind,
-        utf16_start: crate::substrate::text::byte_to_utf16_offset(text, start).unwrap_or(0),
-        utf16_end: crate::substrate::text::byte_to_utf16_offset(text, end)
-            .unwrap_or_else(|| crate::substrate::text::utf16_len(text)),
+        utf16_start: offsets
+            .utf16(start)
+            .expect("word boundary belongs to original text"),
+        utf16_end: offsets
+            .utf16(end)
+            .expect("word boundary belongs to original text"),
         message,
         replacements,
     }
@@ -156,9 +208,11 @@ mod tests {
         let found = check("Mara saw saw a  qwick fox.");
         assert!(found.iter().any(|f| f.kind == FindingKind::Repetition));
         assert!(found.iter().any(|f| f.kind == FindingKind::Whitespace));
-        assert!(found
-            .iter()
-            .any(|f| f.kind == FindingKind::Spelling && f.replacements.contains(&"quick".into())));
+        assert!(
+            found.iter().any(
+                |f| f.kind == FindingKind::Spelling && f.replacements.contains(&"quick".into())
+            )
+        );
         assert!(!found.iter().any(|f| f.message.contains("Mara")));
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "narrative-lens",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "Apache-2.0",
   "author": "WritersLogic, Inc. <david@writerslogic.com>",
   "description": "Local, deterministic prose and narrative-craft analysis -- readability, pacing, voice, foreshadowing, continuity -- extracted from Emathy's meaning engine.",
@@ -31,6 +31,15 @@
     }
   },
   "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.mjs",
+    "index.d.ts",
+    "manuscript.d.ts",
+    "manuscript.generated.d.ts",
+    "standalone.generated.d.ts",
+    "THIRD_PARTY_NOTICES"
+  ],
   "napi": {
     "binaryName": "narrative-lens",
     "targets": [
@@ -43,11 +52,14 @@
   "scripts": {
     "build": "napi build --platform --release --features node-api",
     "build:debug": "napi build --platform --features node-api",
-    "prepublishOnly": "napi prepublish -t npm",
+    "prepublishOnly": "node scripts/release_artifacts.mjs --stage-notices && node scripts/release_artifacts.mjs && napi prepublish -t npm --no-gh-release",
     "artifacts": "napi artifacts",
     "version": "napi version",
     "test": "node --test tests/node/*.test.cjs",
-    "test:types": "tsc --noEmit --strict --target es2022 --module nodenext --moduleResolution nodenext --types node tests/node/types.test.mts"
+    "test:types": "tsc --noEmit --strict --target es2022 --module nodenext --moduleResolution nodenext --types node tests/node/types.test.mts",
+    "test:examples": "node examples/analyze-passage.mjs && node examples/manuscript.mjs",
+    "test:contracts": "node scripts/verify_contracts.mjs && node scripts/verify_standalone_contracts.mjs",
+    "test:package": "node scripts/test_package.mjs"
   },
   "devDependencies": {
     "@napi-rs/cli": "^3",

@@ -4,16 +4,13 @@
 //! The model runtimes differ, but everything *after* the raw tensor comes back
 //! is pure arithmetic over `f32`/`i64` buffers: masked mean-pooling for SBERT
 //! and BIO span decoding for NER. Keeping it here — with no `ort`/`tract`
-//! dependency — means the two backends share exactly one implementation, so a
-//! wasm embedding/tag is bit-for-bit identical to the native one, and this logic
+//! dependency — means the two backends share exactly one implementation, so identical output tensors share the same decoding on both backends, and this logic
 //! is unit-tested on the host gate even though the wasm backend cannot be.
 //!
 //! [`InferenceBackend`]: super::InferenceBackend
 
-/// BERT NER label set (BIO tags), index-aligned with the model's logits.
-pub(super) const NER_LABEL_NAMES: [&str; 9] = [
-    "O", "B-MISC", "I-MISC", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC",
-];
+use super::model::NER_LABEL_NAMES;
+use crate::substrate::utils::is_honorific;
 
 /// Masked mean-pool a batch of token embeddings into one sentence vector per row.
 ///
@@ -80,21 +77,24 @@ pub(super) fn softmax(logits: &[f32]) -> Vec<f64> {
 ///
 /// `logits` is the row-major `[batch, max_len, num_labels]` tensor; row `b`'s
 /// token `i` starts at `(b * max_len + i) * num_labels`. Returns one label index
-/// per real token (padding tokens beyond `seq_len` are not decoded).
+/// per real token (padding tokens beyond `seq_len` are not decoded). A supplied
+/// canonical-to-source map makes both winners and ties use canonical indices.
 pub(super) fn argmax_labels(
     logits: &[f32],
     b: usize,
     max_len: usize,
     num_labels: usize,
     seq_len: usize,
+    canonical_to_source: Option<&[usize]>,
 ) -> Vec<usize> {
     let mut predicted: Vec<usize> = Vec::with_capacity(seq_len);
     for i in 0..seq_len {
         let base = (b * max_len + i) * num_labels;
         let mut best = (0usize, f32::NEG_INFINITY);
         for j in 0..num_labels {
-            if logits[base + j] > best.1 {
-                best = (j, logits[base + j]);
+            let source = canonical_to_source.map_or(j, |order| order[j]);
+            if logits[base + source] > best.1 {
+                best = (j, logits[base + source]);
             }
         }
         predicted.push(best.0);
@@ -112,7 +112,8 @@ fn entity_type(label: &str) -> &str {
 }
 
 /// Push `(span, type, start, end)` for a completed entity if its byte range is
-/// in bounds and non-blank. Out-of-range or whitespace-only spans are dropped.
+/// in bounds and holds a letter or digit. Out-of-range, blank or punctuation-only
+/// spans are dropped.
 fn flush_entity(
     entities: &mut Vec<(String, String, usize, usize)>,
     text: &str,
@@ -120,10 +121,16 @@ fn flush_entity(
     start: usize,
     end: usize,
 ) {
-    if end <= text.len() {
-        let span = &text[start..end];
-        if !span.trim().is_empty() {
-            entities.push((span.trim().to_string(), etype.to_string(), start, end));
+    if let Some(span) = text.get(start..end) {
+        let trimmed = span.trim();
+        let leading = span.len() - span.trim_start().len();
+        if trimmed.chars().any(char::is_alphanumeric) {
+            entities.push((
+                trimmed.into(),
+                etype.into(),
+                start + leading,
+                start + leading + trimmed.len(),
+            ));
         }
     }
 }
@@ -131,17 +138,23 @@ fn flush_entity(
 /// Group per-token BIO label predictions into `(text, type, start, end)` entity
 /// spans over `text`. `offsets[i]` is token `i`'s `(start, end)` byte range in
 /// `text`; a `(0, 0)` offset marks a special token (CLS/SEP/pad) and closes any
-/// open entity. Shared by the single and batched NER paths so there is exactly
-/// one decode implementation across both backends.
+/// open entity. `words[i]` is the tokenizer's word id: a token repeating the
+/// previous word id is a wordpiece continuation, which takes the word's first
+/// token label (the only one the model is trained on) and only extends the
+/// span, so a name split into pieces stays one entity. Shared by the single and
+/// batched NER paths so there is exactly one decode implementation across both
+/// backends.
 pub(super) fn decode_entities(
     predicted: &[usize],
     offsets: &[(usize, usize)],
+    words: &[Option<u32>],
     text: &str,
 ) -> Vec<(String, String, usize, usize)> {
     let mut entities: Vec<(String, String, usize, usize)> = Vec::new();
     let mut cur_type: Option<&str> = None;
     let mut cur_start = 0usize;
     let mut cur_end = 0usize;
+    let mut previous_word = None;
 
     for (i, &lid) in predicted.iter().enumerate() {
         if i >= offsets.len() {
@@ -150,6 +163,16 @@ pub(super) fn decode_entities(
         if offsets[i].0 == offsets[i].1 {
             if let Some(et) = cur_type.take() {
                 flush_entity(&mut entities, text, et, cur_start, cur_end);
+            }
+            previous_word = None;
+            continue;
+        }
+        let word = words.get(i).copied().flatten();
+        let continuation = word.is_some() && word == previous_word;
+        previous_word = word;
+        if continuation {
+            if cur_type.is_some() {
+                cur_end = offsets[i].1;
             }
             continue;
         }
@@ -184,7 +207,54 @@ pub(super) fn decode_entities(
     if let Some(et) = cur_type {
         flush_entity(&mut entities, text, et, cur_start, cur_end);
     }
+    attach_person_titles(&mut entities, text);
     entities
+}
+
+/// Start of a capitalised honorific that directly precedes `start` (`Mr. `,
+/// `Mrs `), if any, not reaching before `floor`.
+fn title_before(text: &str, start: usize, floor: usize) -> Option<usize> {
+    let head = text.get(floor..start)?;
+    let gap = head.trim_end_matches(['.', ' ']);
+    let separator = &head[gap.len()..];
+    if separator.chars().filter(|&ch| ch == '.').count() > 1
+        || separator.chars().filter(|&ch| ch == ' ').count() > 1
+        || separator.is_empty()
+    {
+        return None;
+    }
+    let word_start = gap
+        .rfind(|ch: char| !ch.is_alphabetic())
+        .map_or(0, |index| {
+            index + gap[index..].chars().next().map_or(1, char::len_utf8)
+        });
+    let word = &gap[word_start..];
+    (word.chars().next()?.is_uppercase() && is_honorific(word)).then_some(floor + word_start)
+}
+
+/// Trim leading punctuation from person spans (`. Todd` after an untagged
+/// `Mrs`) and extend them over an adjacent honorific, so `Mrs. Todd` is one
+/// entity as written. Never reaches into a preceding entity.
+fn attach_person_titles(entities: &mut [(String, String, usize, usize)], text: &str) {
+    let mut floor = 0;
+    for entity in entities.iter_mut() {
+        if entity.1 == "PER" {
+            let skipped = text[entity.2..entity.3]
+                .find(char::is_alphanumeric)
+                .unwrap_or(0);
+            let start = entity.2 + skipped;
+            let start = title_before(text, start, floor).unwrap_or(if skipped > 0 {
+                start
+            } else {
+                entity.2
+            });
+            if start != entity.2 {
+                entity.2 = start;
+                entity.0 = text[start..entity.3].trim().into();
+            }
+        }
+        floor = entity.3;
+    }
 }
 
 #[cfg(test)]
@@ -240,8 +310,15 @@ mod tests {
             0.1, 0.9, 0.2, // token 0 -> label 1
             5.0, 1.0, 2.0, // token 1 -> label 0
         ];
-        let got = argmax_labels(&logits, 0, 2, 3, 2);
+        let got = argmax_labels(&logits, 0, 2, 3, 2, None);
         assert_eq!(got, vec![1, 0]);
+    }
+
+    #[test]
+    fn argmax_ties_use_the_requested_order_and_preserve_legacy_source_order() {
+        let logits = [0.0, 0.0, 0.0, 2.0, 2.0, -1.0];
+        assert_eq!(argmax_labels(&logits, 0, 2, 3, 2, None), [0, 0]);
+        assert_eq!(argmax_labels(&logits, 0, 2, 3, 2, Some(&[2, 0, 1])), [0, 1]);
     }
 
     #[test]
@@ -263,7 +340,7 @@ mod tests {
         // label ids: 3=B-PER, 4=I-PER, 0=O
         let predicted = vec![0usize, 3, 4, 0, 0];
         let offsets = vec![(0, 0), (0, 5), (6, 11), (12, 16), (0, 0)];
-        let ents = decode_entities(&predicted, &offsets, text);
+        let ents = decode_entities(&predicted, &offsets, &[], text);
         assert_eq!(ents.len(), 1);
         assert_eq!(ents[0].0, "Alice Smith");
         assert_eq!(ents[0].1, "PER");
@@ -275,10 +352,67 @@ mod tests {
         let text = "Paris London";
         let predicted = vec![7usize, 7]; // B-LOC, B-LOC
         let offsets = vec![(0, 5), (6, 12)];
-        let ents = decode_entities(&predicted, &offsets, text);
+        let ents = decode_entities(&predicted, &offsets, &[], text);
         assert_eq!(ents.len(), 2);
         assert_eq!(ents[0].0, "Paris");
         assert_eq!(ents[1].0, "London");
         assert!(ents.iter().all(|e| e.1 == "LOC"));
+    }
+
+    #[test]
+    fn decoded_unicode_quotes_and_trimmed_ranges_agree() {
+        let text = "  Zoë  ";
+        let entities = decode_entities(&[3], &[(0, text.len())], &[], text);
+        assert_eq!(entities.len(), 1);
+        let (quote, label, start, end) = &entities[0];
+        assert_eq!(quote, "Zoë");
+        assert_eq!(label, "PER");
+        assert_eq!(&text[*start..*end], quote);
+        assert!(decode_entities(&[3], &[(3, 4)], &[], "Zoë").is_empty());
+    }
+
+    #[test]
+    fn wordpiece_continuations_extend_the_first_piece_label() {
+        // "Marilla smiled": Mari ##lla smiled; the model tags the pieces
+        // B-PER, B-PER, then O, which must still be one PER span.
+        let text = "Marilla smiled";
+        let predicted = [3usize, 3, 0];
+        let offsets = [(0, 4), (4, 7), (8, 14)];
+        let words = [Some(0), Some(0), Some(1)];
+        let ents = decode_entities(&predicted, &offsets, &words, text);
+        assert_eq!(ents, [("Marilla".into(), "PER".into(), 0, 7)]);
+        // A continuation never opens an entity when its word starts as O.
+        let ents = decode_entities(&[0, 3, 0], &offsets, &words, text);
+        assert!(ents.is_empty());
+        // Adjacent distinct words stay separate: the apostrophe is its own word
+        // and, being punctuation, never joins or becomes an entity.
+        let text = "Rachel's";
+        let offsets = [(0, 6), (6, 7), (7, 8)];
+        let words = [Some(0), Some(1), Some(2)];
+        let ents = decode_entities(&[3, 3, 0], &offsets, &words, text);
+        assert_eq!(ents, [("Rachel".into(), "PER".into(), 0, 6)]);
+    }
+
+    #[test]
+    fn person_spans_absorb_adjacent_honorifics_and_drop_punctuation_only_spans() {
+        let text = "Mrs. Todd met Sir Henry and “ Dr Livesey .";
+        let at = |needle: &str| {
+            let start = text.find(needle).unwrap();
+            (start, start + needle.len())
+        };
+        // `Todd` and `Henry Curtis`-style spans exclude their honorific; a
+        // stray `.` span after an untagged `Mrs` starts mid-title.
+        let offsets = [at(". Todd"), at("Henry"), at("“"), at("Livesey")];
+        let ents = decode_entities(&[3, 3, 3, 3], &offsets, &[], text);
+        let got: Vec<_> = ents.iter().map(|e| e.0.as_str()).collect();
+        assert_eq!(got, ["Mrs. Todd", "Sir Henry", "Dr Livesey"]);
+        for (quote, _, start, end) in &ents {
+            assert_eq!(&text[*start..*end], quote);
+        }
+        // Non-person entities and ordinary words are left alone.
+        let ents = decode_entities(&[7], &[at("Todd")], &[], text);
+        assert_eq!(ents[0].0, "Todd");
+        let ents = decode_entities(&[3], &[at("met")], &[], text);
+        assert_eq!(ents[0].0, "met");
     }
 }

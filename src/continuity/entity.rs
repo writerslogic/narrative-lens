@@ -22,6 +22,7 @@ use crate::substrate::common_types::Provenance;
 
 /// What kind of thing an entity is. Characters, settings, and symbols share one
 /// resolution mechanism.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum EntityType {
@@ -49,6 +50,7 @@ impl Mention {
 }
 
 /// A resolved entity: its canonical form, observed surface forms, and evidence.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Entity {
@@ -57,7 +59,7 @@ pub struct Entity {
     pub kind: EntityType,
     pub aliases: Vec<String>,
     pub mention_count: usize,
-    /// 0..1; low for thinly-evidenced entities (surfaced, not dropped).
+    /// Heuristic support tier, not a calibrated semantic-accuracy probability.
     pub confidence: f64,
     pub provenance: Provenance,
 }
@@ -65,45 +67,313 @@ pub struct Entity {
 /// Minimum context cosine for two surface-compatible mentions to be the same
 /// entity. Below it, ambiguous surnames resolve to separate entities.
 const DEFAULT_CONTEXT_FLOOR: f64 = 0.45;
+pub const MAX_ENTITY_MENTIONS: usize = 10_000;
+pub const MAX_ENTITY_CONTEXT_VALUES: usize = 1_048_576;
+
+fn validate_surface(surface: &str) -> crate::Result<()> {
+    crate::manuscript::config::validate_id(surface)
+}
+fn validated_mentions(mentions: &[Mention]) -> crate::Result<Vec<Mention>> {
+    if mentions.len() > MAX_ENTITY_MENTIONS {
+        return Err(crate::Error::InvalidInput(
+            "entity mentions exceed10000".into(),
+        ));
+    }
+    let mut values = 0usize;
+    let mut dimensions = None;
+    let mut normalized = Vec::with_capacity(mentions.len());
+    for mention in mentions {
+        validate_surface(&mention.surface)?;
+        values = values
+            .checked_add(mention.context.len())
+            .filter(|n| *n <= MAX_ENTITY_CONTEXT_VALUES)
+            .ok_or_else(|| crate::Error::InvalidInput("entity context budget exceeded".into()))?;
+        if mention.context.len() > 4096 || mention.context.iter().any(|value| !value.is_finite()) {
+            return Err(crate::Error::InvalidInput(
+                "entity contexts require at most4096 finite values".into(),
+            ));
+        }
+        let scale = mention
+            .context
+            .iter()
+            .map(|value| value.abs())
+            .fold(0.0, f64::max);
+        let context = if scale == 0.0 {
+            Vec::new()
+        } else {
+            if dimensions.is_some_and(|d| d != mention.context.len()) {
+                return Err(crate::Error::InvalidInput(
+                    "entity context dimensions disagree".into(),
+                ));
+            }
+            dimensions = Some(mention.context.len());
+            let mut context: Vec<_> = mention.context.iter().map(|value| value / scale).collect();
+            let norm = context
+                .iter()
+                .map(|value| value * value)
+                .sum::<f64>()
+                .sqrt();
+            for value in &mut context {
+                *value /= norm;
+            }
+            context
+        };
+        normalized.push(Mention::new(mention.surface.clone(), context));
+    }
+    Ok(normalized)
+}
+
+pub fn resolve_checked(mentions: &[Mention], kind: EntityType) -> crate::Result<Vec<Entity>> {
+    Ok(resolve_with_floor(
+        &validated_mentions(mentions)?,
+        kind,
+        DEFAULT_CONTEXT_FLOOR,
+    ))
+}
+
+pub fn resolve_with_corrections_checked(
+    mentions: &[Mention],
+    kind: EntityType,
+    corrections: &[EntityCorrection],
+) -> crate::Result<Vec<Entity>> {
+    let normalized = validated_mentions(mentions)?;
+    if corrections.len() > MAX_ENTITY_MENTIONS {
+        return Err(crate::Error::InvalidInput(
+            "entity corrections exceed10000".into(),
+        ));
+    }
+    let mut bytes = mentions
+        .iter()
+        .map(|mention| mention.surface.len())
+        .sum::<usize>();
+    for correction in corrections {
+        validate_surface(&correction.surface)?;
+        let canonical = if let CorrectionAction::Assign { canonical } = &correction.action {
+            validate_surface(canonical)?;
+            canonical.len()
+        } else {
+            0
+        };
+        bytes = bytes
+            .checked_add(correction.surface.len() + canonical)
+            .filter(|n| *n <= 4 * 1024 * 1024)
+            .ok_or_else(|| {
+                crate::Error::InvalidInput("entity correction metadata exceeds4MiB".into())
+            })?;
+    }
+    if corrections.is_empty() {
+        return Ok(resolve_with_floor(&normalized, kind, DEFAULT_CONTEXT_FLOOR));
+    }
+    Ok(apply_corrections(
+        resolve_clusters(&normalized, DEFAULT_CONTEXT_FLOOR, kind),
+        kind,
+        corrections,
+    ))
+}
+
+fn entity_id<'a>(kind: EntityType, surfaces: impl Iterator<Item = &'a str>) -> String {
+    let key = surfaces
+        .map(|surface| {
+            let mut tokens = normalized_tokens(kind, surface);
+            if kind != EntityType::Character {
+                tokens.sort();
+            }
+            tokens
+        })
+        .max_by(|a, b| a.len().cmp(&b.len()).then_with(|| a.cmp(b)))
+        .unwrap_or_default()
+        .join("\0");
+    let mut hash = 0xcbf29ce484222325u64;
+    for byte in format!("entity-v2:{kind:?}\0{key}").bytes() {
+        hash ^= u64::from(byte);
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    let slug = crate::substrate::utils::slug(&key.replace('\0', " "))
+        .chars()
+        .take(64)
+        .collect::<String>();
+    format!("ent-{slug}-{hash:016x}")
+}
+fn finalize_ids(entities: &mut [Entity]) {
+    entities.sort_by(|a, b| {
+        a.canonical
+            .cmp(&b.canonical)
+            .then_with(|| a.aliases.cmp(&b.aliases))
+            .then_with(|| a.mention_count.cmp(&b.mention_count))
+            .then_with(|| a.id.cmp(&b.id))
+    });
+    let mut groups = std::collections::BTreeMap::<String, Vec<usize>>::new();
+    for (index, entity) in entities.iter().enumerate() {
+        groups.entry(entity.id.clone()).or_default().push(index);
+    }
+    for (id, indices) in groups {
+        if indices.len() > 1 {
+            for (suffix, index) in indices.into_iter().enumerate() {
+                entities[index].id = format!("{id}-{}", suffix + 1);
+            }
+        }
+    }
+}
 
 struct Cluster {
     surfaces: Vec<(String, usize)>, // surface form -> count
+    forms: Vec<Vec<String>>,
     centroid: Vec<f64>,
     context_n: usize,
 }
 
 /// Resolve mentions into entities of the given `kind`.
 pub fn resolve(mentions: &[Mention], kind: EntityType) -> Vec<Entity> {
-    resolve_with_floor(mentions, kind, DEFAULT_CONTEXT_FLOOR)
+    resolve_checked(mentions, kind).unwrap_or_default()
 }
 
 fn resolve_with_floor(mentions: &[Mention], kind: EntityType, floor: f64) -> Vec<Entity> {
-    let mut clusters: Vec<Cluster> = Vec::new();
-
-    for m in mentions {
-        let mut matched = None;
-        for (i, c) in clusters.iter().enumerate() {
-            if cluster_accepts(c, m, floor) {
-                matched = Some(i);
-                break;
-            }
-        }
-        match matched {
-            Some(i) => add_to_cluster(&mut clusters[i], m),
-            None => clusters.push(new_cluster(m)),
-        }
-    }
-
-    clusters
+    let mut entities: Vec<_> = resolve_clusters(mentions, floor, kind)
         .into_iter()
         .map(|c| finish_cluster(c, kind))
-        .collect()
+        .collect();
+    finalize_ids(&mut entities);
+    entities
+}
+
+pub(crate) fn resolve_counted(
+    surfaces: &[(String, usize)],
+    kind: EntityType,
+) -> crate::Result<Vec<Entity>> {
+    if surfaces.len() > MAX_ENTITY_MENTIONS {
+        return Err(crate::Error::InvalidInput(
+            "entity surfaces exceed10000".into(),
+        ));
+    }
+    let mut weights = std::collections::BTreeMap::<String, usize>::new();
+    let mut total = 0usize;
+    for (surface, count) in surfaces {
+        validate_surface(surface)?;
+        total = total
+            .checked_add(*count)
+            .ok_or_else(|| crate::Error::InvalidInput("entity mention counts overflow".into()))?;
+        if *count > 0 {
+            *weights.entry(surface.clone()).or_default() += count;
+        }
+    }
+    let mentions: Vec<_> = weights
+        .keys()
+        .map(|surface| Mention::new(surface, vec![]))
+        .collect();
+    let mut clusters = resolve_clusters(&mentions, DEFAULT_CONTEXT_FLOOR, kind);
+    for cluster in &mut clusters {
+        for (surface, count) in &mut cluster.surfaces {
+            *count = weights[surface];
+        }
+    }
+    let mut entities: Vec<_> = clusters
+        .into_iter()
+        .map(|cluster| finish_cluster(cluster, kind))
+        .collect();
+    finalize_ids(&mut entities);
+    Ok(entities)
+}
+
+fn surface_key(kind: EntityType, surface: &str) -> Vec<String> {
+    let mut tokens = normalized_tokens(kind, surface);
+    if kind != EntityType::Character {
+        tokens.sort();
+        tokens.dedup();
+    }
+    tokens
+}
+fn compatible_tokens(kind: EntityType, a: &[String], b: &[String]) -> bool {
+    if kind == EntityType::Character {
+        if a.len() == 1 {
+            return a[0] == b[0] || Some(&a[0]) == b.last();
+        }
+        if b.len() == 1 {
+            return b[0] == a[0] || Some(&b[0]) == a.last();
+        }
+        if a.first() != b.first() || a.last() != b.last() {
+            return false;
+        }
+        let (short, long) = if a.len() <= b.len() { (a, b) } else { (b, a) };
+        let mut matched = 0;
+        for token in long {
+            if short.get(matched) == Some(token) {
+                matched += 1;
+            }
+        }
+        return matched == short.len();
+    }
+    a.iter().all(|token| b.binary_search(token).is_ok())
+        || b.iter().all(|token| a.binary_search(token).is_ok())
+}
+fn resolve_clusters(mentions: &[Mention], floor: f64, kind: EntityType) -> Vec<Cluster> {
+    let mut ordered: Vec<_> = mentions
+        .iter()
+        .map(|mention| (mention, surface_key(kind, &mention.surface)))
+        .collect();
+    ordered.sort_by(|(a, ak), (b, bk)| {
+        bk.len()
+            .cmp(&ak.len())
+            .then_with(|| a.surface.cmp(&b.surface))
+            .then_with(|| {
+                a.context
+                    .iter()
+                    .zip(&b.context)
+                    .map(|(a, b)| a.total_cmp(b))
+                    .find(|order| !order.is_eq())
+                    .unwrap_or_else(|| a.context.len().cmp(&b.context.len()))
+            })
+    });
+    let mut clusters: Vec<Cluster> = Vec::new();
+    let mut index = std::collections::BTreeMap::<String, std::collections::BTreeSet<usize>>::new();
+    for (mention, key) in ordered {
+        let postings: Vec<_> = key.iter().filter_map(|token| index.get(token)).collect();
+        let possible = if postings.len() == key.len() {
+            let mut possible = postings
+                .iter()
+                .min_by_key(|set| set.len())
+                .map(|set| (*set).clone())
+                .unwrap_or_default();
+            possible.retain(|candidate| postings.iter().all(|set| set.contains(candidate)));
+            possible
+        } else {
+            std::collections::BTreeSet::new()
+        };
+        let candidates: Vec<_> = possible
+            .into_iter()
+            .filter(|&i| cluster_accepts(&clusters[i], mention, floor, &key, kind))
+            .collect();
+        let exact: Vec<_> = candidates
+            .iter()
+            .copied()
+            .filter(|&i| clusters[i].forms.contains(&key))
+            .collect();
+        let matched = if exact.len() == 1 {
+            Some(exact[0])
+        } else if candidates.len() == 1 {
+            Some(candidates[0])
+        } else {
+            None
+        };
+        let id = if let Some(id) = matched {
+            add_to_cluster(&mut clusters[id], mention, &key);
+            id
+        } else {
+            clusters.push(new_cluster(mention, &key));
+            clusters.len() - 1
+        };
+        for token in key {
+            index.entry(token).or_default().insert(id);
+        }
+    }
+    clusters
 }
 
 /// A writer's authoritative decision about one mention surface, persisted and
 /// reapplied over the automatic resolution. A correction is keyed by the
 /// `surface` form it targets; the caller looks corrections up per document.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct EntityCorrection {
     /// The mention surface this decision applies to (e.g. "Mr. Condrey").
     pub surface: String,
@@ -115,13 +385,31 @@ pub struct EntityCorrection {
 /// both bind a surface to a named canonical entity (tagging a previously
 /// unrecognized mention vs. moving a mis-grouped one); they carry the same data
 /// and are applied identically, so they share [`CorrectionAction::Assign`].
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum CorrectionAction {
     /// Bind the surface to the entity with this canonical name (tag or reassign).
     Assign { canonical: String },
     /// Suppress the surface: it is not a real entity mention.
     Reject,
+}
+
+impl<'de> Deserialize<'de> for CorrectionAction {
+    fn deserialize<D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> std::result::Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+        enum Wire {
+            Assign { canonical: String },
+            Reject {},
+        }
+        Ok(match Wire::deserialize(deserializer)? {
+            Wire::Assign { canonical } => Self::Assign { canonical },
+            Wire::Reject {} => Self::Reject,
+        })
+    }
 }
 
 /// Resolve mentions, then apply the writer's persisted `corrections` over the
@@ -134,24 +422,20 @@ pub fn resolve_with_corrections(
     kind: EntityType,
     corrections: &[EntityCorrection],
 ) -> Vec<Entity> {
-    let auto = resolve(mentions, kind);
-    apply_corrections(auto, kind, corrections)
+    resolve_with_corrections_checked(mentions, kind, corrections).unwrap_or_default()
 }
 
 /// Apply corrections to an already-resolved entity set. Split out so a caller
 /// can also surface a correction's effect deterministically.
 fn apply_corrections(
-    entities: Vec<Entity>,
+    clusters: Vec<Cluster>,
     kind: EntityType,
     corrections: &[EntityCorrection],
 ) -> Vec<Entity> {
-    if corrections.is_empty() {
-        return entities;
-    }
     // Index corrections by surface; a later correction for the same surface wins
     // (the writer's most recent decision is authoritative).
-    let mut by_surface: std::collections::HashMap<&str, &CorrectionAction> =
-        std::collections::HashMap::new();
+    let mut by_surface: std::collections::BTreeMap<&str, &CorrectionAction> =
+        std::collections::BTreeMap::new();
     for c in corrections {
         by_surface.insert(c.surface.as_str(), &c.action);
     }
@@ -162,16 +446,21 @@ fn apply_corrections(
     // surface stays in its original auto entity; a rejected surface is dropped.
     // An entity left with no surfaces disappears.
     let mut bins: Vec<Bin> = Vec::new();
-    let mut bin_index: std::collections::HashMap<String, usize> =
-        std::collections::HashMap::new();
+    let mut bin_index: std::collections::HashMap<BinKey, usize> = std::collections::HashMap::new();
 
-    for ent in entities {
-        // Reconstruct per-surface counts: aliases carry no count in `Entity`, so
-        // give the canonical the bulk of the mentions and each alias one.
-        let alias_n = ent.aliases.len();
-        let canonical_count = ent.mention_count.saturating_sub(alias_n).max(1);
-        let surfaces = std::iter::once((ent.canonical.clone(), canonical_count))
-            .chain(ent.aliases.iter().cloned().map(|a| (a, 1usize)));
+    let mut clusters = clusters;
+    for cluster in &mut clusters {
+        sort_surfaces(&mut cluster.surfaces, kind);
+    }
+    let mut counts = std::collections::BTreeMap::new();
+    for cluster in &clusters {
+        *counts
+            .entry(cluster.surfaces[0].0.clone())
+            .or_insert(0usize) += 1;
+    }
+    for (cluster_id, cluster) in clusters.into_iter().enumerate() {
+        let surfaces = cluster.surfaces;
+        let auto_canonical = surfaces[0].0.clone();
         for (surface, count) in surfaces {
             match by_surface.get(surface.as_str()) {
                 Some(CorrectionAction::Reject) => {}
@@ -182,7 +471,11 @@ fn apply_corrections(
                     &mut bins,
                     &mut bin_index,
                     kind,
-                    &ent.canonical,
+                    if counts[&auto_canonical] == 1 {
+                        BinKey::Canonical(auto_canonical.clone())
+                    } else {
+                        BinKey::Auto(cluster_id)
+                    },
                     surface,
                     count,
                 ),
@@ -192,19 +485,38 @@ fn apply_corrections(
 
     // A tag may name a surface the resolver never produced (a missed mention).
     // Materialize an assigned surface that landed in no bin.
-    for c in corrections {
-        if let CorrectionAction::Assign { canonical } = &c.action
-            && !bins.iter().any(|b| b.surfaces.iter().any(|(s, _)| s == &c.surface))
+    let mut placed: std::collections::BTreeSet<String> = bins
+        .iter()
+        .flat_map(|bin| bin.surfaces.iter().map(|(surface, _)| surface.clone()))
+        .collect();
+    for (surface, action) in by_surface {
+        if let CorrectionAction::Assign { canonical } = action
+            && !placed.contains(surface)
         {
-            place_assigned(&mut bins, &mut bin_index, kind, canonical, c.surface.clone(), 1);
+            place_assigned(
+                &mut bins,
+                &mut bin_index,
+                kind,
+                canonical,
+                surface.to_string(),
+                1,
+            );
+            placed.insert(surface.into());
         }
     }
 
-    bins.into_iter().map(finish_bin).collect()
+    let mut entities: Vec<_> = bins.into_iter().map(finish_bin).collect();
+    finalize_ids(&mut entities);
+    entities
 }
 
 /// One regrouped entity-in-progress. `forced_canonical` is set when a writer
 /// assigned the surface to a named entity, pinning that name as canonical.
+#[derive(Hash, PartialEq, Eq)]
+enum BinKey {
+    Canonical(String),
+    Auto(usize),
+}
 struct Bin {
     kind: EntityType,
     forced_canonical: Option<String>,
@@ -214,8 +526,8 @@ struct Bin {
 
 fn bin_for<'a>(
     bins: &'a mut Vec<Bin>,
-    bin_index: &mut std::collections::HashMap<String, usize>,
-    key: String,
+    bin_index: &mut std::collections::HashMap<BinKey, usize>,
+    key: BinKey,
     kind: EntityType,
 ) -> &'a mut Bin {
     let i = *bin_index.entry(key).or_insert_with(|| {
@@ -232,19 +544,19 @@ fn bin_for<'a>(
 
 fn place_auto(
     bins: &mut Vec<Bin>,
-    bin_index: &mut std::collections::HashMap<String, usize>,
+    bin_index: &mut std::collections::HashMap<BinKey, usize>,
     kind: EntityType,
-    auto_canonical: &str,
+    key: BinKey,
     surface: String,
     count: usize,
 ) {
-    let bin = bin_for(bins, bin_index, auto_canonical.to_string(), kind);
+    let bin = bin_for(bins, bin_index, key, kind);
     bin.surfaces.push((surface, count));
 }
 
 fn place_assigned(
     bins: &mut Vec<Bin>,
-    bin_index: &mut std::collections::HashMap<String, usize>,
+    bin_index: &mut std::collections::HashMap<BinKey, usize>,
     kind: EntityType,
     canonical: &str,
     surface: String,
@@ -254,7 +566,12 @@ fn place_assigned(
     // so assigning a surface to an entity that auto-resolution already produced
     // (canonical names equal) merges into that one entity rather than emitting a
     // second entity with the same canonical and the same id.
-    let bin = bin_for(bins, bin_index, canonical.to_string(), kind);
+    let bin = bin_for(
+        bins,
+        bin_index,
+        BinKey::Canonical(canonical.to_string()),
+        kind,
+    );
     bin.forced_canonical = Some(canonical.to_string());
     bin.user_edited = true;
     bin.surfaces.push((surface, count));
@@ -275,6 +592,7 @@ fn finish_bin(bin: Bin) -> Entity {
             let mut ent = finish_cluster(
                 Cluster {
                     surfaces,
+                    forms: Vec::new(),
                     centroid: Vec::new(),
                     context_n: 0,
                 },
@@ -321,7 +639,7 @@ fn finish_forced(canonical: String, surfaces: Vec<(String, usize)>, kind: Entity
     // Distinct surface forms = the canonical plus each alias.
     let forms = aliases.len() + 1;
     Entity {
-        id: format!("ent-{}", crate::substrate::utils::slug(&canonical)),
+        id: entity_id(kind, std::iter::once(canonical.as_str())),
         canonical: canonical.clone(),
         kind,
         aliases,
@@ -333,21 +651,31 @@ fn finish_forced(canonical: String, surfaces: Vec<(String, usize)>, kind: Entity
 
 /// A mention joins a cluster when it is surface-compatible with any of the
 /// cluster's known forms AND (when both have context) context-similar.
-fn cluster_accepts(cluster: &Cluster, m: &Mention, floor: f64) -> bool {
-    let surface_ok = cluster
-        .surfaces
+fn cluster_accepts(
+    cluster: &Cluster,
+    mention: &Mention,
+    floor: f64,
+    key: &[String],
+    kind: EntityType,
+) -> bool {
+    if !cluster
+        .forms
         .iter()
-        .any(|(s, _)| surfaces_compatible(s, &m.surface));
-    if !surface_ok {
+        .any(|form| compatible_tokens(kind, form, key))
+        || key.len() > 1
+            && cluster
+                .forms
+                .iter()
+                .any(|form| form.len() > 1 && !compatible_tokens(kind, form, key))
+    {
         return false;
     }
-    if cluster.context_n == 0 || m.context.is_empty() {
-        return true; // no context to disambiguate on → string-only
-    }
-    crate::substrate::utils::cosine_similarity(&cluster.centroid, &m.context) >= floor
+    cluster.context_n == 0
+        || mention.context.is_empty()
+        || crate::substrate::utils::cosine_similarity(&cluster.centroid, &mention.context) >= floor
 }
 
-fn new_cluster(m: &Mention) -> Cluster {
+fn new_cluster(m: &Mention, key: &[String]) -> Cluster {
     let (centroid, context_n) = if m.context.is_empty() {
         (Vec::new(), 0)
     } else {
@@ -355,12 +683,16 @@ fn new_cluster(m: &Mention) -> Cluster {
     };
     Cluster {
         surfaces: vec![(m.surface.clone(), 1)],
+        forms: vec![key.to_vec()],
         centroid,
         context_n,
     }
 }
 
-fn add_to_cluster(cluster: &mut Cluster, m: &Mention) {
+fn add_to_cluster(cluster: &mut Cluster, m: &Mention, key: &[String]) {
+    if !cluster.forms.iter().any(|form| form == key) {
+        cluster.forms.push(key.to_vec());
+    }
     match cluster.surfaces.iter_mut().find(|(s, _)| s == &m.surface) {
         Some((_, n)) => *n += 1,
         None => cluster.surfaces.push((m.surface.clone(), 1)),
@@ -379,16 +711,33 @@ fn add_to_cluster(cluster: &mut Cluster, m: &Mention) {
     }
 }
 
+/// Canonical first: the most frequent surface, except that a character's
+/// fuller name with at least half that support outranks a bare given name
+/// ("Hester Prynne" over "Hester", which every full mention also counts as).
+fn sort_surfaces(surfaces: &mut [(String, usize)], kind: EntityType) {
+    let top = surfaces.iter().map(|(_, count)| *count).max().unwrap_or(0);
+    let rank = |surface: &str, count: usize| {
+        let full = kind == EntityType::Character && count.saturating_mul(2) >= top;
+        (full.then(|| surface.split_whitespace().count()), count)
+    };
+    surfaces.sort_by(|a, b| {
+        rank(&b.0, b.1)
+            .cmp(&rank(&a.0, a.1))
+            .then_with(|| b.0.len().cmp(&a.0.len()))
+            .then_with(|| a.0.cmp(&b.0))
+    });
+}
+
 fn finish_cluster(cluster: Cluster, kind: EntityType) -> Entity {
     let mut surfaces = cluster.surfaces;
-    // Canonical = most frequent surface; longest breaks ties (fuller name).
-    surfaces.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| b.0.len().cmp(&a.0.len())));
+    sort_surfaces(&mut surfaces, kind);
     let mention_count: usize = surfaces.iter().map(|(_, n)| n).sum();
     let canonical = surfaces[0].0.clone();
+    let id = entity_id(kind, surfaces.iter().map(|(surface, _)| surface.as_str()));
     let aliases: Vec<String> = surfaces.iter().skip(1).map(|(s, _)| s.clone()).collect();
     let confidence = confidence_of(mention_count, surfaces.len());
     Entity {
-        id: format!("ent-{}", crate::substrate::utils::slug(&canonical)),
+        id,
         canonical,
         kind,
         aliases,
@@ -413,48 +762,39 @@ const HONORIFICS: &[&str] = &[
     "sergeant", "aunt", "uncle", "father", "mother",
 ];
 
-/// Two surface forms are compatible if, after stripping honorifics/articles and
-/// normalizing the given name through the nickname lexicon, their token *sets*
-/// are equal or one is a subset of the other.
-///
-/// Subset — not "shares any token" — is the safe rule when no context is
-/// available to disambiguate (the production path supplies none): a bare given
-/// name or surname ("David", "Condrey", "Mr. Condrey") attaches to the fuller
-/// name it is contained in, while two full names that merely share one token
-/// ("John Smith" / "Mary Smith", "David Brown" / "David Green") do **not** merge.
-/// Comparison is token-wise, so a substring coincidence ("Ann" / "Anne") is not
-/// a match. When context vectors are present, [`cluster_accepts`] still confirms
-/// an ambiguous subset attachment against the cluster centroid.
-fn surfaces_compatible(a: &str, b: &str) -> bool {
-    let aw = normalized_tokens(a);
-    let bw = normalized_tokens(b);
-    if aw.is_empty() || bw.is_empty() {
-        return false;
+/// Kind-aware comparison tokens preserve surnames, setting names and symbol
+/// punctuation; only leading character titles and given-name nicknames fold.
+fn normalized_tokens(kind: EntityType, surface: &str) -> Vec<String> {
+    if kind == EntityType::Symbol {
+        let mut words: Vec<_> = surface.split_whitespace().map(str::to_lowercase).collect();
+        if words.len() > 1 && matches!(words[0].as_str(), "the" | "a" | "an") {
+            words.remove(0);
+        }
+        return vec![words.join(" ")];
     }
-    let aset: std::collections::HashSet<&str> = aw.iter().map(String::as_str).collect();
-    let bset: std::collections::HashSet<&str> = bw.iter().map(String::as_str).collect();
-    // `is_subset` is true for equal sets too, so this covers exact matches,
-    // reorderings, and bare-name attachment in one test.
-    aset.is_subset(&bset) || bset.is_subset(&aset)
-}
-
-/// Content tokens with the given (first) token mapped through the nickname
-/// lexicon, so "Bob Condrey" and "Robert Condrey" share a token set. Only the
-/// leading token is normalized — surnames are left verbatim.
-fn normalized_tokens(s: &str) -> Vec<String> {
-    let mut tokens = content_tokens(s);
-    if let Some(first) = tokens.first_mut() {
-        *first = nickname_key(first);
+    let mut tokens: Vec<_> = surface
+        .split(|ch: char| !ch.is_alphanumeric())
+        .filter(|part| !part.is_empty())
+        .map(str::to_lowercase)
+        .collect();
+    if tokens.len() > 1
+        && (tokens[0] == "the"
+            || kind != EntityType::Character && matches!(tokens[0].as_str(), "a" | "an"))
+    {
+        tokens.remove(0);
+    }
+    if kind == EntityType::Character {
+        while tokens.len() > 1 && tokens[1] != "s" && HONORIFICS.contains(&tokens[0].as_str()) {
+            tokens.remove(0);
+        }
+        if let Some(first) = tokens.first_mut() {
+            *first = nickname_key(first);
+        }
+    }
+    if tokens.is_empty() {
+        tokens.push(format!("@raw:{}", surface.trim().to_lowercase()));
     }
     tokens
-}
-
-fn content_tokens(s: &str) -> Vec<String> {
-    s.split(|c: char| !c.is_alphanumeric())
-        .filter(|t| !t.is_empty())
-        .map(|t| t.to_lowercase())
-        .filter(|t| !HONORIFICS.contains(&t.as_str()) && !matches!(t.as_str(), "the" | "a" | "an"))
-        .collect()
 }
 
 /// Canonical key for a given/nickname form (Bob and Robert both map to robert).
@@ -579,7 +919,10 @@ mod tests {
             action: CorrectionAction::Reject,
         }];
         let ents = resolve_with_corrections(&mentions, EntityType::Character, &corrections);
-        assert!(ents.is_empty(), "rejected surface should not resolve: {ents:?}");
+        assert!(
+            ents.is_empty(),
+            "rejected surface should not resolve: {ents:?}"
+        );
     }
 
     #[test]
@@ -626,7 +969,11 @@ mod tests {
             &[m("John Smith", &[]), m("Mary Smith", &[])],
             EntityType::Character,
         );
-        assert_eq!(ents.len(), 2, "siblings sharing a surname must not merge: {ents:?}");
+        assert_eq!(
+            ents.len(),
+            2,
+            "siblings sharing a surname must not merge: {ents:?}"
+        );
     }
 
     #[test]
@@ -664,7 +1011,11 @@ mod tests {
         // it into that one entity — not emit a second entity also named "David".
         let mentions = [m("David", &[]), m("Dave", &[])];
         let auto = resolve(&mentions, EntityType::Character);
-        assert_eq!(auto.len(), 2, "precondition: should auto-resolve apart: {auto:?}");
+        assert_eq!(
+            auto.len(),
+            2,
+            "precondition: should auto-resolve apart: {auto:?}"
+        );
         let corrections = [EntityCorrection {
             surface: "Dave".into(),
             action: CorrectionAction::Assign {
@@ -672,10 +1023,17 @@ mod tests {
             },
         }];
         let ents = resolve_with_corrections(&mentions, EntityType::Character, &corrections);
-        assert_eq!(ents.len(), 1, "assign to existing canonical must not duplicate: {ents:?}");
+        assert_eq!(
+            ents.len(),
+            1,
+            "assign to existing canonical must not duplicate: {ents:?}"
+        );
         assert_eq!(ents[0].canonical, "David");
         assert!(ents[0].aliases.iter().any(|a| a == "Dave"), "{ents:?}");
-        assert_eq!(ents[0].mention_count, 2, "both mentions counted once: {ents:?}");
+        assert_eq!(
+            ents[0].mention_count, 2,
+            "both mentions counted once: {ents:?}"
+        );
         assert_eq!(ents[0].provenance, Provenance::UserEdited);
     }
 
@@ -695,8 +1053,34 @@ mod tests {
             .iter()
             .find(|e| e.canonical == "The Narrator")
             .unwrap_or_else(|| panic!("tagged entity missing: {ents:?}"));
-        assert_eq!(narrator.mention_count, 1, "one mention, not inflated: {narrator:?}");
+        assert_eq!(
+            narrator.mention_count, 1,
+            "one mention, not inflated: {narrator:?}"
+        );
         assert_eq!(narrator.aliases, vec!["Narrator".to_string()]);
+    }
+
+    #[test]
+    fn counted_resolution_checks_allocation_independent_count_bounds() {
+        assert!(
+            resolve_counted(
+                &[("Alice".into(), usize::MAX), ("Bob".into(), 1)],
+                EntityType::Character
+            )
+            .is_err()
+        );
+        for count in [usize::MAX - 1, usize::MAX] {
+            let entities =
+                resolve_counted(&[("Alice".into(), count)], EntityType::Character).unwrap();
+            assert_eq!(entities[0].mention_count, count);
+        }
+        let entities = resolve_counted(
+            &[("John Smith".into(), 3), ("John".into(), 7)],
+            EntityType::Character,
+        )
+        .unwrap();
+        assert_eq!(entities[0].canonical, "John");
+        assert_eq!(entities[0].mention_count, 10);
     }
 
     #[test]
@@ -708,6 +1092,9 @@ mod tests {
             },
         };
         let bytes = serde_json::to_vec(&c).unwrap();
-        assert_eq!(serde_json::from_slice::<EntityCorrection>(&bytes).unwrap(), c);
+        assert_eq!(
+            serde_json::from_slice::<EntityCorrection>(&bytes).unwrap(),
+            c
+        );
     }
 }

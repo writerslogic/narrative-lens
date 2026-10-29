@@ -1,0 +1,59 @@
+{
+  "status": "frozen",
+  "files": [
+    {
+      "path": "src/continuity/coreference.rs",
+      "sha256": "1bbc5f66775447933e0027739f11748382e10804f24f725c0e7bbb8ca5df6d0f"
+    },
+    {
+      "path": "src/continuity/entity.rs",
+      "sha256": "8680c8fe106435573a33371509c74976c37397ab88c9acdefc0d1878eb1a5a5b"
+    },
+    {
+      "path": "tests/component_continuity_resolution.rs",
+      "sha256": "99fef12a83ebd5cf41a1eabf3fe476ab066ca7bfa065f04dcaa9e827366794e1"
+    },
+    {
+      "path": "tests/component_continuity_entities.rs",
+      "sha256": "73f91ac49510aab5256f1c0e48353e065b262cb4665d6bb108e02c672ef94b7c"
+    }
+  ],
+  "checks": [
+    {
+      "command": "cargo test --locked --features bindings --test component_continuity_entities --test component_continuity_resolution --test release_integrity",
+      "passed": 30,
+      "log": "continuity-resolution-entities-tests.log"
+    },
+    {
+      "command": "cargo test --locked --features bindings --lib continuity::entity::tests",
+      "passed": 17,
+      "log": "continuity-entity-unit.log"
+    },
+    {
+      "command": "cargo test --locked --features bindings --lib continuity::coreference::tests",
+      "passed": 11,
+      "log": "continuity-coreference-unit.log"
+    },
+    {
+      "command": "cargo clippy --locked --features bindings --lib --test component_continuity_resolution --test component_continuity_entities -- -D warnings",
+      "exit": 0,
+      "log": "continuity-resolution-clippy.log"
+    }
+  ],
+  "fixes": [
+    "Conservative bounded checked cast/context validation; exact source byte/UTF16 spans preserve Unicode/BOM/case folding",
+    "Pronoun resolution requires unique compatible visible antecedent; narrow cataphora, quoted ambiguity, explicit author source links",
+    "Entity name order and multiplicity, surname/honorific semantics, context scale and zero invariance, contextual homonym preservation under corrections",
+    "Stable type-specific Unicode/symbol/more-specific IDs and counted last-wins corrections; indexed clustering avoids disjoint quadratic comparisons"
+  ],
+  "compatibility": [
+    "Entity generated IDs change to type-specific entity-v2 FNV64 namespace; persist author decisions by stable surface/canonical rather than old generated ID",
+    "Existing unchecked APIs retained; Node callers should use checked methods",
+    "Mention/result wire fields additive; coverage/confidence explicitly uncalibrated; imported older results default unavailable"
+  ],
+  "limitations": [
+    "Conservative English heuristic, not trained semantic coreference or dialogue attribution",
+    "No accuracy score assigned here; parent independent human-labelled LitBank evaluation owns dev/holdout",
+    "Local build-only prerequisite syncs excluded; all cargo used private target"
+  ]
+}

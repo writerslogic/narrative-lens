@@ -1,0 +1,14 @@
+[
+  {
+    "probe": "vector",
+    "expected_rejection_observed": true,
+    "exit_code": 1,
+    "log": "docs/audit-2026-10-27/component-real-model-negative-vector.log"
+  },
+  {
+    "probe": "token",
+    "expected_rejection_observed": true,
+    "exit_code": 1,
+    "log": "docs/audit-2026-10-27/component-real-model-negative-token.log"
+  }
+]

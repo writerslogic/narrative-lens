@@ -1,0 +1,1037 @@
+{
+  "repository": "writerslogic/narrative-lens",
+  "working_directory": "/Volumes/A/narrative-lens",
+  "date": "2026-10-27",
+  "head": "c02d48246247bb14d1646e6e3c0fb1b8a2e17068",
+  "scope": "Current dirty working tree; no production edits. Audit artifacts only.",
+  "classification": {
+    "primary": "Rust local text-analysis library",
+    "secondary": [
+      "Node native addon",
+      "optional manuscript-analysis CLI",
+      "research-oriented narrative heuristics",
+      "optional local ONNX inference"
+    ]
+  },
+  "scale": "1 Broken/Absent,2 Critical,3 Poor,4 Weak,5 Basic,6 Competent,7 Strong,8 Excellent,9 Exceptional,10 Verified best-in-class",
+  "weights": {
+    "F": 0.25,
+    "E": 0.2,
+    "S": 0.2,
+    "R": 0.25,
+    "M": 0.1
+  },
+  "domains": {
+    "F": {
+      "score": 4.666666666666667,
+      "weight": 0.25,
+      "confidence": 4.833333333333333,
+      "evidenced_metrics": 6,
+      "applicable_metrics": 6
+    },
+    "E": {
+      "score": 5.333333333333333,
+      "weight": 0.2,
+      "confidence": 4.333333333333333,
+      "evidenced_metrics": 6,
+      "applicable_metrics": 6
+    },
+    "S": {
+      "score": 5.333333333333333,
+      "weight": 0.2,
+      "confidence": 4.5,
+      "evidenced_metrics": 6,
+      "applicable_metrics": 6
+    },
+    "R": {
+      "score": 4.666666666666667,
+      "weight": 0.25,
+      "confidence": 4.0,
+      "evidenced_metrics": 6,
+      "applicable_metrics": 6
+    },
+    "M": {
+      "score": 6.25,
+      "weight": 0.1,
+      "confidence": 4.5,
+      "evidenced_metrics": 4,
+      "applicable_metrics": 5
+    }
+  },
+  "quality": 5.091666666666667,
+  "weighted_confidence": 4.425,
+  "coverage": {
+    "current_metrics_scored": 28,
+    "current_metrics_applicable": 29,
+    "forward_metric_excluded": "M6",
+    "unverified": [
+      "Independent editorial/generalization accuracy",
+      "Real trained-model accuracy and label semantics",
+      "Native/WASM inference parity",
+      "Fresh published target-platform installs",
+      "Claimed legacy and active-LTS runtime matrix beyond local Node26",
+      "Large-workload tail latency/RSS and concurrency",
+      "Reachability of dependency unsafe APIs and any local exploit",
+      "Quantified competitive user utility"
+    ],
+    "current_metric_evidence_coverage": 0.9655172413793104,
+    "unverified_metrics": [
+      "M5"
+    ]
+  },
+  "metrics": [
+    {
+      "id": "F1",
+      "name": "Completeness",
+      "score": 5,
+      "confidence": 5,
+      "evidence": "D7,D8",
+      "deficiency": "Advertised reserved and partial reasoning paths",
+      "target_score": 8,
+      "target": "Supported capability catalog and explicit unavailable states",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "F2",
+      "name": "Correctness",
+      "score": 3,
+      "confidence": 5,
+      "evidence": "D1\u2013D6",
+      "deficiency": "Panics, false CI success, identity/state/measurement defects",
+      "target_score": 8,
+      "target": "Boundary, state, coordinate and unit invariants proved",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "F3",
+      "name": "Depth",
+      "score": 5,
+      "confidence": 4,
+      "evidence": "D7,D8,D13",
+      "deficiency": "Rich types exceed semantic inference; real accuracy U",
+      "target_score": 8,
+      "target": "Evidence-backed supported reasoning",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "F4",
+      "name": "Workflow coverage",
+      "score": 6,
+      "confidence": 5,
+      "evidence": "V1,V2,D2",
+      "deficiency": "Facade works end to end; revision gate can pass incomplete output",
+      "target_score": 8,
+      "target": "Reliable analyze-control-compare-gate workflows",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "F5",
+      "name": "Consistency",
+      "score": 3,
+      "confidence": 5,
+      "evidence": "D5,D6,D7",
+      "deficiency": "Nondeterministic ties, divergent scales and availability semantics",
+      "target_score": 8,
+      "target": "Stable outputs and shared contracts",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "F6",
+      "name": "Interoperability",
+      "score": 6,
+      "confidence": 5,
+      "evidence": "D15,V2",
+      "deficiency": "Working adapters but standalone TypeScript enum contracts differ from runtime",
+      "target_score": 8,
+      "target": "Packed Rust/Node/CLI contracts verified",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "E1",
+      "name": "Architecture",
+      "score": 6,
+      "confidence": 4,
+      "evidence": "src/manuscript/context.rs,D4,D9,D10",
+      "deficiency": "Good layering; duplicate state engines and global model/cache lifetimes",
+      "target_score": 8,
+      "target": "One provenance-bearing core with caller-owned adapters",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "E2",
+      "name": "Code quality",
+      "score": 6,
+      "confidence": 4,
+      "evidence": "D3\u2013D6",
+      "deficiency": "Clear modules coexist with duplicated primitives and heuristic constants",
+      "target_score": 8,
+      "target": "Shared typed primitives and local invariant tests",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "E3",
+      "name": "Extensibility",
+      "score": 6,
+      "confidence": 4,
+      "evidence": "src/onnx/mod.rs,src/manuscript/config.rs",
+      "deficiency": "Backend injection exists; coordinated rule orchestration is hardcoded",
+      "target_score": 8,
+      "target": "Typed rule/capability contracts without a new framework",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "E4",
+      "name": "Dependencies",
+      "score": 5,
+      "confidence": 5,
+      "evidence": "V6,D11",
+      "deficiency": "Advisory-bearing lockfile, stale optional runtime, unenforced deny policy",
+      "target_score": 8,
+      "target": "Patched dependency graph and enforced policy",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "E5",
+      "name": "State/data integrity",
+      "score": 4,
+      "confidence": 5,
+      "evidence": "D3,D4,D14",
+      "deficiency": "Corrections resurrect identities; legacy snapshots and lexical cache diverge",
+      "target_score": 8,
+      "target": "Author decisions and current-state/index invariants",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "E6",
+      "name": "Maintainability",
+      "score": 5,
+      "confidence": 4,
+      "evidence": "D4\u2013D8,D12",
+      "deficiency": "Multiple result/semantics conventions and weak cross-module safeguards",
+      "target_score": 8,
+      "target": "One supported semantic contract and executable release checks",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "S1",
+      "name": "Standards conformance",
+      "score": 5,
+      "confidence": 5,
+      "evidence": "D5,tests/cli.rs",
+      "deficiency": "SARIF BOM text-offset requirement violated despite schema validity",
+      "target_score": 8,
+      "target": "Normative and semantic conformance fixtures",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "S2",
+      "name": "Interface/API design",
+      "score": 5,
+      "confidence": 5,
+      "evidence": "D15,src/manuscript/validation.rs",
+      "deficiency": "Handwritten standalone declarations conflict with serde shapes; facade stronger",
+      "target_score": 8,
+      "target": "Validated typed checked APIs with honest unknown states",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "S3",
+      "name": "Protocol interoperability",
+      "score": 6,
+      "confidence": 5,
+      "evidence": "D15,V2,tests/cli.rs",
+      "deficiency": "Local transports work but consumer contracts drift; fresh artifact matrix U",
+      "target_score": 8,
+      "target": "Artifact-level consumer conformance",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "S4",
+      "name": "Discoverability",
+      "score": 7,
+      "confidence": 4,
+      "evidence": "src/manuscript/config.rs,README.md",
+      "deficiency": "Registry and guides strong; advertised stubs and placeholders confuse",
+      "target_score": 8,
+      "target": "Machine-readable supported capability matrix",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "S5",
+      "name": "Compatibility",
+      "score": 5,
+      "confidence": 3,
+      "evidence": "D12,.github/workflows/ci.yml",
+      "deficiency": "CI only Node20, no Windows runtime smoke; released installs U",
+      "target_score": 8,
+      "target": "Declared runtime and OS matrix tested from packages",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "S6",
+      "name": "Integration fidelity",
+      "score": 4,
+      "confidence": 5,
+      "evidence": "D5,D8,D14",
+      "deficiency": "Legacy casefold offsets, CRLF segmentation, invented payoff scene, stale BM25",
+      "target_score": 8,
+      "target": "Original source semantics preserved across adapters/revisions",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "R1",
+      "name": "Reliability",
+      "score": 4,
+      "confidence": 5,
+      "evidence": "V1,V2,D1,D2",
+      "deficiency": "Passing suites miss valid-text panic and false success",
+      "target_score": 8,
+      "target": "No valid-input panics or silent incomplete success",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "R2",
+      "name": "Recovery",
+      "score": 5,
+      "confidence": 4,
+      "evidence": "src/onnx/checked.rs,D7,D10",
+      "deficiency": "Checked failures explicit; legacy empty/neutral fallbacks and first-use globals",
+      "target_score": 8,
+      "target": "Explicit recoverable failures and unavailable outcomes",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "R3",
+      "name": "Security",
+      "score": 5,
+      "confidence": 4,
+      "evidence": "D10,D11,src/manuscript/config.rs",
+      "deficiency": "Strong facade bounds, but ambient model trust and vulnerable build TLS chain",
+      "target_score": 8,
+      "target": "Explicit trust boundaries and patched dependencies",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "R4",
+      "name": "Data safety",
+      "score": 4,
+      "confidence": 5,
+      "evidence": "D3,D4,D9",
+      "deficiency": "In-memory integrity and process-lifetime plaintext retention defects",
+      "target_score": 8,
+      "target": "Isolated bounded retention and correct state transitions",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "R5",
+      "name": "Performance",
+      "score": 6,
+      "confidence": 3,
+      "evidence": "docs/performance-*.json,D14",
+      "deficiency": "Two useful synthetic workloads; release Node and frontier comparisons U",
+      "target_score": 8,
+      "target": "Equivalent-profile workloads and measured hotspot gains",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "R6",
+      "name": "Scalability",
+      "score": 4,
+      "confidence": 3,
+      "evidence": "D9,D14",
+      "deficiency": "Unbounded NER memo; dense training and growing legacy snapshots",
+      "target_score": 8,
+      "target": "Resource budgets verified across workload growth",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "M1",
+      "name": "Developer experience",
+      "score": 6,
+      "confidence": 4,
+      "evidence": "D15,V1,V2",
+      "deficiency": "Usable setup; incorrect standalone types add integration debugging",
+      "target_score": 8,
+      "target": "One reproducible tested install path per supported target",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "M2",
+      "name": "Documentation",
+      "score": 6,
+      "confidence": 5,
+      "evidence": "README.md,SECURITY.md,docs/EVALUATION.md,D7,D10",
+      "deficiency": "Candid evaluation guide; capability/security claims contradict code",
+      "target_score": 8,
+      "target": "Implementation-aligned inventory and contracts",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "M3",
+      "name": "Validation",
+      "score": 6,
+      "confidence": 5,
+      "evidence": "V1\u2013V5,D13",
+      "deficiency": "Strong local cases; synthetic small authored corpus misses critical invariants",
+      "target_score": 8,
+      "target": "Metamorphic regressions plus independent editorial/model evidence",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "M4",
+      "name": "Observability",
+      "score": 7,
+      "confidence": 4,
+      "evidence": "src/manuscript/context.rs,src/manuscript/finding.rs",
+      "deficiency": "Facade evidence, coverage and counts strong; legacy diagnoses ambiguous",
+      "target_score": 8,
+      "target": "Comparable per-rule availability, reasons and provenance",
+      "aggregation": "current-quality"
+    },
+    {
+      "id": "M5",
+      "name": "Competitive differentiation",
+      "score": null,
+      "confidence": 2,
+      "evidence": "Inspected competing mechanisms; no equivalent-workload or author-utility comparison",
+      "deficiency": "Demonstrated competitive superiority remains unverified",
+      "target_score": 8,
+      "target": "Win on author utility/correctness at equal privacy and workload",
+      "aggregation": "unverified-excluded",
+      "status": "U"
+    },
+    {
+      "id": "M6",
+      "name": "Innovation potential",
+      "score": 8,
+      "confidence": 2,
+      "evidence": "roadmap A13,A14",
+      "deficiency": "Credible author-confirmed constraint analysis; benefits unvalidated",
+      "target_score": 9,
+      "target": "Experimentally demonstrated differentiated utility",
+      "aggregation": "excluded-forward-looking"
+    }
+  ],
+  "findings": [
+    {
+      "id": "D1",
+      "classification": "Critical",
+      "confidence": 5,
+      "evidence_kind": "Reproduced",
+      "source": [
+        "src/continuity/ner.rs:70",
+        "src/continuity/ner.rs:105",
+        "src/structure/foreshadow.rs:225",
+        "src/continuity/anachronism.rs:347"
+      ],
+      "evidence": "rust-reproductions.log",
+      "root_cause": "Unicode whitespace byte offset advanced by one byte; unchecked public integer/count arithmetic",
+      "consequence": "Valid Unicode text panics in NER; mismatched foreshadowing input and extreme year also panic in debug"
+    },
+    {
+      "id": "D2",
+      "classification": "Critical",
+      "confidence": 5,
+      "evidence_kind": "Reproduced",
+      "source": [
+        "src/bin/narrative-lens.rs:754",
+        "src/bin/narrative-lens.rs:771",
+        "src/manuscript/comparison.rs:189"
+      ],
+      "evidence": "ci-reproduction.json",
+      "root_cause": "Completeness inferred only from unmatched unassessed findings, not omitted candidate population",
+      "consequence": "--new-only exits 0 with one new warning omitted by maxFindings=1"
+    },
+    {
+      "id": "D3",
+      "classification": "Critical",
+      "confidence": 5,
+      "evidence_kind": "Reproduced",
+      "source": [
+        "src/continuity/entity.rs:153",
+        "src/continuity/entity.rs:196",
+        "src/continuity/entity.rs:346"
+      ],
+      "evidence": "reproductions.json",
+      "root_cause": "Correction materialization replays original history; cluster joins require any matching alias without a cluster exclusion invariant",
+      "consequence": "Reject resurrected as Alice; John Smith/Smith/Mary Smith collapse"
+    },
+    {
+      "id": "D4",
+      "classification": "Critical for trusted continuity",
+      "confidence": 5,
+      "evidence_kind": "Reproduced and source-confirmed",
+      "source": [
+        "src/continuity/world_state.rs:599",
+        "src/continuity/world_state.rs:649",
+        "src/continuity/world_state.rs:1063"
+      ],
+      "evidence": "reproductions.json",
+      "root_cause": "Unordered extraction passes and duplicated live/history state lose grammatical roles, event order and acquisition provenance",
+      "consequence": "Reversed communication, impossible-knowledge false proof, concurrent contradictory current locations"
+    },
+    {
+      "id": "D5",
+      "classification": "High leverage",
+      "confidence": 5,
+      "evidence_kind": "Reproduced",
+      "source": [
+        "src/substrate/text.rs:763",
+        "src/substrate/text.rs:808",
+        "src/continuity/coreference.rs:271",
+        "src/craft/readability.rs:1153",
+        "src/bin/narrative-lens.rs:474"
+      ],
+      "evidence": [
+        "reproductions.json",
+        "rust-reproductions.log",
+        "sarif-bom-reproduction.json"
+      ],
+      "root_cause": "Divergent segmentation and coordinate systems; repeated silent-e correction; lowercased positions reused on originals; SARIF lacks BOM transform",
+      "consequence": "Wrong syllables/sentences, LF/CRLF variance changes, corrupted mention quotations, SARIF offsets +1 with BOM"
+    },
+    {
+      "id": "D6",
+      "classification": "High leverage",
+      "confidence": 5,
+      "evidence_kind": "Reproduced and source-confirmed",
+      "source": [
+        "src/craft/voice.rs:224",
+        "src/structure/structure.rs:378",
+        "src/continuity/causal_engine.rs:569",
+        "src/structure/genre.rs:873"
+      ],
+      "evidence": "reproductions.json",
+      "root_cause": "No total tie ordering; inconsistent score units/populations and pacing direction",
+      "consequence": "24 voice calls yielded 24 top-word arrays; nonlinear health 1 instead of percent-scale 100; causal coherence 4 for five events; conflicting pacing advice"
+    },
+    {
+      "id": "D7",
+      "classification": "High leverage",
+      "confidence": 5,
+      "evidence_kind": "Source-confirmed",
+      "source": [
+        "src/craft/subtext.rs:78",
+        "src/structure/thematic_argument.rs:118",
+        "src/continuity/mental_model.rs:128",
+        "src/structure/genre_compliance.rs:682",
+        "src/continuity/epistemic_engine.rs:289"
+      ],
+      "root_cause": "Rich legacy schemas retained after removal or without implementation; unsupported semantic cases assigned neutral/positive values",
+      "consequence": "Reserved analysis looks successful; genre health stands in for unmeasured conventions; reader advantage structurally degenerate"
+    },
+    {
+      "id": "D8",
+      "classification": "Strategic correctness",
+      "confidence": 5,
+      "evidence_kind": "Reproduced and source-confirmed",
+      "source": [
+        "src/structure/promise_payoff.rs:459",
+        "src/structure/promise_payoff.rs:775"
+      ],
+      "evidence": "reproductions.json",
+      "root_cause": "Promise creation has no general fulfillment pass; resolved boolean lacks payoff location",
+      "consequence": "Answered explicit question marked broken; caller-resolved foreshadowing assigned invented final-scene payoff"
+    },
+    {
+      "id": "D9",
+      "classification": "High leverage",
+      "confidence": 5,
+      "evidence_kind": "Source-confirmed",
+      "source": [
+        "src/onnx/mod.rs:173",
+        "src/onnx/mod.rs:220"
+      ],
+      "root_cause": "Process-global raw-text cache has no bound, eviction or clear",
+      "consequence": "Distinct NER windows/revisions remain in memory for process lifetime, even with unavailable model"
+    },
+    {
+      "id": "D10",
+      "classification": "High leverage",
+      "confidence": 5,
+      "evidence_kind": "Source-confirmed",
+      "source": [
+        "src/onnx/ort_backend.rs:68",
+        "src/onnx/ort_backend.rs:73",
+        "src/onnx/ort_backend.rs:110"
+      ],
+      "root_cause": "Ambient model discovery and global first-use initialization; positional model profiles",
+      "consequence": "CWD may select unintended model; first failure permanent; valid class count does not establish label semantics"
+    },
+    {
+      "id": "D11",
+      "classification": "Critical dependency remediation",
+      "confidence": 5,
+      "evidence_kind": "Fresh automated checks and authoritative upstream reports",
+      "source": [
+        "Cargo.lock",
+        "Cargo.toml",
+        "deny.toml",
+        ".github/workflows/ci.yml"
+      ],
+      "evidence": [
+        "security-advisories.json",
+        "dependency-policy.log"
+      ],
+      "root_cause": "Policy configured but not executed in CI; optional dependency pin excludes upstream safety fixes",
+      "consequence": "RUSTSEC-2026-0383 in webpki-root-certs1.0.9 via ort-sys build; tokio1.53.1 unsound advisory; ort rc15 reports safety fixes beyond pinned rc13; exploit reachability not established"
+    },
+    {
+      "id": "D12",
+      "classification": "High leverage",
+      "confidence": 4,
+      "evidence_kind": "Source-confirmed",
+      "source": [
+        ".github/workflows/ci.yml:29",
+        ".github/workflows/ci.yml:82",
+        ".github/workflows/release.yml:52"
+      ],
+      "root_cause": "Build jobs substitute for packed-artifact runtime/install verification",
+      "consequence": "Claimed Windows/macOS/Linux target installation and active-LTS compatibility remain unproved"
+    },
+    {
+      "id": "D13",
+      "classification": "Validation limitation",
+      "confidence": 5,
+      "evidence_kind": "Fresh regression tests and retained evaluation evidence",
+      "source": [
+        "docs/EVALUATION.md",
+        "tests/evaluation_findings.rs",
+        "docs/evaluation-v2-current.json"
+      ],
+      "root_cause": "Agent-authored small templated corpus and narrow facade rules; no independent editorial or trained-model semantic evaluation",
+      "consequence": "14 held-out matched findings/0 rated FP-FN plus4 unrated do not establish real-manuscript accuracy; removing controls yields10 rated FP"
+    },
+    {
+      "id": "D14",
+      "classification": "Optimization/integrity",
+      "confidence": 4,
+      "evidence_kind": "Source complexity inference plus retained benchmarks",
+      "source": [
+        "src/substrate/embedding.rs:116",
+        "src/substrate/embedding.rs:459",
+        "src/substrate/wordfreq.rs:26",
+        "src/continuity/world_state.rs:464"
+      ],
+      "root_cause": "Dense cooccurrence/SVD, full dictionary suggestion scans, cumulative snapshot copies, lexical index not refreshed on document update",
+      "consequence": "50MB base cooccurrence at2500 words before workspaces; possible quadratic growing snapshots; stale lexical retrieval; actual scaling/hotspot share unmeasured"
+    },
+    {
+      "id": "D15",
+      "classification": "High leverage interface correctness",
+      "confidence": 5,
+      "evidence_kind": "Reproduced",
+      "source": [
+        "src/continuity/world_state.rs:20",
+        "src/structure/promise_payoff.rs:48",
+        "src/napi_bindings/structure_bindings.rs:62",
+        "index.d.ts:104",
+        "index.d.ts:359"
+      ],
+      "evidence": "reproductions.json",
+      "root_cause": "Handwritten NAPI ts_return_type overrides duplicate serde contracts without runtime validation for standalone enums",
+      "consequence": "WorldFact uses characterAt while types require CharacterAt; payoff status broken/outstanding while declarations require Broken/Outstanding; TS compilation alone does not catch mismatch"
+    }
+  ],
+  "roadmap": [
+    {
+      "id": "A01",
+      "phase": "Quick win",
+      "classification": "Critical",
+      "impact": 5,
+      "current": 3,
+      "target": 8,
+      "gap": 5,
+      "evidence_confidence": 5,
+      "effort": 2,
+      "priority": 62.5,
+      "risk": "Low",
+      "findings": "D1",
+      "current_behavior": "Unchecked text/count/year boundaries",
+      "proposed": "Checked Unicode windows and defined count/year input contracts",
+      "expected_benefit": "Prevent panics and profile-dependent overflow",
+      "acceptance": "No panic on four Unicode whitespace reproductions; empty/mismatched scene counts and year extrema have defined validated outcomes; fuzz all affected entry points",
+      "dependencies": []
+    },
+    {
+      "id": "A02",
+      "phase": "Quick win",
+      "classification": "Critical",
+      "impact": 5,
+      "current": 4,
+      "target": 8,
+      "gap": 4,
+      "evidence_confidence": 5,
+      "effort": 1,
+      "priority": 100,
+      "risk": "Low",
+      "findings": "D2",
+      "current_behavior": "Truncated revision can pass",
+      "proposed": "Explicit report/comparison completeness gates",
+      "expected_benefit": "Prevent false CI success",
+      "acceptance": "Existing reproduction exits2 or proves all introduced findings within declared exhaustive coverage; test omitted limit-1/limit/limit+1 including all retained findings persistent",
+      "dependencies": []
+    },
+    {
+      "id": "A03",
+      "phase": "Quick win",
+      "classification": "Critical",
+      "impact": 5,
+      "current": 4,
+      "target": 8,
+      "gap": 4,
+      "evidence_confidence": 5,
+      "effort": 2,
+      "priority": 50,
+      "risk": "Medium; identity migrations",
+      "findings": "D3",
+      "current_behavior": "Historical corrections replay and greedy alias bridge",
+      "proposed": "Collapse corrections once; preserve per-surface counts; enforce full-name exclusion/ambiguity",
+      "expected_benefit": "Honor author authority and character identity",
+      "acceptance": "Latest Assign/Reject wins for present/absent surfaces; history idempotent; all name permutations preserve incompatible people",
+      "dependencies": []
+    },
+    {
+      "id": "A04",
+      "phase": "Quick win",
+      "classification": "Critical dependency remediation",
+      "impact": 5,
+      "current": 5,
+      "target": 8,
+      "gap": 3,
+      "evidence_confidence": 5,
+      "effort": 2,
+      "priority": 37.5,
+      "risk": "Medium; prerelease API changes",
+      "findings": "D11",
+      "current_behavior": "Advisory-bearing lock and no policy gate",
+      "proposed": "Patch webpki roots/Tokio; assess pinned ort rc15 migration; run locked policy in CI",
+      "expected_benefit": "Close known dependency exposure and prevent recurrence",
+      "acceptance": "cargo audit/deny clean for supported graph or documented reachability-based exception; native fixtures and feature/MSRV gates pass; controlled rejected dependency fails pipeline",
+      "dependencies": []
+    },
+    {
+      "id": "A05",
+      "phase": "Foundation",
+      "classification": "High leverage",
+      "impact": 5,
+      "current": 4,
+      "target": 8,
+      "gap": 4,
+      "evidence_confidence": 5,
+      "effort": 3,
+      "priority": 33.333333333333336,
+      "risk": "Medium; metric and coordinate changes",
+      "findings": "D5",
+      "current_behavior": "Divergent original-text, segmentation and readability primitives",
+      "proposed": "Canonical spans/coordinate adapters and validated formula resources",
+      "expected_benefit": "Repair evidence and measurements across analyzers",
+      "acceptance": "Canonical count equals spans; five syllable golden words correct; LF/CRLF metrics equivalent; every mention slices original; SARIF text offsets invariant to BOM while facade offsets preserve raw input",
+      "dependencies": [
+        "A01"
+      ]
+    },
+    {
+      "id": "A06",
+      "phase": "Foundation",
+      "classification": "High leverage",
+      "impact": 5,
+      "current": 3,
+      "target": 8,
+      "gap": 5,
+      "evidence_confidence": 5,
+      "effort": 4,
+      "priority": 31.25,
+      "risk": "High; legacy semantic compatibility",
+      "findings": "D4,D7",
+      "current_behavior": "Independent legacy fact passes",
+      "proposed": "One ordered provenance-bearing event reducer; adapt or deprecate unsupported legacy proof modes",
+      "expected_benefit": "Fix direction, state invalidation and knowledge reasoning together",
+      "acceptance": "Cast permutations invariant; one live location/owner; co-location follows current locations; releases remove locks; explicit discovery never impossible knowledge; chronology barriers preserved",
+      "dependencies": [
+        "A03",
+        "A05"
+      ]
+    },
+    {
+      "id": "A07",
+      "phase": "Foundation",
+      "classification": "High leverage",
+      "impact": 4,
+      "current": 3,
+      "target": 8,
+      "gap": 5,
+      "evidence_confidence": 5,
+      "effort": 2,
+      "priority": 50,
+      "risk": "Medium; output contract migration",
+      "findings": "D7,D8",
+      "current_behavior": "Unsupported cases resemble measured positives",
+      "proposed": "Uniform available/unsupported/unknown statuses and evidence provenance",
+      "expected_benefit": "Restore truthful semantics and discoverability",
+      "acceptance": "Subtext/thematic/mental stubs report unavailable; unsupported genre conventions unknown; no model-less positive verdict; README and machine catalog match implementations",
+      "dependencies": []
+    },
+    {
+      "id": "A08",
+      "phase": "Foundation",
+      "classification": "High leverage",
+      "impact": 4,
+      "current": 4,
+      "target": 8,
+      "gap": 4,
+      "evidence_confidence": 5,
+      "effort": 3,
+      "priority": 26.666666666666668,
+      "risk": "Medium; model lifecycle changes",
+      "findings": "D9,D10",
+      "current_behavior": "Immortal cache and ambient first-use model",
+      "proposed": "Caller-owned bounded clearable cache and explicit model locations/profiles",
+      "expected_benefit": "Bound retention and make model identity reproducible",
+      "acceptance": "Distinct-revision retention <=declared budget; clear releases text; CWD cannot activate model by default; invalid explicit model does not select fallback; digest/profile recorded",
+      "dependencies": [
+        "A07"
+      ]
+    },
+    {
+      "id": "A09",
+      "phase": "Quick win",
+      "classification": "High leverage",
+      "impact": 4,
+      "current": 3,
+      "target": 8,
+      "gap": 5,
+      "evidence_confidence": 5,
+      "effort": 2,
+      "priority": 50,
+      "risk": "Low; visible ordering/score corrections",
+      "findings": "D6",
+      "current_behavior": "Randomized ties and incompatible scales/populations",
+      "proposed": "Total ordering before truncation, explicit score units and shared metric direction",
+      "expected_benefit": "Deterministic and coherent results",
+      "acceptance": "100 fresh-process canonical outputs identical including ties; nonlinear example healthPct100; causal example coherence in[0,1]; pacing guidance agrees at boundaries",
+      "dependencies": []
+    },
+    {
+      "id": "A10",
+      "phase": "Foundation",
+      "classification": "High leverage",
+      "impact": 4,
+      "current": 5,
+      "target": 8,
+      "gap": 3,
+      "evidence_confidence": 4,
+      "effort": 3,
+      "priority": 16,
+      "risk": "Medium; release matrix complexity",
+      "findings": "D12",
+      "current_behavior": "Build-only release assurance",
+      "proposed": "Staged package install/runtime tests on all declared targets and supported Node lines",
+      "expected_benefit": "Prove delivery to intended users",
+      "acceptance": "Fresh packed root+platform installs pass CJS/ESM/types/manuscript smoke on four declared targets; declared Node floor/currentLTS pass; publication bound to successful tested commit/artifact",
+      "dependencies": [
+        "A04"
+      ]
+    },
+    {
+      "id": "A11",
+      "phase": "Foundation",
+      "classification": "Research/investigation",
+      "impact": 5,
+      "current": null,
+      "target": 8,
+      "gap": null,
+      "evidence_confidence": 3,
+      "effort": 4,
+      "priority": null,
+      "risk": "Medium; corpus cost and disagreement",
+      "findings": "D13,D10",
+      "current_behavior": "Semantic effectiveness unverified",
+      "proposed": "Independent editorial corpus plus real model reference comparisons",
+      "expected_benefit": "Establish real accuracy, utility and calibration evidence",
+      "acceptance": "Freeze external held-out texts; annotate double-blind/disjoint by work and template; report rule/span FP-FN, abstention, controls ablation, Brier/reliability, model labels/truncation, native/WASM tolerances; preregister release targets",
+      "dependencies": [
+        "A05",
+        "A07"
+      ]
+    },
+    {
+      "id": "A12",
+      "phase": "Optimization",
+      "classification": "Optimization",
+      "impact": 3,
+      "current": 6,
+      "target": 8,
+      "gap": 2,
+      "evidence_confidence": 3,
+      "effort": 3,
+      "priority": 6,
+      "risk": "Medium; numeric/index drift",
+      "findings": "D14",
+      "current_behavior": "Known scan/dense/index mechanisms without scaling attribution",
+      "proposed": "Atomic lexical+dense updates; profile spelling and sparse/truncated alternatives",
+      "expected_benefit": "Correct edited retrieval and reduce measured hot-path cost",
+      "acceptance": "Inserted rare term retrievable/deleted term absent after update; same-profile release benchmarks and scaling recorded; choose optimization only for measured gain with no contract regression",
+      "dependencies": [
+        "A05"
+      ]
+    },
+    {
+      "id": "A13",
+      "phase": "Strategic",
+      "classification": "Strategic",
+      "impact": 4,
+      "current": 3,
+      "target": 8,
+      "gap": 5,
+      "evidence_confidence": 5,
+      "effort": 3,
+      "priority": 33.333333333333336,
+      "risk": "Medium; author input burden",
+      "findings": "D8",
+      "current_behavior": "Boolean resolution and unsupported broken-promise claims",
+      "proposed": "Typed author-confirmed setup/payoff/transfer/knowledge events with exact scene/evidence",
+      "expected_benefit": "Useful verifiable narrative constraints without invented understanding",
+      "acceptance": "Explicit answered-question fixture fulfilled at actual scene; unknown links abstain; no fabricated payoff locations; edit/reorder comparison preserves identities",
+      "dependencies": [
+        "A05",
+        "A06",
+        "A07"
+      ]
+    },
+    {
+      "id": "A14",
+      "phase": "Research",
+      "classification": "Research",
+      "impact": 4,
+      "current": null,
+      "target": 8,
+      "gap": null,
+      "evidence_confidence": 2,
+      "effort": 4,
+      "priority": null,
+      "risk": "High; no demonstrated utility gain",
+      "findings": "D7,D13",
+      "current_behavior": "Unvalidated narrative model hypotheses",
+      "proposed": "Entity-aware candidate retrieval plus calibrated optional local NLI/mention ranking; keep author facts authoritative",
+      "expected_benefit": "Test semantic assistance beyond explicit patterns",
+      "acceptance": "Pre-registered comparison against rules/author-event and BookNLP-style baselines at equal workloads; improve useful recall at fixed FP/latency/memory budgets or reject mechanism",
+      "dependencies": [
+        "A08",
+        "A11",
+        "A13"
+      ]
+    },
+    {
+      "id": "A15",
+      "phase": "Foundation",
+      "classification": "High leverage",
+      "impact": 4,
+      "current": 5,
+      "target": 8,
+      "gap": 3,
+      "evidence_confidence": 5,
+      "effort": 3,
+      "priority": 20,
+      "risk": "Medium; consumers may depend on current wire shapes",
+      "findings": "D15",
+      "current_behavior": "Handwritten standalone TS shapes drift from serde JSON",
+      "proposed": "Derive standalone wire declarations/schemas from existing Rust serde types using current bindings machinery; preserve or version actual wire representations",
+      "expected_benefit": "Make typed integrations executable and prevent enum drift",
+      "acceptance": "Each public standalone enum variant/struct shape validates against generated schema; CJS/ESM typed consumer smoke reads real CharacterAt/PayoffStatus data without unchecked casts; existing facade contract checks remain valid",
+      "dependencies": [
+        "A07"
+      ]
+    }
+  ],
+  "validation": {
+    "rust": {
+      "command": "cargo test --locked --features cli,onnx",
+      "passed": 642,
+      "failed": 0,
+      "log": "rust-tests.log"
+    },
+    "node": {
+      "command": "npm test",
+      "passed": 8,
+      "failed": 0,
+      "log": "node-tests.log",
+      "artifact": "Existing local darwin-arm64 debug addon"
+    },
+    "types": {
+      "command": "npm run test:types",
+      "passed": true,
+      "log": "types.log"
+    },
+    "schemas": {
+      "command": "npm run test:contracts",
+      "passed": true,
+      "log": "contracts.log"
+    },
+    "provenance": {
+      "command": "uv run --no-project scripts/verify_fixtures.py",
+      "passed": true,
+      "log": "provenance.log"
+    },
+    "advisories": {
+      "command": "cargo audit --json",
+      "exit": 1,
+      "evidence": "security-advisories.json"
+    },
+    "dependency_policy": {
+      "command": "cargo deny --locked --all-features check",
+      "exit": 1,
+      "evidence": "dependency-policy.log"
+    },
+    "package_inventory": {
+      "command": "npm pack --ignore-scripts --dry-run --json",
+      "evidence": "npm-pack.json",
+      "limit": "Inventory only; not a fresh installed package or release build"
+    }
+  },
+  "external_sources": [
+    {
+      "url": "https://github.com/booknlp/booknlp/blob/3d900fc2224e55960c3363826ae28539b77b4204/booknlp/english/litbank_coref.py",
+      "contentRetrieved": true,
+      "sourceTitle": "litbank_coref.py",
+      "characters": 4888
+    },
+    {
+      "url": "https://github.com/Automattic/harper/blob/2920066028f3db71876e9b3648bb7023a3eb202a/harper-core/src/linting/mod.rs",
+      "contentRetrieved": true,
+      "sourceTitle": "mod.rs",
+      "characters": 30022
+    },
+    {
+      "url": "https://github.com/Automattic/harper/blob/2920066028f3db71876e9b3648bb7023a3eb202a/harper-core/src/spell/fst_dictionary.rs",
+      "contentRetrieved": true,
+      "sourceTitle": "fst_dictionary.rs",
+      "characters": 16127
+    },
+    {
+      "url": "https://github.com/vale-cli/vale/blob/v3/internal/lint/lint.go",
+      "contentRetrieved": true,
+      "sourceTitle": "lint.go",
+      "characters": 26803
+    },
+    {
+      "url": "https://github.com/vale-cli/vale/blob/v3/internal/check/existence.go",
+      "contentRetrieved": true,
+      "sourceTitle": "existence.go",
+      "characters": 6069
+    },
+    {
+      "url": "https://github.com/languagetool-org/languagetool/blob/ff39a8e5d4824f38d35d665d74cdc2174cd0472b/languagetool-core/src/main/java/org/languagetool/rules/WordRepeatBeginningRule.java",
+      "contentRetrieved": true,
+      "sourceTitle": "WordRepeatBeginningRule.java",
+      "characters": 4994
+    }
+  ],
+  "inventory_artifact": "inventory.json",
+  "verification_artifact": "verification.json",
+  "reproduction_commands": [
+    "node docs/audit-2026-10-27/probes.cjs",
+    "uv run --no-project docs/audit-2026-10-27/probe-cli.py",
+    "rustc --edition=2024 docs/audit-2026-10-27/probes.rs -L dependency=TARGET/debug/deps -L native=CLANG_RESOURCE_DIR/lib/darwin --extern narrative_lens=TARGET/debug/deps/libnarrative_lens.rlib -o AUDIT_PROBE_BINARY; run AUDIT_PROBE_BINARY after cargo test --locked --features cli,onnx"
+  ]
+}

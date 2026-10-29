@@ -8,14 +8,15 @@
 //! general-purpose embedding model is better for general semantics.
 //!
 //! Technique: a **PPMI + truncated SVD** count-based model (latent semantic
-//! analysis), which rivals word2vec on intrinsic similarity (Levy & Goldberg,
-//! 2014) while staying fully deterministic and model-free. Steps: (1)
+//! analysis), with context-distribution smoothing following Levy et al. (2015).
+//! Steps: (1)
 //! distance-weighted word co-occurrence over a sliding window; (2) positive
 //! pointwise mutual information with context-distribution smoothing (α = 0.75,
 //! which downweights frequent words and surfaces informative associations); (3)
 //! truncated SVD of the PPMI matrix into dense, denoised word vectors.
-//! Deterministic (SVD has no RNG), local, and fast at the capped vocabulary size
-//! used here; rebuilt whenever the manuscript changes.
+//! Small spaces retain an exact dense factorization; larger truncated spaces use
+//! sparse counts and deterministic subspace iteration. The solver materializes
+//! rank-sized projections, with a dense fallback for sufficiently dense counts.
 
 use std::collections::HashMap;
 
@@ -68,6 +69,33 @@ pub struct CorpusEmbedding {
 impl CorpusEmbedding {
     /// Build an embedding from the given texts (e.g. a project's documents).
     pub fn train(texts: &[&str], opts: &EmbeddingOptions) -> CorpusEmbedding {
+        Self::train_checked(texts, opts).unwrap_or_else(|error| {
+            log::warn!("corpus embedding unavailable: {error}");
+            Self {
+                dim: 0,
+                vectors: HashMap::new(),
+                weights: HashMap::new(),
+            }
+        })
+    }
+
+    pub fn train_checked(
+        texts: &[&str],
+        opts: &EmbeddingOptions,
+    ) -> crate::Result<CorpusEmbedding> {
+        let bytes = texts
+            .iter()
+            .try_fold(0usize, |total, text| total.checked_add(text.len()));
+        if !(1..=4096).contains(&opts.max_vocab)
+            || !(1..=1024).contains(&opts.dim)
+            || !(1..=1024).contains(&opts.window)
+            || texts.len() > 10_000
+            || bytes.is_none_or(|bytes| bytes > 64 * 1024 * 1024)
+        {
+            return Err(crate::Error::InvalidInput(
+                "corpus embedding exceeds option or input limits".into(),
+            ));
+        }
         // 1. Per-text content-token sequences + global counts.
         let stop = crate::substrate::text::stopwords();
         let sequences: Vec<Vec<String>> = texts
@@ -92,11 +120,11 @@ impl CorpusEmbedding {
         let words: Vec<String> = vocab.iter().map(|(w, _)| w.clone()).collect();
         let n = words.len();
         if n == 0 {
-            return CorpusEmbedding {
+            return Ok(CorpusEmbedding {
                 dim: 0,
                 vectors: HashMap::new(),
                 weights: HashMap::new(),
-            };
+            });
         }
         // Smooth inverse-frequency pooling weights from corpus frequencies.
         let weights: HashMap<String, f64> = vocab
@@ -113,7 +141,8 @@ impl CorpusEmbedding {
             .collect();
 
         // 3. Distance-weighted symmetric co-occurrence matrix.
-        let mut cooc = DMatrix::<f64>::zeros(n, n);
+        let dim = opts.dim.min(n);
+        let mut cooc = Cooccurrence::new(n, n > EXACT_SVD_MAX && dim + 10 < n);
         for seq in &sequences {
             for (t, target) in seq.iter().enumerate() {
                 let Some(&ti) = idx.get(target.as_str()) else {
@@ -126,7 +155,7 @@ impl CorpusEmbedding {
                         continue;
                     }
                     if let Some(&ci) = idx.get(ctx.as_str()) {
-                        cooc[(ti, ci)] += 1.0 / t.abs_diff(c) as f64;
+                        cooc.add(ti, ci, 1.0 / t.abs_diff(c) as f64);
                     }
                 }
             }
@@ -134,15 +163,16 @@ impl CorpusEmbedding {
 
         // 4. PPMI with context-distribution smoothing, then 5. truncated SVD.
         // The space can hold at most `n` components.
-        let dim = opts.dim.max(1).min(n);
-        let ppmi = ppmi_matrix(cooc);
+        drop(sequences);
+        drop(idx);
+        let ppmi = cooc.into_ppmi();
         let vectors = svd_vectors(&ppmi, &words, dim);
 
-        CorpusEmbedding {
+        Ok(CorpusEmbedding {
             dim,
             vectors,
             weights,
-        }
+        })
     }
 
     pub fn dim(&self) -> usize {
@@ -190,16 +220,19 @@ impl CorpusEmbedding {
     }
 
     /// The `k` vocabulary words most similar to `word` (a manuscript-tuned
-    /// thesaurus), strongest first. Empty if the word is unknown.
+    /// thesaurus), strongest first. Empty if the word has no learned context.
     pub fn nearest_words(&self, word: &str, k: usize) -> Vec<(String, f64)> {
         let key = word.to_lowercase();
         let Some(target) = self.vectors.get(&key) else {
             return Vec::new();
         };
+        if target.iter().all(|&value| value == 0.0) {
+            return Vec::new();
+        }
         let mut scored: Vec<(String, f64)> = self
             .vectors
             .iter()
-            .filter(|(w, _)| *w != &key)
+            .filter(|(w, v)| *w != &key && v.iter().any(|&value| value != 0.0))
             .map(|(w, v)| {
                 (
                     w.clone(),
@@ -207,7 +240,7 @@ impl CorpusEmbedding {
                 )
             })
             .collect();
-        crate::substrate::utils::sort_by_score_desc(&mut scored);
+        scored.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
         scored.truncate(k);
         scored
     }
@@ -297,13 +330,17 @@ impl SceneIndex {
         limit: usize,
     ) -> Vec<(SceneRef, f64)> {
         let q = embedding.embed_text(query);
+        if q.iter().all(|&value| value == 0.0) {
+            return Vec::new();
+        }
         let mut hits: Vec<(usize, f64)> = self
             .vectors
             .iter()
             .enumerate()
+            .filter(|(_, v)| v.iter().any(|&value| value != 0.0))
             .map(|(i, v)| (i, crate::substrate::utils::cosine_similarity(&q, v)))
             .collect();
-        crate::substrate::utils::sort_by_score_desc(&mut hits);
+        hits.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
         hits.truncate(limit);
         hits.into_iter()
             .map(|(i, s)| (self.scenes[i].clone(), s))
@@ -364,8 +401,7 @@ pub struct SemanticIndex {
     doc_vectors: Vec<(String, Vec<f64>)>,
     scenes: SceneIndex,
     /// Sparse lexical index over documents, fused with the dense ranking so
-    /// exact/rare terms are not missed. Reflects the last full build (rebuilt
-    /// with the embedding model, not on each incremental edit).
+    /// exact/rare terms are not missed. Updated with the document and scene vectors.
     lexical_docs: crate::craft::lexical::Bm25Index,
 }
 
@@ -398,7 +434,7 @@ impl SemanticIndex {
     /// drops; either arm being empty degrades gracefully to the other. The score
     /// is the fusion score, not a cosine.
     pub fn search(&self, query: &str, limit: usize) -> Vec<(String, f64)> {
-        let pool = (limit * 5).max(20);
+        let pool = limit.saturating_mul(5).max(20);
         let dense: Vec<String> = self
             .dense_search(query, pool)
             .into_iter()
@@ -420,9 +456,13 @@ impl SemanticIndex {
     /// Documents ranked by dense cosine similarity to `query` alone.
     fn dense_search(&self, query: &str, limit: usize) -> Vec<(String, f64)> {
         let q = self.embedding.embed_text(query);
+        if q.iter().all(|&value| value == 0.0) {
+            return Vec::new();
+        }
         let mut hits: Vec<(String, f64)> = self
             .doc_vectors
             .iter()
+            .filter(|(_, v)| v.iter().any(|&value| value != 0.0))
             .map(|(id, v)| {
                 (
                     id.clone(),
@@ -430,7 +470,7 @@ impl SemanticIndex {
                 )
             })
             .collect();
-        crate::substrate::utils::sort_by_score_desc(&mut hits);
+        hits.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
         hits.truncate(limit);
         hits
     }
@@ -462,6 +502,165 @@ impl SemanticIndex {
             None => self.doc_vectors.push((id.to_string(), vec)),
         }
         self.scenes.update_document(id, text, &self.embedding);
+        self.lexical_docs.update_document(id, text);
+    }
+}
+
+enum Cooccurrence {
+    Sparse {
+        size: usize,
+        counts: HashMap<usize, f64>,
+    },
+    Dense(DMatrix<f64>),
+}
+
+impl Cooccurrence {
+    fn new(size: usize, sparse: bool) -> Self {
+        if sparse {
+            Self::Sparse {
+                size,
+                counts: HashMap::new(),
+            }
+        } else {
+            Self::Dense(DMatrix::zeros(size, size))
+        }
+    }
+
+    fn add(&mut self, row: usize, column: usize, weight: f64) {
+        match self {
+            Self::Dense(matrix) => matrix[(row, column)] += weight,
+            Self::Sparse { size, counts } => {
+                *counts.entry(row * *size + column).or_default() += weight;
+                // Hash table overhead exceeds a dense matrix before half occupancy.
+                if counts.len() >= *size * *size / 4 {
+                    let mut dense = DMatrix::zeros(*size, *size);
+                    for (key, value) in counts.drain() {
+                        dense[(key / *size, key % *size)] = value;
+                    }
+                    *self = Self::Dense(dense);
+                }
+            }
+        }
+    }
+
+    fn into_ppmi(self) -> PpmiMatrix {
+        match self {
+            Self::Dense(matrix) => PpmiMatrix::Dense(ppmi_matrix(matrix)),
+            Self::Sparse { size, counts } => {
+                PpmiMatrix::Sparse(SparsePpmi::from_counts(size, counts))
+            }
+        }
+    }
+}
+
+struct SparsePpmi {
+    size: usize,
+    offsets: Vec<usize>,
+    entries: Vec<(usize, f64)>,
+}
+
+impl SparsePpmi {
+    fn from_counts(size: usize, counts: HashMap<usize, f64>) -> Self {
+        let mut entries: Vec<_> = counts.into_iter().collect();
+        entries.sort_unstable_by_key(|&(key, _)| key);
+        let mut row_sums = vec![0.0; size];
+        let mut columns = vec![0.0; size];
+        for &(key, value) in &entries {
+            row_sums[key / size] += value;
+            columns[key % size] += value;
+        }
+        let total: f64 = row_sums.iter().sum();
+        for column in &mut columns {
+            *column = column.powf(PPMI_SMOOTHING);
+        }
+        let column_total: f64 = columns.iter().sum();
+        entries.retain_mut(|(key, value)| {
+            if total <= 0.0 || column_total <= 0.0 || *value <= 0.0 {
+                return false;
+            }
+            let p_w = row_sums[*key / size] / total;
+            let p_c = columns[*key % size] / column_total;
+            *value = ((*value / total) / (p_w * p_c)).ln();
+            *value > 0.0
+        });
+        let mut offsets = vec![0; size + 1];
+        for (key, _) in &mut entries {
+            offsets[*key / size + 1] += 1;
+            *key %= size;
+        }
+        for row in 0..size {
+            offsets[row + 1] += offsets[row];
+        }
+        entries.shrink_to_fit();
+        Self {
+            size,
+            offsets,
+            entries,
+        }
+    }
+
+    fn multiply(&self, right: &DMatrix<f64>, transpose: bool) -> DMatrix<f64> {
+        assert_eq!(right.nrows(), self.size);
+        let mut result = DMatrix::zeros(self.size, right.ncols());
+        for column in 0..right.ncols() {
+            let input = right.column(column);
+            let mut output = result.column_mut(column);
+            for row in 0..self.size {
+                let entries = &self.entries[self.offsets[row]..self.offsets[row + 1]];
+                if transpose {
+                    let value = input[row];
+                    for &(index, weight) in entries {
+                        output[index] += weight * value;
+                    }
+                } else {
+                    let mut value = 0.0;
+                    for &(index, weight) in entries {
+                        value += weight * input[index];
+                    }
+                    output[row] = value;
+                }
+            }
+        }
+        result
+    }
+}
+
+enum PpmiMatrix {
+    Dense(DMatrix<f64>),
+    Sparse(SparsePpmi),
+}
+
+impl PpmiMatrix {
+    fn size(&self) -> usize {
+        match self {
+            Self::Dense(matrix) => matrix.nrows(),
+            Self::Sparse(matrix) => matrix.size,
+        }
+    }
+
+    fn multiply(&self, right: &DMatrix<f64>, transpose: bool) -> DMatrix<f64> {
+        match self {
+            Self::Dense(matrix) if transpose => matrix.tr_mul(right),
+            Self::Dense(matrix) => matrix * right,
+            Self::Sparse(matrix) => matrix.multiply(right, transpose),
+        }
+    }
+
+    fn to_dense(&self) -> DMatrix<f64> {
+        match self {
+            Self::Dense(matrix) => matrix.clone(),
+            Self::Sparse(matrix) => {
+                let mut dense = DMatrix::zeros(matrix.size, matrix.size);
+                for row in 0..matrix.size {
+                    for &(column, value) in
+                        &matrix.entries[matrix.offsets[row]..matrix.offsets[row + 1]]
+                    {
+                        dense[(row, column)] = value;
+                    }
+                }
+                dense
+            }
+        }
     }
 }
 
@@ -508,8 +707,8 @@ fn ppmi_matrix(cooc: DMatrix<f64>) -> DMatrix<f64> {
 /// Truncated SVD of the PPMI matrix → dense word vectors `U_k · Σ_k^{1/2}`,
 /// L2-normalized. Singular triplets are selected by magnitude (independent of
 /// the solver's ordering).
-fn svd_vectors(ppmi: &DMatrix<f64>, words: &[String], dim: usize) -> HashMap<String, Vec<f64>> {
-    let n = ppmi.nrows();
+fn svd_vectors(ppmi: &PpmiMatrix, words: &[String], dim: usize) -> HashMap<String, Vec<f64>> {
+    let n = ppmi.size();
     let (u, s) = truncated_svd(ppmi, dim);
     if u.ncols() == 0 {
         return HashMap::new();
@@ -533,36 +732,32 @@ fn svd_vectors(ppmi: &DMatrix<f64>, words: &[String], dim: usize) -> HashMap<Str
 /// below this matrix size; larger matrices use randomized SVD.
 const EXACT_SVD_MAX: usize = 200;
 
-/// Left singular vectors and singular values of `m`, computed exactly for small
-/// matrices and via deterministic randomized SVD (Halko et al.) for large ones,
-/// so the dense PPMI factorization stays fast as the vocabulary grows. `m` is
-/// symmetric (PPMI of a symmetric co-occurrence matrix), so power iterations use
-/// `m` directly.
-fn truncated_svd(m: &DMatrix<f64>, target: usize) -> (DMatrix<f64>, Vec<f64>) {
-    let n = m.nrows();
-    let l = (target + 10).min(n); // oversampled rank
+/// Exact small-space SVD or deterministic subspace iteration (Halko et al.,
+/// Algorithm 4.4). Smoothed PPMI is generally nonsymmetric even when counts are
+/// symmetric, so each power step applies both the matrix and its transpose.
+fn truncated_svd(m: &PpmiMatrix, target: usize) -> (DMatrix<f64>, Vec<f64>) {
+    let n = m.size();
+    let l = (target + 10).min(n);
     if n <= EXACT_SVD_MAX || l >= n {
-        let svd = m.clone().svd(true, false);
+        let svd = m.to_dense().svd(true, false);
         let u = svd.u.unwrap_or_else(|| DMatrix::zeros(n, 0));
         let s = svd.singular_values.iter().copied().collect();
         return (u, s);
     }
 
-    // Randomized range finder with 2 power iterations.
     let omega = rademacher_projection(n, l);
-    let mut y = m * &omega;
+    let mut q = m.multiply(&omega, false).qr().q();
     for _ in 0..2 {
-        let my = m * &y;
-        y = m * &my;
+        let z = m.multiply(&q, true).qr().q();
+        q = m.multiply(&z, false).qr().q();
     }
-    let q = y.qr().q(); // n × l, orthonormal columns
-    let b = q.transpose() * m; // l × n
+    let b = m.multiply(&q, true).transpose();
     let svd_b = b.svd(true, false);
     let u_b = match svd_b.u {
         Some(u) => u,
         None => return (DMatrix::zeros(n, 0), Vec::new()),
     };
-    let u = &q * &u_b; // n × l, approximate left singular vectors of m
+    let u = &q * &u_b;
     let s = svd_b.singular_values.iter().copied().collect();
     (u, s)
 }
@@ -577,11 +772,7 @@ fn rademacher_projection(rows: usize, cols: usize) -> DMatrix<f64> {
         z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
         z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
         z ^= z >> 31;
-        if z & 1 == 0 {
-            1.0
-        } else {
-            -1.0
-        }
+        if z & 1 == 0 { 1.0 } else { -1.0 }
     })
 }
 
@@ -597,6 +788,186 @@ fn l2_normalize(v: &mut [f64]) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn component_performance_sparse_ppmi_and_products_match_dense_math() {
+        let mut counts = DMatrix::<f64>::zeros(7, 7);
+        for (row, column, value) in [
+            (0, 1, 10.0),
+            (0, 2, 2.5),
+            (1, 2, 0.5),
+            (1, 3, 0.25),
+            (2, 4, 7.0),
+            (3, 4, 1.0),
+        ] {
+            counts[(row, column)] = value;
+            counts[(column, row)] = value;
+        }
+        let entries = (0..7)
+            .flat_map(|row| (0..7).map(move |column| (row, column)))
+            .filter(|&(row, column)| counts[(row, column)] > 0.0)
+            .map(|(row, column)| (row * 7 + column, counts[(row, column)]))
+            .collect();
+        let sparse = PpmiMatrix::Sparse(SparsePpmi::from_counts(7, entries));
+        let dense = PpmiMatrix::Dense(ppmi_matrix(counts));
+        let reference = dense.to_dense();
+        assert!((&reference - sparse.to_dense()).norm() < 1e-12);
+        assert!((&reference - reference.transpose()).norm() > 0.01);
+        let right = DMatrix::from_fn(7, 4, |r, c| (r * 3 + c + 1) as f64 / 7.0);
+        for transpose in [false, true] {
+            assert!(
+                (sparse.multiply(&right, transpose) - dense.multiply(&right, transpose)).norm()
+                    < 1e-11
+            );
+        }
+        let words: Vec<_> = (0..7).map(|i| format!("word{i}")).collect();
+        let exact_dense = svd_vectors(&dense, &words, 4);
+        let exact_sparse = svd_vectors(&sparse, &words, 4);
+        for a in &words {
+            for b in &words {
+                let left =
+                    crate::substrate::utils::cosine_similarity(&exact_dense[a], &exact_dense[b]);
+                let right =
+                    crate::substrate::utils::cosine_similarity(&exact_sparse[a], &exact_sparse[b]);
+                assert!((left - right).abs() < 1e-10);
+            }
+        }
+    }
+
+    #[test]
+    fn component_performance_dense_promotion_preserves_counts_at_threshold() {
+        for entries in [15, 16, 17] {
+            let mut adaptive = Cooccurrence::new(8, true);
+            let mut dense = DMatrix::<f64>::zeros(8, 8);
+            for key in 0..entries {
+                let weight = (key + 1) as f64 / 3.0;
+                adaptive.add(key / 8, key % 8, weight);
+                adaptive.add(key / 8, key % 8, weight);
+                dense[(key / 8, key % 8)] = 2.0 * weight;
+            }
+            assert_eq!(matches!(adaptive, Cooccurrence::Dense(_)), entries >= 16);
+            assert!((adaptive.into_ppmi().to_dense() - ppmi_matrix(dense)).norm() < 1e-11);
+        }
+    }
+
+    #[test]
+    fn component_performance_subspace_iteration_handles_nonsymmetric_low_rank() {
+        let size = 240;
+        let mut matrix = DMatrix::<f64>::zeros(size, size);
+        let mut entries = Vec::new();
+        let mut offsets = vec![0; size + 1];
+        for row in 0..size {
+            if row < 60 {
+                let group = row / 10;
+                for column in (120 + group * 10)..(130 + group * 10) {
+                    let value = ((row % 10 + 1) * (column % 10 + 1) * (group + 1)) as f64;
+                    matrix[(row, column)] = value;
+                    entries.push((column, value));
+                }
+            }
+            offsets[row + 1] = entries.len();
+        }
+        assert_eq!((&matrix * &matrix).norm(), 0.0);
+        let sparse = PpmiMatrix::Sparse(SparsePpmi {
+            size,
+            offsets,
+            entries,
+        });
+        let (u, values) = truncated_svd(&sparse, 6);
+        let (_, repeated) = truncated_svd(&sparse, 6);
+        assert_eq!(values, repeated);
+        let (_, dense_values) = truncated_svd(&PpmiMatrix::Dense(matrix.clone()), 6);
+        let exact = matrix.clone().svd(false, false).singular_values;
+        for i in 0..6 {
+            assert!((values[i] - exact[i]).abs() / exact[i] < 1e-10);
+            assert!((values[i] - dense_values[i]).abs() / exact[i] < 1e-10);
+        }
+        let factor = DMatrix::from_fn(size, 6, |r, c| u[(r, c)] * values[c]);
+        let gram = &matrix * matrix.transpose();
+        let residual = (&factor * factor.transpose() - &gram).norm() / gram.norm();
+        assert!(residual < 1e-10, "relative Gram residual {residual}");
+    }
+
+    #[test]
+    fn component_performance_sparse_embedding_preserves_topics_and_reproducibility() {
+        let mut documents = Vec::new();
+        for i in 0..128 {
+            documents.push(format!(
+                "crown throne monarch queen crown throne court{i} court{i}"
+            ));
+            documents.push(format!(
+                "python compiler software code python compiler code{i} code{i}"
+            ));
+        }
+        let refs: Vec<_> = documents.iter().map(String::as_str).collect();
+        let opts = EmbeddingOptions {
+            dim: 16,
+            max_vocab: 512,
+            ..Default::default()
+        };
+        let first = CorpusEmbedding::train_checked(&refs, &opts).unwrap();
+        let second = CorpusEmbedding::train_checked(&refs, &opts).unwrap();
+        assert!(first.vocab_size() > EXACT_SVD_MAX);
+        assert_eq!(first.vectors, second.vectors);
+        assert!(
+            first.similarity("crown monarch", "throne queen")
+                > first.similarity("crown monarch", "compiler software") + 0.2
+        );
+        let neighbors = first.nearest_words("python", 5);
+        assert!(
+            neighbors
+                .iter()
+                .any(|(word, _)| ["compiler", "software", "code"].contains(&word.as_str()))
+        );
+        assert!(
+            !neighbors
+                .iter()
+                .any(|(word, _)| ["crown", "throne", "monarch", "queen"].contains(&word.as_str()))
+        );
+    }
+
+    #[test]
+    fn component_performance_document_updates_preserve_space_and_refresh_retrieval() {
+        let mut documents: Vec<_> = (0..220)
+            .map(|i| {
+                (
+                    format!("context{i}"),
+                    format!("crown throne context{i} context{i}"),
+                )
+            })
+            .collect();
+        documents.push((
+            "edited".into(),
+            "crown throne obsoleteuniquetoken\n\ncrown throne".into(),
+        ));
+        documents.push((
+            "lab".into(),
+            "python compiler software code python compiler software code".into(),
+        ));
+        let mut index = SemanticIndex::build(
+            &documents,
+            &EmbeddingOptions {
+                dim: 16,
+                max_vocab: 512,
+                ..Default::default()
+            },
+        );
+        let word_before = index.embedding().word_vector("crown").unwrap().to_vec();
+        assert_eq!(index.search("obsoleteuniquetoken", 1)[0].0, "edited");
+        index.update_document(
+            "edited",
+            "🜂 python compiler currentuniquetoken\n\nsoftware code",
+        );
+        assert_eq!(index.embedding().word_vector("crown").unwrap(), word_before);
+        assert!(index.search("obsoleteuniquetoken", 5).is_empty());
+        assert_eq!(index.search("currentuniquetoken", 1)[0].0, "edited");
+        let scenes = index.search_scenes("python compiler", 5);
+        assert!(scenes.iter().any(|(scene, _)| scene.document_id == "edited"
+            && scene.scene_index == 0
+            && scene.snippet.contains("currentuniquetoken")));
+        index.update_document("added", "python compiler addeduniquetoken");
+        assert_eq!(index.search("addeduniquetoken", 1)[0].0, "added");
+    }
 
     /// A corpus with two clearly separated topics, repeated for signal.
     fn corpus() -> Vec<&'static str> {
@@ -746,6 +1117,72 @@ mod tests {
         let texts = corpus();
         let emb = CorpusEmbedding::train(&texts, &EmbeddingOptions::default());
         assert!(emb.nearest_words("zzzznotaword", 5).is_empty());
+    }
+
+    #[test]
+    fn zero_context_vocabulary_has_no_semantic_neighbors() {
+        let texts = ["quartz", "quartz", "velvet", "velvet"];
+        let emb = CorpusEmbedding::train(&texts, &EmbeddingOptions::default());
+        assert_eq!(emb.vocab_size(), 2);
+        assert!(emb.word_vector("quartz").unwrap().iter().all(|&x| x == 0.0));
+        for limit in [0, 1, 2, 3] {
+            assert!(emb.nearest_words("quartz", limit).is_empty());
+        }
+    }
+
+    #[test]
+    fn zero_context_candidates_abstain_but_keep_lexical_recall() {
+        let documents = vec![
+            (
+                "signal".into(),
+                "king queen castle king queen castle".into(),
+            ),
+            ("isolated-a".into(), "velvet".into()),
+            ("isolated-b".into(), "velvet".into()),
+        ];
+        let mut index = SemanticIndex::build(&documents, &EmbeddingOptions::default());
+        assert!(
+            index
+                .embedding
+                .word_vector("velvet")
+                .unwrap()
+                .iter()
+                .all(|&x| x == 0.0)
+        );
+        for limit in [0, 1, 2, 3, 4] {
+            assert!(
+                index
+                    .related_words("king", limit)
+                    .iter()
+                    .all(|(word, _)| word != "velvet")
+            );
+            assert!(
+                index
+                    .dense_search("king", limit)
+                    .iter()
+                    .all(|(id, _)| id == "signal")
+            );
+            assert!(
+                index
+                    .search("king", limit)
+                    .iter()
+                    .all(|(id, _)| id == "signal")
+            );
+            assert!(
+                index
+                    .search_scenes("king", limit)
+                    .iter()
+                    .all(|(scene, _)| scene.document_id == "signal")
+            );
+        }
+        assert!(index.related_words("velvet", 4).is_empty());
+        assert!(index.dense_search("velvet", 4).is_empty());
+        assert!(index.search_scenes("velvet", 4).is_empty());
+        assert_eq!(index.search("velvet", 4).len(), 2);
+        index.update_document("signal", "velvet");
+        assert!(index.search("king", 4).is_empty());
+        assert!(index.search_scenes("king", 4).is_empty());
+        assert_eq!(index.search("velvet", 4).len(), 3);
     }
 
     #[test]

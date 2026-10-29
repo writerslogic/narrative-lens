@@ -1,7 +1,6 @@
-//! Top-level result/options types. Reserved for a future unified facade over
-//! the individual analyzer functions; each analyzer currently exposes its own
-//! function-specific result and options types, and nothing in this crate
-//! depends on these yet.
+//! Legacy empty placeholders, retained so existing imports and struct literals
+//! keep compiling. The optional facade uses `manuscript::Configuration` and
+//! `manuscript::Report`; standalone analyzers retain their own types.
 
 /// Placeholder for shared analyzer options. Not yet used by any analyzer.
 #[derive(Debug, Clone, Default)]

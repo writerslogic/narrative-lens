@@ -44,6 +44,7 @@ fn suspense_words() -> &'static HashSet<&'static str> {
 }
 
 /// Result of analyzing syntax tension in a single scene.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SceneTensionResult {
@@ -60,6 +61,7 @@ pub struct SceneTensionResult {
 }
 
 /// Aggregate tension metrics across multiple scenes.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TensionSummary {
@@ -201,10 +203,7 @@ fn compute_dialogue_shift_score(text: &str) -> f64 {
 /// Detect bursts of short paragraphs (1-2 sentences each).
 /// Returns a 0.0-1.0 score.
 fn compute_paragraph_burst_score(text: &str) -> f64 {
-    let paragraphs: Vec<&str> = text
-        .split("\n\n")
-        .filter(|p| !p.trim().is_empty())
-        .collect();
+    let paragraphs = crate::substrate::text::split_paragraphs(text);
     if paragraphs.len() < 3 {
         return 0.0;
     }

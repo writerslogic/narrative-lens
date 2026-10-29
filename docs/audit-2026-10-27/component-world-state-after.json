@@ -1,0 +1,824 @@
+{
+  "host": "Apple M4 arm64;32GiB RAM",
+  "binarySha256": "82cdcd23a0471f948353d7dce0cdccd9b0d1ce5d7bff39ccc5068aeffc11a060",
+  "sourceSha256": "31ee8470a7b48eef9f06f833a8e5504f5fc03f11d637e98e0f95b610c632cb66",
+  "benchmarkSha256": "973dcd037228b4e8cbc94416159094134276a96c2a2b2a5c75cc8825a73ca690",
+  "runs": [
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 256,
+      "finalSemanticFingerprint": "4f8912884d46c4a8",
+      "medianMs": 0.858875,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "full",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 16512,
+      "samples": [
+        {
+          "allocationCalls": 37989,
+          "ms": 1.3634160000000002,
+          "peakAdditionalRequestedBytes": 2477382,
+          "retainedAdditionalRequestedBytes": 2417506,
+          "totalRequestedBytes": 2716791
+        },
+        {
+          "allocationCalls": 37960,
+          "ms": 1.020791,
+          "peakAdditionalRequestedBytes": 2474990,
+          "retainedAdditionalRequestedBytes": 2415114,
+          "totalRequestedBytes": 2713079
+        },
+        {
+          "allocationCalls": 37960,
+          "ms": 0.858875,
+          "peakAdditionalRequestedBytes": 2474990,
+          "retainedAdditionalRequestedBytes": 2415114,
+          "totalRequestedBytes": 2713079
+        },
+        {
+          "allocationCalls": 37960,
+          "ms": 0.832375,
+          "peakAdditionalRequestedBytes": 2474990,
+          "retainedAdditionalRequestedBytes": 2415114,
+          "totalRequestedBytes": 2713079
+        },
+        {
+          "allocationCalls": 37960,
+          "ms": 0.821125,
+          "peakAdditionalRequestedBytes": 2474990,
+          "retainedAdditionalRequestedBytes": 2415114,
+          "totalRequestedBytes": 2713079
+        }
+      ],
+      "scenes": 128,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 256,
+      "finalSemanticFingerprint": "4f8912884d46c4a8",
+      "medianMs": 0.360667,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "current",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 256,
+      "samples": [
+        {
+          "allocationCalls": 4191,
+          "ms": 0.414916,
+          "peakAdditionalRequestedBytes": 79181,
+          "retainedAdditionalRequestedBytes": 56272,
+          "totalRequestedBytes": 299737
+        },
+        {
+          "allocationCalls": 4162,
+          "ms": 0.360667,
+          "peakAdditionalRequestedBytes": 76789,
+          "retainedAdditionalRequestedBytes": 53880,
+          "totalRequestedBytes": 296025
+        },
+        {
+          "allocationCalls": 4162,
+          "ms": 0.36154200000000003,
+          "peakAdditionalRequestedBytes": 76789,
+          "retainedAdditionalRequestedBytes": 53880,
+          "totalRequestedBytes": 296025
+        },
+        {
+          "allocationCalls": 4162,
+          "ms": 0.359208,
+          "peakAdditionalRequestedBytes": 76789,
+          "retainedAdditionalRequestedBytes": 53880,
+          "totalRequestedBytes": 296025
+        },
+        {
+          "allocationCalls": 4162,
+          "ms": 0.359625,
+          "peakAdditionalRequestedBytes": 76789,
+          "retainedAdditionalRequestedBytes": 53880,
+          "totalRequestedBytes": 296025
+        }
+      ],
+      "scenes": 128,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 256,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 256,
+      "finalSemanticFingerprint": "4f8912884d46c4a8",
+      "medianMs": 0.38975000000000004,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "deltas",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 256,
+      "samples": [
+        {
+          "allocationCalls": 5477,
+          "ms": 0.438542,
+          "peakAdditionalRequestedBytes": 107323,
+          "retainedAdditionalRequestedBytes": 87412,
+          "totalRequestedBytes": 446785
+        },
+        {
+          "allocationCalls": 5448,
+          "ms": 0.393083,
+          "peakAdditionalRequestedBytes": 104931,
+          "retainedAdditionalRequestedBytes": 85020,
+          "totalRequestedBytes": 443073
+        },
+        {
+          "allocationCalls": 5448,
+          "ms": 0.384333,
+          "peakAdditionalRequestedBytes": 104931,
+          "retainedAdditionalRequestedBytes": 85020,
+          "totalRequestedBytes": 443073
+        },
+        {
+          "allocationCalls": 5448,
+          "ms": 0.387625,
+          "peakAdditionalRequestedBytes": 104931,
+          "retainedAdditionalRequestedBytes": 85020,
+          "totalRequestedBytes": 443073
+        },
+        {
+          "allocationCalls": 5448,
+          "ms": 0.38975000000000004,
+          "peakAdditionalRequestedBytes": 104931,
+          "retainedAdditionalRequestedBytes": 85020,
+          "totalRequestedBytes": 443073
+        }
+      ],
+      "scenes": 128,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 256,
+      "finalSemanticFingerprint": "4f8912884d46c4a8",
+      "medianMs": 0.349333,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "minimal",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 256,
+      "samples": [
+        {
+          "allocationCalls": 4191,
+          "ms": 0.40175,
+          "peakAdditionalRequestedBytes": 79181,
+          "retainedAdditionalRequestedBytes": 56272,
+          "totalRequestedBytes": 299737
+        },
+        {
+          "allocationCalls": 4162,
+          "ms": 0.352459,
+          "peakAdditionalRequestedBytes": 76789,
+          "retainedAdditionalRequestedBytes": 53880,
+          "totalRequestedBytes": 296025
+        },
+        {
+          "allocationCalls": 4162,
+          "ms": 0.349333,
+          "peakAdditionalRequestedBytes": 76789,
+          "retainedAdditionalRequestedBytes": 53880,
+          "totalRequestedBytes": 296025
+        },
+        {
+          "allocationCalls": 4162,
+          "ms": 0.341958,
+          "peakAdditionalRequestedBytes": 76789,
+          "retainedAdditionalRequestedBytes": 53880,
+          "totalRequestedBytes": 296025
+        },
+        {
+          "allocationCalls": 4162,
+          "ms": 0.33829200000000004,
+          "peakAdditionalRequestedBytes": 76789,
+          "retainedAdditionalRequestedBytes": 53880,
+          "totalRequestedBytes": 296025
+        }
+      ],
+      "scenes": 128,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 1024,
+      "finalSemanticFingerprint": "e72b92dd912e5918",
+      "medianMs": 8.22975,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "full",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 262656,
+      "samples": [
+        {
+          "allocationCalls": 544991,
+          "ms": 10.010917,
+          "peakAdditionalRequestedBytes": 38213654,
+          "retainedAdditionalRequestedBytes": 37975586,
+          "totalRequestedBytes": 39170391
+        },
+        {
+          "allocationCalls": 544962,
+          "ms": 9.128041,
+          "peakAdditionalRequestedBytes": 38211262,
+          "retainedAdditionalRequestedBytes": 37973194,
+          "totalRequestedBytes": 39166679
+        },
+        {
+          "allocationCalls": 544962,
+          "ms": 8.04925,
+          "peakAdditionalRequestedBytes": 38211262,
+          "retainedAdditionalRequestedBytes": 37973194,
+          "totalRequestedBytes": 39166679
+        },
+        {
+          "allocationCalls": 544962,
+          "ms": 7.9927090000000005,
+          "peakAdditionalRequestedBytes": 38211262,
+          "retainedAdditionalRequestedBytes": 37973194,
+          "totalRequestedBytes": 39166679
+        },
+        {
+          "allocationCalls": 544962,
+          "ms": 8.22975,
+          "peakAdditionalRequestedBytes": 38211262,
+          "retainedAdditionalRequestedBytes": 37973194,
+          "totalRequestedBytes": 39166679
+        }
+      ],
+      "scenes": 512,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 1024,
+      "finalSemanticFingerprint": "e72b92dd912e5918",
+      "medianMs": 1.420958,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "current",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 1024,
+      "samples": [
+        {
+          "allocationCalls": 16599,
+          "ms": 1.4678339999999999,
+          "peakAdditionalRequestedBytes": 305389,
+          "retainedAdditionalRequestedBytes": 218320,
+          "totalRequestedBytes": 1187961
+        },
+        {
+          "allocationCalls": 16570,
+          "ms": 1.4215829999999998,
+          "peakAdditionalRequestedBytes": 302997,
+          "retainedAdditionalRequestedBytes": 215928,
+          "totalRequestedBytes": 1184249
+        },
+        {
+          "allocationCalls": 16570,
+          "ms": 1.420958,
+          "peakAdditionalRequestedBytes": 302997,
+          "retainedAdditionalRequestedBytes": 215928,
+          "totalRequestedBytes": 1184249
+        },
+        {
+          "allocationCalls": 16570,
+          "ms": 1.3832499999999999,
+          "peakAdditionalRequestedBytes": 302997,
+          "retainedAdditionalRequestedBytes": 215928,
+          "totalRequestedBytes": 1184249
+        },
+        {
+          "allocationCalls": 16570,
+          "ms": 1.395458,
+          "peakAdditionalRequestedBytes": 302997,
+          "retainedAdditionalRequestedBytes": 215928,
+          "totalRequestedBytes": 1184249
+        }
+      ],
+      "scenes": 512,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 1024,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 1024,
+      "finalSemanticFingerprint": "e72b92dd912e5918",
+      "medianMs": 1.516375,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "deltas",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 1024,
+      "samples": [
+        {
+          "allocationCalls": 21727,
+          "ms": 1.57325,
+          "peakAdditionalRequestedBytes": 418539,
+          "retainedAdditionalRequestedBytes": 343540,
+          "totalRequestedBytes": 1778145
+        },
+        {
+          "allocationCalls": 21698,
+          "ms": 1.532833,
+          "peakAdditionalRequestedBytes": 416147,
+          "retainedAdditionalRequestedBytes": 341148,
+          "totalRequestedBytes": 1774433
+        },
+        {
+          "allocationCalls": 21698,
+          "ms": 1.516375,
+          "peakAdditionalRequestedBytes": 416147,
+          "retainedAdditionalRequestedBytes": 341148,
+          "totalRequestedBytes": 1774433
+        },
+        {
+          "allocationCalls": 21698,
+          "ms": 1.489333,
+          "peakAdditionalRequestedBytes": 416147,
+          "retainedAdditionalRequestedBytes": 341148,
+          "totalRequestedBytes": 1774433
+        },
+        {
+          "allocationCalls": 21698,
+          "ms": 1.4942499999999999,
+          "peakAdditionalRequestedBytes": 416147,
+          "retainedAdditionalRequestedBytes": 341148,
+          "totalRequestedBytes": 1774433
+        }
+      ],
+      "scenes": 512,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 1024,
+      "finalSemanticFingerprint": "e72b92dd912e5918",
+      "medianMs": 1.4025,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "minimal",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 1024,
+      "samples": [
+        {
+          "allocationCalls": 16599,
+          "ms": 1.469166,
+          "peakAdditionalRequestedBytes": 305389,
+          "retainedAdditionalRequestedBytes": 218320,
+          "totalRequestedBytes": 1187961
+        },
+        {
+          "allocationCalls": 16570,
+          "ms": 1.4025,
+          "peakAdditionalRequestedBytes": 302997,
+          "retainedAdditionalRequestedBytes": 215928,
+          "totalRequestedBytes": 1184249
+        },
+        {
+          "allocationCalls": 16570,
+          "ms": 1.425416,
+          "peakAdditionalRequestedBytes": 302997,
+          "retainedAdditionalRequestedBytes": 215928,
+          "totalRequestedBytes": 1184249
+        },
+        {
+          "allocationCalls": 16570,
+          "ms": 1.379,
+          "peakAdditionalRequestedBytes": 302997,
+          "retainedAdditionalRequestedBytes": 215928,
+          "totalRequestedBytes": 1184249
+        },
+        {
+          "allocationCalls": 16570,
+          "ms": 1.37925,
+          "peakAdditionalRequestedBytes": 302997,
+          "retainedAdditionalRequestedBytes": 215928,
+          "totalRequestedBytes": 1184249
+        }
+      ],
+      "scenes": 512,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 2048,
+      "finalSemanticFingerprint": "19e0573ca754c128",
+      "medianMs": 30.47625,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "full",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 1049600,
+      "samples": [
+        {
+          "allocationCalls": 2138495,
+          "ms": 35.592708,
+          "peakAdditionalRequestedBytes": 151999806,
+          "retainedAdditionalRequestedBytes": 151523802,
+          "totalRequestedBytes": 153913063
+        },
+        {
+          "allocationCalls": 2138466,
+          "ms": 30.47625,
+          "peakAdditionalRequestedBytes": 151997414,
+          "retainedAdditionalRequestedBytes": 151521410,
+          "totalRequestedBytes": 153909351
+        },
+        {
+          "allocationCalls": 2138466,
+          "ms": 32.772000000000006,
+          "peakAdditionalRequestedBytes": 151997414,
+          "retainedAdditionalRequestedBytes": 151521410,
+          "totalRequestedBytes": 153909351
+        },
+        {
+          "allocationCalls": 2138466,
+          "ms": 27.950042,
+          "peakAdditionalRequestedBytes": 151997414,
+          "retainedAdditionalRequestedBytes": 151521410,
+          "totalRequestedBytes": 153909351
+        },
+        {
+          "allocationCalls": 2138466,
+          "ms": 27.827875,
+          "peakAdditionalRequestedBytes": 151997414,
+          "retainedAdditionalRequestedBytes": 151521410,
+          "totalRequestedBytes": 153909351
+        }
+      ],
+      "scenes": 1024,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 2048,
+      "finalSemanticFingerprint": "19e0573ca754c128",
+      "medianMs": 2.820292,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "current",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 2048,
+      "samples": [
+        {
+          "allocationCalls": 33142,
+          "ms": 2.9052919999999998,
+          "peakAdditionalRequestedBytes": 607221,
+          "retainedAdditionalRequestedBytes": 434480,
+          "totalRequestedBytes": 2372737
+        },
+        {
+          "allocationCalls": 33113,
+          "ms": 2.820292,
+          "peakAdditionalRequestedBytes": 604829,
+          "retainedAdditionalRequestedBytes": 432088,
+          "totalRequestedBytes": 2369025
+        },
+        {
+          "allocationCalls": 33113,
+          "ms": 2.7955419999999997,
+          "peakAdditionalRequestedBytes": 604829,
+          "retainedAdditionalRequestedBytes": 432088,
+          "totalRequestedBytes": 2369025
+        },
+        {
+          "allocationCalls": 33113,
+          "ms": 2.809209,
+          "peakAdditionalRequestedBytes": 604829,
+          "retainedAdditionalRequestedBytes": 432088,
+          "totalRequestedBytes": 2369025
+        },
+        {
+          "allocationCalls": 33113,
+          "ms": 2.83125,
+          "peakAdditionalRequestedBytes": 604829,
+          "retainedAdditionalRequestedBytes": 432088,
+          "totalRequestedBytes": 2369025
+        }
+      ],
+      "scenes": 1024,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 2048,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 2048,
+      "finalSemanticFingerprint": "19e0573ca754c128",
+      "medianMs": 3.059375,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "deltas",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 2048,
+      "samples": [
+        {
+          "allocationCalls": 43391,
+          "ms": 3.190292,
+          "peakAdditionalRequestedBytes": 833715,
+          "retainedAdditionalRequestedBytes": 685188,
+          "totalRequestedBytes": 3553865
+        },
+        {
+          "allocationCalls": 43362,
+          "ms": 3.063959,
+          "peakAdditionalRequestedBytes": 831323,
+          "retainedAdditionalRequestedBytes": 682796,
+          "totalRequestedBytes": 3550153
+        },
+        {
+          "allocationCalls": 43362,
+          "ms": 3.0400829999999996,
+          "peakAdditionalRequestedBytes": 831323,
+          "retainedAdditionalRequestedBytes": 682796,
+          "totalRequestedBytes": 3550153
+        },
+        {
+          "allocationCalls": 43362,
+          "ms": 3.054041,
+          "peakAdditionalRequestedBytes": 831323,
+          "retainedAdditionalRequestedBytes": 682796,
+          "totalRequestedBytes": 3550153
+        },
+        {
+          "allocationCalls": 43362,
+          "ms": 3.059375,
+          "peakAdditionalRequestedBytes": 831323,
+          "retainedAdditionalRequestedBytes": 682796,
+          "totalRequestedBytes": 3550153
+        }
+      ],
+      "scenes": 1024,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 2048,
+      "finalSemanticFingerprint": "19e0573ca754c128",
+      "medianMs": 2.814959,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "minimal",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 2048,
+      "samples": [
+        {
+          "allocationCalls": 33142,
+          "ms": 2.922,
+          "peakAdditionalRequestedBytes": 607221,
+          "retainedAdditionalRequestedBytes": 434480,
+          "totalRequestedBytes": 2372737
+        },
+        {
+          "allocationCalls": 33113,
+          "ms": 2.814959,
+          "peakAdditionalRequestedBytes": 604829,
+          "retainedAdditionalRequestedBytes": 432088,
+          "totalRequestedBytes": 2369025
+        },
+        {
+          "allocationCalls": 33113,
+          "ms": 2.8330830000000002,
+          "peakAdditionalRequestedBytes": 604829,
+          "retainedAdditionalRequestedBytes": 432088,
+          "totalRequestedBytes": 2369025
+        },
+        {
+          "allocationCalls": 33113,
+          "ms": 2.805125,
+          "peakAdditionalRequestedBytes": 604829,
+          "retainedAdditionalRequestedBytes": 432088,
+          "totalRequestedBytes": 2369025
+        },
+        {
+          "allocationCalls": 33113,
+          "ms": 2.806,
+          "peakAdditionalRequestedBytes": 604829,
+          "retainedAdditionalRequestedBytes": 432088,
+          "totalRequestedBytes": 2369025
+        }
+      ],
+      "scenes": 1024,
+      "workload": "growth"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 1028,
+      "finalSemanticFingerprint": "28e29abb9bbaf2ff",
+      "medianMs": 14.320583,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "full",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 264704,
+      "samples": [
+        {
+          "allocationCalls": 723185,
+          "ms": 16.822542,
+          "peakAdditionalRequestedBytes": 39820978,
+          "retainedAdditionalRequestedBytes": 39539872,
+          "totalRequestedBytes": 43596671
+        },
+        {
+          "allocationCalls": 722840,
+          "ms": 14.511584,
+          "peakAdditionalRequestedBytes": 39582986,
+          "retainedAdditionalRequestedBytes": 39301880,
+          "totalRequestedBytes": 43122607
+        },
+        {
+          "allocationCalls": 722840,
+          "ms": 14.320583,
+          "peakAdditionalRequestedBytes": 39417130,
+          "retainedAdditionalRequestedBytes": 39136024,
+          "totalRequestedBytes": 42956751
+        },
+        {
+          "allocationCalls": 722840,
+          "ms": 14.282042,
+          "peakAdditionalRequestedBytes": 39657738,
+          "retainedAdditionalRequestedBytes": 39376632,
+          "totalRequestedBytes": 43197359
+        },
+        {
+          "allocationCalls": 722840,
+          "ms": 14.262125000000001,
+          "peakAdditionalRequestedBytes": 39473194,
+          "retainedAdditionalRequestedBytes": 39192088,
+          "totalRequestedBytes": 43012815
+        }
+      ],
+      "scenes": 512,
+      "workload": "activity"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 1028,
+      "finalSemanticFingerprint": "28e29abb9bbaf2ff",
+      "medianMs": 5.954792,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "current",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 1028,
+      "samples": [
+        {
+          "allocationCalls": 43507,
+          "ms": 6.440833,
+          "peakAdditionalRequestedBytes": 850888,
+          "retainedAdditionalRequestedBytes": 741130,
+          "totalRequestedBytes": 3538621
+        },
+        {
+          "allocationCalls": 43162,
+          "ms": 5.954792,
+          "peakAdditionalRequestedBytes": 517120,
+          "retainedAdditionalRequestedBytes": 407362,
+          "totalRequestedBytes": 2968781
+        },
+        {
+          "allocationCalls": 43162,
+          "ms": 5.9255,
+          "peakAdditionalRequestedBytes": 517120,
+          "retainedAdditionalRequestedBytes": 407362,
+          "totalRequestedBytes": 2968781
+        },
+        {
+          "allocationCalls": 43162,
+          "ms": 5.874625,
+          "peakAdditionalRequestedBytes": 517120,
+          "retainedAdditionalRequestedBytes": 407362,
+          "totalRequestedBytes": 2968781
+        },
+        {
+          "allocationCalls": 43162,
+          "ms": 5.959833000000001,
+          "peakAdditionalRequestedBytes": 517120,
+          "retainedAdditionalRequestedBytes": 407362,
+          "totalRequestedBytes": 2968781
+        }
+      ],
+      "scenes": 512,
+      "workload": "activity"
+    },
+    {
+      "deltaFactEntries": 3072,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 1028,
+      "finalSemanticFingerprint": "28e29abb9bbaf2ff",
+      "medianMs": 6.871541,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "deltas",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 1028,
+      "samples": [
+        {
+          "allocationCalls": 71662,
+          "ms": 7.3956669999999995,
+          "peakAdditionalRequestedBytes": 1147108,
+          "retainedAdditionalRequestedBytes": 1037350,
+          "totalRequestedBytes": 5510509
+        },
+        {
+          "allocationCalls": 71317,
+          "ms": 6.871541,
+          "peakAdditionalRequestedBytes": 813340,
+          "retainedAdditionalRequestedBytes": 703582,
+          "totalRequestedBytes": 4940669
+        },
+        {
+          "allocationCalls": 71317,
+          "ms": 6.893375,
+          "peakAdditionalRequestedBytes": 813340,
+          "retainedAdditionalRequestedBytes": 703582,
+          "totalRequestedBytes": 4940669
+        },
+        {
+          "allocationCalls": 71317,
+          "ms": 6.824666,
+          "peakAdditionalRequestedBytes": 813340,
+          "retainedAdditionalRequestedBytes": 703582,
+          "totalRequestedBytes": 4940669
+        },
+        {
+          "allocationCalls": 71317,
+          "ms": 6.816666,
+          "peakAdditionalRequestedBytes": 813340,
+          "retainedAdditionalRequestedBytes": 703582,
+          "totalRequestedBytes": 4940669
+        }
+      ],
+      "scenes": 512,
+      "workload": "activity"
+    },
+    {
+      "deltaFactEntries": 0,
+      "equivalenceScope": "full/current/deltas retain identical final facts,violations,character knowledge,event histories and scores;minimal deliberately omits optional histories and may have a different semantic fingerprint",
+      "facts": 1028,
+      "finalSemanticFingerprint": "205ecbd0a1cf5234",
+      "medianMs": 5.832042,
+      "memoryScope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+      "mode": "minimal",
+      "profile": "release;default features;one process;identical generated corpus;regex/cast cache warmed;tracked allocator enabled;compilation excluded",
+      "repetitions": 5,
+      "retainedFactEntries": 1028,
+      "samples": [
+        {
+          "allocationCalls": 33222,
+          "ms": 6.367125000000001,
+          "peakAdditionalRequestedBytes": 606812,
+          "retainedAdditionalRequestedBytes": 525798,
+          "totalRequestedBytes": 2831783
+        },
+        {
+          "allocationCalls": 32877,
+          "ms": 5.832042,
+          "peakAdditionalRequestedBytes": 273067,
+          "retainedAdditionalRequestedBytes": 192030,
+          "totalRequestedBytes": 2261943
+        },
+        {
+          "allocationCalls": 32877,
+          "ms": 5.860625000000001,
+          "peakAdditionalRequestedBytes": 273008,
+          "retainedAdditionalRequestedBytes": 192030,
+          "totalRequestedBytes": 2261943
+        },
+        {
+          "allocationCalls": 32877,
+          "ms": 5.790709,
+          "peakAdditionalRequestedBytes": 273067,
+          "retainedAdditionalRequestedBytes": 192030,
+          "totalRequestedBytes": 2261943
+        },
+        {
+          "allocationCalls": 32877,
+          "ms": 5.799708,
+          "peakAdditionalRequestedBytes": 272971,
+          "retainedAdditionalRequestedBytes": 192030,
+          "totalRequestedBytes": 2261943
+        }
+      ],
+      "scenes": 512,
+      "workload": "activity"
+    }
+  ]
+}

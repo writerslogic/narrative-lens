@@ -1,0 +1,183 @@
+{
+  "dataset": {
+    "protocolVersion": 4,
+    "revision": "3e50db0ffc033d7ccbb94f4d88f6b99210328ed8",
+    "license": "CC-BY-4.0",
+    "inputsSha256": "bd3140891c76f574e59153ea622b7593013d94c2ba84c527aa7ed50558963568",
+    "goldSha256": "f5955889aa888bd836c459b314190cec3f858a47d50f741e6f43401aa7f0985f",
+    "works": 76,
+    "splits": {
+      "development": 76
+    },
+    "authors": {
+      "development": 57
+    },
+    "protocol": "Author-disjoint; original tokenized annotation texts. Supplied-cast mode uses unambiguous proper-name aliases from human labels,never gold pronoun/speaker assignments or gender. Detected-cast mode uses only library-extracted names. Unique-surface names are diagnostic;canonical inventory is scored by unambiguous named-person identity groups,with nominal-only predictions explicitly unassessed. Coreference covers supported personal pronouns with exact original byte ranges. Quotation speaker numeric suffix IDs are a separate annotation namespace;gold speaker canonical names link through exact unique aliases only,otherwise identity is explicitly unassessed with coverage and all-gold lower-bound recall. Legacy quotes use one-to-one normalized content multiset with repeated-content speaker ambiguity unassessed. Checked explicit-only quotes additionally use exact original delimiter boundaries and source-validated UTF8/UTF16 anchors,including repeated content. Pinned model NER is scored separately on contiguous proper-person spans;nominal and nested entity semantics differ from CoNLL/news. No data edits or model training.",
+    "scope": "Development-only projection of frozen v4 preparation;no held-out records."
+  },
+  "split": "development",
+  "works": 76,
+  "executionFailures": 0,
+  "predictionSha256": "3abb82592fe07efd05bc6fa797fa0a3d16afc05d978f4da78b348a0c06e5a2ab",
+  "modelModes": [
+    "verified local NER model plus heuristic person inventory"
+  ],
+  "metrics": {
+    "properPersonNames": {
+      "tp": 369,
+      "fp": 158,
+      "fn": 338,
+      "precision": 0.7001897533206831,
+      "recall": 0.521923620933522,
+      "f1": 0.5980551053484603
+    },
+    "namedCharacterInventory": {
+      "tp": 334,
+      "fp": 180,
+      "fn": 202,
+      "precision": 0.6498054474708171,
+      "recall": 0.6231343283582089,
+      "f1": 0.6361904761904762,
+      "unassessedNominalOnly": 13
+    },
+    "modelProperPersonSpansExact": {
+      "tp": 1681,
+      "fp": 426,
+      "fn": 333,
+      "precision": 0.7978168011390603,
+      "recall": 0.8346573982125124,
+      "f1": 0.8158214025721913
+    },
+    "dialogueExplicitSuppliedCastExact": {
+      "tp": 1193,
+      "fp": 256,
+      "fn": 151,
+      "precision": 0.8233264320220842,
+      "recall": 0.8876488095238095,
+      "f1": 0.8542785535266738
+    },
+    "speakerExplicitSuppliedCastExact": {
+      "tp": 112,
+      "fp": 2,
+      "fn": 763,
+      "precision": 0.9824561403508771,
+      "recall": 0.128,
+      "f1": 0.22649140546006066,
+      "total": 1344,
+      "abstained": 761,
+      "unassessedIdentity": 469,
+      "assessmentCoverage": 0.6510416666666666,
+      "recallOverAllGoldLowerBound": 0.08333333333333333,
+      "decisionCoverage": 0.08482142857142858,
+      "decisionCoverageWithinAssessed": 0.13028571428571428
+    },
+    "coreferenceSuppliedCast": {
+      "tp": 2239,
+      "fp": 635,
+      "fn": 4658,
+      "precision": 0.779053583855254,
+      "recall": 0.3246338987965782,
+      "f1": 0.4582949544570668,
+      "total": 6897,
+      "abstained": 4023,
+      "assessmentCoverage": 1.0,
+      "recallOverAllGoldLowerBound": 0.3246338987965782,
+      "decisionCoverage": 0.4167029143105698,
+      "decisionCoverageWithinAssessed": 0.4167029143105698
+    },
+    "dialogueSuppliedCast": {
+      "tp": 1193,
+      "fp": 256,
+      "fn": 151,
+      "precision": 0.8233264320220842,
+      "recall": 0.8876488095238095,
+      "f1": 0.8542785535266738,
+      "unassessedIndirect": 3
+    },
+    "speakerSuppliedCast": {
+      "tp": 200,
+      "fp": 134,
+      "fn": 659,
+      "precision": 0.5988023952095808,
+      "recall": 0.23282887077997672,
+      "f1": 0.3352891869237217,
+      "total": 1344,
+      "abstained": 525,
+      "unassessedRepeatedText": 26,
+      "unassessedIdentity": 459,
+      "assessmentCoverage": 0.6391369047619048,
+      "recallOverAllGoldLowerBound": 0.1488095238095238,
+      "decisionCoverage": 0.24851190476190477,
+      "decisionCoverageWithinAssessed": 0.38882421420256114
+    },
+    "dialogueExplicitDetectedCastExact": {
+      "tp": 1193,
+      "fp": 256,
+      "fn": 151,
+      "precision": 0.8233264320220842,
+      "recall": 0.8876488095238095,
+      "f1": 0.8542785535266738
+    },
+    "speakerExplicitDetectedCastExact": {
+      "tp": 108,
+      "fp": 4,
+      "fn": 767,
+      "precision": 0.9642857142857143,
+      "recall": 0.12342857142857143,
+      "f1": 0.2188449848024316,
+      "total": 1344,
+      "abstained": 763,
+      "unassessedIdentity": 469,
+      "assessmentCoverage": 0.6510416666666666,
+      "recallOverAllGoldLowerBound": 0.08035714285714286,
+      "decisionCoverage": 0.08333333333333333,
+      "decisionCoverageWithinAssessed": 0.128
+    },
+    "coreferenceDetectedCast": {
+      "tp": 1956,
+      "fp": 960,
+      "fn": 4941,
+      "precision": 0.6707818930041153,
+      "recall": 0.2836015658982166,
+      "f1": 0.3986548456129624,
+      "total": 6897,
+      "abstained": 3981,
+      "assessmentCoverage": 1.0,
+      "recallOverAllGoldLowerBound": 0.2836015658982166,
+      "decisionCoverage": 0.4227925184862984,
+      "decisionCoverageWithinAssessed": 0.4227925184862984
+    },
+    "dialogueDetectedCast": {
+      "tp": 1193,
+      "fp": 256,
+      "fn": 151,
+      "precision": 0.8233264320220842,
+      "recall": 0.8876488095238095,
+      "f1": 0.8542785535266738,
+      "unassessedIndirect": 3
+    },
+    "speakerDetectedCast": {
+      "tp": 185,
+      "fp": 150,
+      "fn": 674,
+      "precision": 0.5522388059701493,
+      "recall": 0.21536670547147846,
+      "f1": 0.3098827470686767,
+      "total": 1344,
+      "abstained": 524,
+      "unassessedRepeatedText": 26,
+      "unassessedIdentity": 459,
+      "assessmentCoverage": 0.6391369047619048,
+      "recallOverAllGoldLowerBound": 0.13764880952380953,
+      "decisionCoverage": 0.24925595238095238,
+      "decisionCoverageWithinAssessed": 0.389988358556461
+    }
+  },
+  "limits": [
+    "Independent published human labels,not blinded fresh editorial annotation or proof of all narrative semantics.",
+    "Unique proper-name and supported-person-pronoun tasks are narrower than full nested NER/CoNLL coreference.",
+    "Supplied cast is an oracle inventory;detected-cast mode measures its separate effect.",
+    "Legacy quotation-content multiset metrics are relaxed;checked explicit-only Exact metrics validate boundaries,source anchors and repeated-content speaker identities separately.",
+    "Model metadata records the actual supplied weights;confidence values remain uncalibrated rule strengths."
+  ]
+}

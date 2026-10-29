@@ -6,11 +6,69 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.89.0
+      - run: cargo check --locked --all-targets --features cli,node-api,bindings
+
+  onnx-msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.92.0
+      - run: cargo check --locked --all-targets --all-features
+
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+      - run: cargo install cargo-deny --version 0.19.0 --locked
+      - run: cargo deny --locked --all-features check --deny unsound
+
+  wasm:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: [1.91.0, stable]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          targets: wasm32-unknown-unknown
+      - run: cargo check --locked --target wasm32-unknown-unknown --features onnx
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        if: matrix.toolchain == 'stable'
+        with:
+          node-version: 26.x
+      - name: Execute strict profiles and state reducers on WASM
+        if: matrix.toolchain == 'stable'
+        run: |
+          rustup target add wasm32-wasip1
+          CARGO_TARGET_WASM32_WASIP1_RUNNER='node tests/component_models_wasi.cjs' cargo test --locked --target wasm32-wasip1 --features onnx --test component_models
+          CARGO_TARGET_WASM32_WASIP1_RUNNER='node tests/component_models_wasi.cjs' cargo test --locked --target wasm32-wasip1 --test component_author_knowledge --test component_author_events --test component_world_state
+
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -25,22 +83,49 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
 
+      - name: Install uv for locked development validators
+        uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+
+      - name: Verify fixture provenance
+        run: |
+          uv run --no-project scripts/verify_fixtures.py
+          uv run --no-project scripts/verify_readability_resources.py
+
       - name: cargo test (default features)
-        run: cargo test --workspace
+        run: cargo test --locked --workspace
 
       - name: cargo test (node-api feature)
-        run: cargo test --workspace --features node-api
+        run: cargo test --locked --workspace --features node-api
 
       - name: cargo test (onnx feature)
-        run: cargo test --workspace --features onnx
+        run: cargo test --locked --workspace --features onnx
+
+      - name: cargo test (bindings feature)
+        run: cargo test --locked --workspace --features bindings
+
+      - name: cargo test (CLI and combined features)
+        run: cargo test --locked --workspace --all-features
 
       - name: cargo clippy
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: cargo clippy (all features)
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
+
+      - name: Verify generated manuscript contracts
+        run: |
+          cargo run --locked --features bindings --example export_contracts -- --check
+          cargo run --locked --features bindings --example export_standalone_contracts -- --check
+
+      - name: Executable Rust examples
+        run: |
+          cargo run --example analyze_passage
+          cargo run --example manuscript
 
       - name: Use Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 20.x
+          node-version: 24.x
           cache: 'npm'
 
       - name: npm ci
@@ -54,3 +139,17 @@ jobs:
 
       - name: npm test:types
         run: npm run test:types
+
+      - name: Executable Node examples
+        run: npm run test:examples
+
+      - name: Validate actual Node reports against generated schemas
+        run: npm run test:contracts
+
+      - name: Install and exercise packed packages
+        run: npm run test:package
+
+      - name: Exercise verified model loading through Node workers
+        run: |
+          npx --no-install napi build --platform --features node-api,onnx -- --locked
+          NARRATIVE_LENS_REQUIRE_NODE_MODELS=1 node --test tests/node/model_profiles.test.cjs

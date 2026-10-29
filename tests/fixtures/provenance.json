@@ -1,0 +1,36 @@
+{
+  "corpus": "evaluation.json",
+  "sha256": "76760d49691c20e4946416c5d52e7def21061cbcdee45b75bde07e68b1515169",
+  "caseCount": 56,
+  "splits": {
+    "calibration": 28,
+    "held_out": 28
+  },
+  "annotationOrigin": "OpenAI Codex agent-authored original fiction and engineering labels, 2026-10-27; no human editorial review; not extracted from published work",
+  "humanEditorialValidation": false,
+  "caveats": [
+    "Small related synthetic families; held-out wording is distinct, but templates and annotations are not statistically independent.",
+    "Case-level binary labels evaluate any finding in an analyzer; not exhaustive span or all legacy-analyzer validation.",
+    "Held-out set is a repeatable engineering regression set, not a blind editorial study."
+  ],
+  "sarifSchema": {
+    "source": "https://github.com/oasis-tcs/sarif-spec/blob/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+    "sha256": "c3b4bb2d6093897483348925aaa73af03b3e3f4bd4ca38cef26dcb4212a2682e"
+  },
+  "findingCorpus": {
+    "corpus": "evaluation-v2.json",
+    "sha256": "daf0294922319a3807c6bd9096c4845efefc3712c9383828ae9b2e22d30918b6",
+    "caseCount": 52,
+    "splits": {
+      "calibration": 26,
+      "held_out": 26
+    },
+    "annotationOrigin": "Agent-authored original fiction and engineering labels; no human editorial validation",
+    "baseline": "docs/evaluation-v2-baseline.json",
+    "baselineSha256": "d05448d6d3f5e3fc833e6730c54024cfbf30b9bc26c9a268aebefeea42923837",
+    "version": "finding-level-fiction-v2.1",
+    "baselineCorpus": "evaluation-v2-baseline.json",
+    "baselineCorpusSha256": "18f7d96d302ead56bcf370e47fd3eb5a121999774af153a36e4533561037c139",
+    "caveat": "Baseline v2 reused one short object assertion across splits; v2.1 replaces that held-out passage. Empty-input boundary cases remain identical and contribute no calibration scores. Related templates are not independent editorial samples."
+  }
+}

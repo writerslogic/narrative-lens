@@ -1,14 +1,12 @@
 name: Release
 
 # Manual only, per the platform-support decision recorded in
-# docs/INTEGRATION.md: cross-compile+publish native binaries for the 4
-# targets package.json's `napi.targets` already declares, gated behind an
-# explicit trigger rather than firing on every push/tag. Requires an
-# NPM_TOKEN secret (Settings -> Secrets and variables -> Actions) with
-# publish rights to the `narrative-lens` package before the publish job can
-# do anything -- everything up to that point (build + artifact upload) works
-# without it, so a run without the secret still validates the cross-compile
-# matrix.
+# docs/INTEGRATION.md. validate runs CI; assurance (platform-assurance.yml) builds,
+# assembles, installs and executes the tarballs on every declared target and Node
+# line; publish re-verifies the commit, tarball digests, build-host results and every
+# smoke attestation immediately before uploading those same tarballs. Publishing
+# needs an NPM_TOKEN secret and the `npm-release` environment (configure required
+# reviewers there); everything before the publish job works without them.
 on:
   workflow_dispatch: {}
 
@@ -16,52 +14,18 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - host: macos-latest
-            target: x86_64-apple-darwin
-          - host: macos-latest
-            target: aarch64-apple-darwin
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-          - host: windows-latest
-            target: x86_64-pc-windows-msvc
-    runs-on: ${{ matrix.host }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
+  validate:
+    uses: ./.github/workflows/ci.yml
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Use Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: 20.x
-          cache: 'npm'
-
-      - name: npm ci
-        run: npm ci
-
-      - name: Build native addon (${{ matrix.target }})
-        run: npm run build -- --target ${{ matrix.target }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: bindings-${{ matrix.target }}
-          path: '*.node'
-          if-no-files-found: error
+  assurance:
+    needs: validate
+    uses: ./.github/workflows/platform-assurance.yml
 
   publish:
-    needs: build
+    needs: [validate, assurance]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: npm-release
     permissions:
       contents: read
       id-token: write
@@ -73,38 +37,36 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 20.x
-          cache: 'npm'
+          node-version: 24.x
           registry-url: 'https://registry.npmjs.org'
 
-      - name: npm ci
-        run: npm ci
-
-      - name: Download all platform artifacts
+      - name: Download the assembled tarballs
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
-          path: artifacts
-          merge-multiple: true
+          name: release-packages
+          path: release-packages
 
-      - name: Create per-platform npm packages
-        run: npx --no-install napi create-npm-dirs
+      - name: Download smoke attestations
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: attestation-*
+          path: attestations
 
-      - name: Move downloaded artifacts into place
-        run: npx --no-install napi artifacts --output-dir artifacts
+      - name: Download build-host test records
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: precheck-*
+          path: prechecks
 
-      # `npm publish` on the root package triggers the `prepublishOnly`
-      # lifecycle script (`napi prepublish -t npm`), which updates each
-      # per-platform package.json (version, optionalDependencies on the
-      # root) and publishes every platform package -- npm then proceeds to
-      # publish the root package itself. Calling `napi prepublish` directly
-      # (as this step used to) only does the platform-package half and never
-      # publishes the root package. Always under whatever dist-tag npm
-      # defaults to (`latest`) for the version in package.json; publishing
-      # under `next`/a pre-release tag means bumping to a pre-release
-      # version first (`npm version prerelease`) rather than a flag here.
-      - name: npm publish (all platform packages + main package)
-        run: |
-          npm config set provenance true
-          npm publish
+      # Fails closed unless the commit, tarball digests, tested binaries and all
+      # 4 targets x 5 Node lines of smoke attestations agree.
+      - name: Verify the tested release
+        run: node scripts/verify_tested_artifacts.mjs --release release-packages --attestations attestations --prechecks prechecks
+
+      # Uploads the verified tarballs themselves (no rebuild, no lifecycle scripts):
+      # platform packages first, then the root that depends on them. Versions already
+      # published with identical content are skipped, so a partial run can be resumed.
+      - name: Publish the verified tarballs
+        run: node scripts/release_artifacts.mjs publish release-packages --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -8,31 +8,100 @@ use crate::substrate::utils::{cosine_similarity, mean, std_dev};
 
 /// Semantic descriptions for SBERT-based theme detection.
 const THEME_DESCRIPTIONS: &[(&str, &str)] = &[
-    ("love", "romantic love, desire, passion, affection between characters"),
+    (
+        "love",
+        "romantic love, desire, passion, affection between characters",
+    ),
     ("death", "mortality, killing, dying, grief over loss"),
-    ("power", "authority, control, dominion, political power, rulers and subjects"),
-    ("betrayal", "treachery, deception, broken trust, backstabbing allies"),
-    ("redemption", "forgiveness, atonement, second chances, moral recovery"),
-    ("freedom", "liberation, escape from captivity, breaking chains, independence"),
-    ("identity", "self-discovery, masks, disguises, transformation of self"),
-    ("justice", "law, trials, punishment, innocence and guilt, fairness"),
-    ("sacrifice", "selfless surrender, martyrdom, giving up something precious"),
-    ("isolation", "loneliness, solitude, exile, abandonment, being an outcast"),
-    ("grief", "mourning, sorrow, loss of a loved one, bereavement"),
-    ("revenge", "vengeance, retribution, avenging a wrong, grudges"),
-    ("hope", "optimism, dreams, aspiration, faith in a better future"),
+    (
+        "power",
+        "authority, control, dominion, political power, rulers and subjects",
+    ),
+    (
+        "betrayal",
+        "treachery, deception, broken trust, backstabbing allies",
+    ),
+    (
+        "redemption",
+        "forgiveness, atonement, second chances, moral recovery",
+    ),
+    (
+        "freedom",
+        "liberation, escape from captivity, breaking chains, independence",
+    ),
+    (
+        "identity",
+        "self-discovery, masks, disguises, transformation of self",
+    ),
+    (
+        "justice",
+        "law, trials, punishment, innocence and guilt, fairness",
+    ),
+    (
+        "sacrifice",
+        "selfless surrender, martyrdom, giving up something precious",
+    ),
+    (
+        "isolation",
+        "loneliness, solitude, exile, abandonment, being an outcast",
+    ),
+    (
+        "grief",
+        "mourning, sorrow, loss of a loved one, bereavement",
+    ),
+    (
+        "revenge",
+        "vengeance, retribution, avenging a wrong, grudges",
+    ),
+    (
+        "hope",
+        "optimism, dreams, aspiration, faith in a better future",
+    ),
     ("fear", "terror, dread, horror, anxiety, nightmares"),
-    ("guilt", "shame, remorse, regret, a troubled conscience, self-blame"),
-    ("coming_of_age", "growing up, maturity, leaving childhood, learning independence, mentors and first experiences"),
-    ("war", "battle, soldiers, armies, weapons, enemies, siege, victory and defeat"),
-    ("corruption", "corruption, bribery, scandal, dishonesty, abuse of power, exploitation, conspiracy"),
-    ("survival", "survival against odds, hunger, shelter, danger, wilderness, endurance, struggle to live"),
-    ("family", "family bonds, parents, siblings, children, home, inheritance, bloodline, legacy"),
-    ("class", "social class, wealth and poverty, nobles and servants, privilege, inequality, status"),
-    ("nature", "forests, rivers, mountains, oceans, wilderness, seasons, storms, the natural world"),
-    ("technology", "machines, inventions, progress, digital systems, artificial intelligence, automation"),
-    ("faith", "religion, god, prayer, church, miracles, divinity, sacred rituals, sin and salvation"),
-    ("madness", "insanity, hallucinations, delusions, paranoia, obsession, mental breakdown"),
+    (
+        "guilt",
+        "shame, remorse, regret, a troubled conscience, self-blame",
+    ),
+    (
+        "coming_of_age",
+        "growing up, maturity, leaving childhood, learning independence, mentors and first experiences",
+    ),
+    (
+        "war",
+        "battle, soldiers, armies, weapons, enemies, siege, victory and defeat",
+    ),
+    (
+        "corruption",
+        "corruption, bribery, scandal, dishonesty, abuse of power, exploitation, conspiracy",
+    ),
+    (
+        "survival",
+        "survival against odds, hunger, shelter, danger, wilderness, endurance, struggle to live",
+    ),
+    (
+        "family",
+        "family bonds, parents, siblings, children, home, inheritance, bloodline, legacy",
+    ),
+    (
+        "class",
+        "social class, wealth and poverty, nobles and servants, privilege, inequality, status",
+    ),
+    (
+        "nature",
+        "forests, rivers, mountains, oceans, wilderness, seasons, storms, the natural world",
+    ),
+    (
+        "technology",
+        "machines, inventions, progress, digital systems, artificial intelligence, automation",
+    ),
+    (
+        "faith",
+        "religion, god, prayer, church, miracles, divinity, sacred rituals, sin and salvation",
+    ),
+    (
+        "madness",
+        "insanity, hallucinations, delusions, paranoia, obsession, mental breakdown",
+    ),
 ];
 
 /// Thresholds for theme status classification (from Python source).
@@ -61,6 +130,7 @@ const CYCLICAL_PRESENT: f64 = 0.2;
 const CLIMACTIC_MIN: f64 = 0.3;
 
 /// Resolution status for a single theme across the manuscript.
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ThematicResolution {
@@ -141,7 +211,7 @@ pub fn detect_themes_sbert(scenes: &[String]) -> Vec<HashMap<String, f64>> {
                 .collect();
             // Strongest first, then cap the tail (handles flat distributions the
             // relative gate alone lets through).
-            kept.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+            kept.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| a.0.cmp(b.0)));
             kept.truncate(THEME_MAX_PER_SCENE);
             kept.into_iter()
                 .map(|(name, sim)| (name.to_string(), (sim * 10000.0).round() / 10000.0))
@@ -292,8 +362,8 @@ pub fn analyze_resolution(scene_themes: &[HashMap<String, f64>]) -> Vec<Thematic
         let total_b = b.act1_presence + b.act2_presence + b.act3_presence;
         let total_a = a.act1_presence + a.act2_presence + a.act3_presence;
         total_b
-            .partial_cmp(&total_a)
-            .unwrap_or(std::cmp::Ordering::Equal)
+            .total_cmp(&total_a)
+            .then_with(|| a.theme_name.cmp(&b.theme_name))
     });
 
     resolutions

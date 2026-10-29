@@ -1,0 +1,22 @@
+{
+  "origin": "Agent-authored synthetic performance workloads; no editorial labels",
+  "fixtures": [
+    {
+      "id": "benchmark-novel-v1",
+      "source": "tests/fixtures/manuscript-passages.json",
+      "sourceSha256": "9c4e90250e8cef2dfe16085b18684d5c5d917a6875d63c4f2e469a8ef6841791",
+      "recipe": "160 scenes cycling the four source passages, each repeated 14 times",
+      "words": 85280,
+      "utf8Bytes": 474880
+    },
+    {
+      "id": "benchmark-novel-v2-xorshift32-20261027",
+      "generator": "scripts/generate_benchmark.mjs",
+      "generatorSha256": "e4dbea5987f0f9849660307b2f0381c5f745bcea3edfe1d9d36fd85608d8e979",
+      "generatedSha256": "73dec7f12a49e4a9f25d7effe7e4a3ae3236fd766b321d787110bd7c6f666ccd",
+      "scenes": 160,
+      "words": 104455,
+      "utf8Bytes": 571260
+    }
+  ]
+}

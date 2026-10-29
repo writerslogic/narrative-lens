@@ -10,6 +10,7 @@ use crate::craft::lexicon::WordMatcher;
 // Types
 // ---------------------------------------------------------------------------
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NarrativePromise {
@@ -28,6 +29,7 @@ pub struct NarrativePromise {
     pub weight: f64,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PromiseType {
     OpeningHook,
@@ -44,9 +46,12 @@ pub enum PromiseType {
     CharacterGoal(String, String),
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum PayoffStatus {
+    Unknown,
+    ConfirmedFulfilled,
     Outstanding,
     Fulfilled { quality: f64 },
     PartiallyFulfilled { completeness: f64 },
@@ -56,6 +61,7 @@ pub enum PayoffStatus {
     Deferred { new_deadline: Option<usize> },
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UnearnedPayoff {
@@ -65,6 +71,7 @@ pub struct UnearnedPayoff {
     pub reason: String,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CascadePayoff {
@@ -73,6 +80,7 @@ pub struct CascadePayoff {
     pub elegance: f64,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GratificationDelay {
@@ -83,6 +91,7 @@ pub struct GratificationDelay {
     pub tension_maintained: f64,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActLedger {
@@ -93,6 +102,7 @@ pub struct ActLedger {
     pub outstanding_weight: f64,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContractNote {
@@ -103,9 +113,15 @@ pub struct ContractNote {
     pub suggestion: Option<String>,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PromisePayoffResult {
+    #[serde(default)]
+    pub availability: crate::substrate::utils::AnalysisAvailability,
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
+
     pub promises: Vec<NarrativePromise>,
     pub unearned_payoffs: Vec<UnearnedPayoff>,
     pub cascade_payoffs: Vec<CascadePayoff>,
@@ -326,7 +342,7 @@ fn compute_act_breakdown(promises: &[NarrativePromise], total_scenes: usize) -> 
 
         // Track outstanding weight
         match &p.status {
-            PayoffStatus::Outstanding | PayoffStatus::Deferred { .. } => {
+            PayoffStatus::Unknown | PayoffStatus::Outstanding | PayoffStatus::Deferred { .. } => {
                 ledgers[act_idx].outstanding_weight += p.weight;
             }
             _ => {}
@@ -434,7 +450,7 @@ pub fn build_promise_payoff_ledger(
             scene: 0,
             promise_type: PromiseType::GenreContract(genre.to_string()),
             explicitness: 0.3, // implicit genre contract
-            status: PayoffStatus::Outstanding,
+            status: PayoffStatus::Unknown,
             payoff_scene: None,
             payoff_quality: None,
             investment: 0.0,
@@ -449,9 +465,9 @@ pub fn build_promise_payoff_ledger(
     // --- 2. Seed from foreshadowing items ---
     for (desc, setup_scene, resolved) in foreshadowing_items {
         let status = if *resolved {
-            PayoffStatus::Fulfilled { quality: 1.0 }
+            PayoffStatus::ConfirmedFulfilled
         } else {
-            PayoffStatus::Outstanding
+            PayoffStatus::Unknown
         };
         promises.push(NarrativePromise {
             id: next_id,
@@ -460,12 +476,8 @@ pub fn build_promise_payoff_ledger(
             promise_type: PromiseType::Foreshadowing(desc.clone()),
             explicitness: 0.7,
             status,
-            payoff_scene: if *resolved {
-                Some(total_scenes.saturating_sub(1))
-            } else {
-                None
-            },
-            payoff_quality: if *resolved { Some(1.0) } else { None },
+            payoff_scene: None,
+            payoff_quality: None,
             investment: 0.0,
             urgency: 0.6,
             parent: None,
@@ -486,7 +498,7 @@ pub fn build_promise_payoff_ledger(
             scene: *first_scene,
             promise_type: PromiseType::CharacterIntroduction(name.clone()),
             explicitness: 0.5,
-            status: PayoffStatus::Outstanding,
+            status: PayoffStatus::Unknown,
             payoff_scene: None,
             payoff_quality: None,
             investment: 0.0,
@@ -511,7 +523,7 @@ pub fn build_promise_payoff_ledger(
                 scene: scene_idx,
                 promise_type: PromiseType::ChekhovsGun(obj_desc),
                 explicitness: 0.6,
-                status: PayoffStatus::Outstanding,
+                status: PayoffStatus::Unknown,
                 payoff_scene: None,
                 payoff_quality: None,
                 investment: 0.0,
@@ -534,7 +546,7 @@ pub fn build_promise_payoff_ledger(
                 scene: scene_idx,
                 promise_type: PromiseType::ExplicitQuestion(q),
                 explicitness: 0.9,
-                status: PayoffStatus::Outstanding,
+                status: PayoffStatus::Unknown,
                 payoff_scene: None,
                 payoff_quality: None,
                 investment: 0.0,
@@ -555,7 +567,7 @@ pub fn build_promise_payoff_ledger(
             scene: 0,
             promise_type: PromiseType::OpeningHook,
             explicitness: 0.4,
-            status: PayoffStatus::Outstanding,
+            status: PayoffStatus::Unknown,
             payoff_scene: None,
             payoff_quality: None,
             investment: 0.0,
@@ -596,7 +608,7 @@ pub fn build_promise_payoff_ledger(
             scene: 0,
             promise_type: PromiseType::StructuralBeat(beat_name.to_string()),
             explicitness: 0.2,
-            status: PayoffStatus::Outstanding,
+            status: PayoffStatus::Unknown,
             payoff_scene: None,
             payoff_quality: None,
             investment: 0.0,
@@ -615,9 +627,10 @@ pub fn build_promise_payoff_ledger(
         let mut scene_resolutions: Vec<Vec<usize>> = vec![Vec::new(); total_scenes];
         for p in &promises {
             if let Some(ps) = p.payoff_scene
-                && ps < total_scenes {
-                    scene_resolutions[ps].push(p.id);
-                }
+                && ps < total_scenes
+            {
+                scene_resolutions[ps].push(p.id);
+            }
         }
         for (scene_idx, resolved_ids) in scene_resolutions.iter().enumerate() {
             if resolved_ids.len() >= 2 {
@@ -749,24 +762,18 @@ pub fn build_promise_payoff_ledger(
     let mut overpaid_moments: Vec<(usize, f64)> = Vec::new();
     for p in &promises {
         if let PayoffStatus::Overpaid { excess } = &p.status
-            && let Some(ps) = p.payoff_scene {
-                overpaid_moments.push((ps, *excess));
-            }
+            && let Some(ps) = p.payoff_scene
+        {
+            overpaid_moments.push((ps, *excess));
+        }
     }
     // Also flag promises with disproportionately large payoff scenes relative to setup
     for p in &promises {
         if let (Some(ps), PayoffStatus::Fulfilled { quality }) = (p.payoff_scene, &p.status)
-            && *quality > 0.9 && p.weight < 0.4 {
-                overpaid_moments.push((ps, quality - p.weight));
-            }
-    }
-
-    // --- 14. Mark broken promises ---
-    // Promises still outstanding past 90% of manuscript are likely broken
-    let cutoff = (total_scenes as f64 * 0.9).ceil() as usize;
-    for p in &mut promises {
-        if matches!(p.status, PayoffStatus::Outstanding) && p.scene < cutoff && p.weight >= 0.7 {
-            p.status = PayoffStatus::Broken;
+            && *quality > 0.9
+            && p.weight < 0.4
+        {
+            overpaid_moments.push((ps, quality - p.weight));
         }
     }
 
@@ -778,6 +785,7 @@ pub fn build_promise_payoff_ledger(
             matches!(
                 p.status,
                 PayoffStatus::Fulfilled { .. }
+                    | PayoffStatus::ConfirmedFulfilled
                     | PayoffStatus::PartiallyFulfilled { .. }
                     | PayoffStatus::Subverted { .. }
             )
@@ -801,6 +809,7 @@ pub fn build_promise_payoff_ledger(
             matches!(
                 p.status,
                 PayoffStatus::Fulfilled { .. }
+                    | PayoffStatus::ConfirmedFulfilled
                     | PayoffStatus::PartiallyFulfilled { .. }
                     | PayoffStatus::Subverted { .. }
             )
@@ -817,7 +826,6 @@ pub fn build_promise_payoff_ledger(
     let max_nesting_depth = compute_max_nesting(&promises);
 
     let act_breakdown = compute_act_breakdown(&promises, total_scenes);
-    let unearned_count = unearned_payoffs.len();
 
     // --- 16. Generate contract notes ---
     let mut contract_notes: Vec<ContractNote> = Vec::new();
@@ -833,7 +841,7 @@ pub fn build_promise_payoff_ledger(
     for p in &promises {
         if matches!(
             p.status,
-            PayoffStatus::Outstanding | PayoffStatus::Deferred { .. }
+            PayoffStatus::Unknown | PayoffStatus::Outstanding | PayoffStatus::Deferred { .. }
         ) {
             let delay = total_scenes.saturating_sub(p.scene);
             if delay > 15 {
@@ -898,27 +906,18 @@ pub fn build_promise_payoff_ledger(
         });
     }
 
-    // --- 17. Reader trust assessment ---
-    let trust_level = if weighted_health > 0.7 {
-        "high"
-    } else if weighted_health > 0.4 {
-        "moderate"
-    } else {
-        "low"
-    };
-    let feeling = if weighted_health > 0.7 {
-        "will feel the story delivers on its promises"
-    } else if weighted_health > 0.4 {
-        "may feel some threads were left dangling"
-    } else {
-        "will feel cheated by unresolved setups"
-    };
     let reader_trust_assessment = format!(
-        "The reader's contract trust is {}. {} promises fulfilled, {} broken. The reader {}.",
-        trust_level, fulfilled, broken_count, feeling
+        "Resolution is unassessed for inferred setups; {fulfilled} promises are author-confirmed fulfilled. No automatic broken-promise conclusion is available."
     );
+    unearned_payoffs.clear();
+    contract_notes.retain(|note| note.note_type != "unearned_payoff");
+    let unearned_count = 0;
 
     PromisePayoffResult {
+        availability: crate::substrate::utils::AnalysisAvailability::Partial,
+        diagnostics: vec![
+            "candidate_setups_only; automatic_fulfillment_and_payoff_locations_unavailable".into(),
+        ],
         promises,
         unearned_payoffs,
         cascade_payoffs,

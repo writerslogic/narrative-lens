@@ -1,0 +1,255 @@
+{
+  "scope": "Engineering execution/tokenization/BIO fidelity only;authored cases are not independent accuracy labels.",
+  "manifest": {
+    "schemaVersion": 1,
+    "kind": "ner",
+    "profile": "hugging_face_bio9_v1",
+    "modelSha256": "9419a876387ff2bbe5f21ab7429c7bef93eac86c50353390d4d8fca6e4a210d8",
+    "tokenizerSha256": "40a64613a56c48ee512bea8d8d7cf2107d36c9093cee8c6a95e6979f47094907",
+    "maxTokens": 512,
+    "paddingTokenId": 0,
+    "labels": [
+      "O",
+      "B-PER",
+      "I-PER",
+      "B-ORG",
+      "I-ORG",
+      "B-LOC",
+      "I-LOC",
+      "B-MISC",
+      "I-MISC"
+    ]
+  },
+  "command": [
+    "/Volumes/C/rust-target/release/examples/evaluate_literary",
+    "/Volumes/A/narrative-lens/target/external-validation/ner-model/3a19fe9404a4469d91aa3d551558a97f68872f67/parity-inputs.json",
+    "--ner-cache",
+    "/Volumes/A/narrative-lens/target/external-validation/ner-model/3a19fe9404a4469d91aa3d551558a97f68872f67",
+    "--split",
+    "development"
+  ],
+  "predictorSha256": "2b60f9e87ec851ecb1e3aa28672d6851a03a0ea15aa1c3729fbb6ea1aa159fe5",
+  "inputsSha256": "960c3dabe650cdc3732457c3d053e7a3018ade60d29548f62783ab121379be7a",
+  "versions": {
+    "onnxruntime": "1.27.0",
+    "tokenizers": "0.23.3",
+    "numpy": "2.4.6"
+  },
+  "provider": [
+    "CPUExecutionProvider"
+  ],
+  "comparisons": [
+    {
+      "id": "0",
+      "text": "Alice met Bob in Paris. Microsoft hired John Smith.",
+      "referenceSpans": [
+        [
+          "Alice",
+          "PER",
+          0,
+          5
+        ],
+        [
+          "Bob",
+          "PER",
+          10,
+          13
+        ],
+        [
+          "Paris",
+          "LOC",
+          17,
+          22
+        ],
+        [
+          "Microsoft",
+          "ORG",
+          24,
+          33
+        ],
+        [
+          "John Smith",
+          "PER",
+          40,
+          50
+        ]
+      ],
+      "nativeSpans": [
+        [
+          "Alice",
+          "PER",
+          0,
+          5
+        ],
+        [
+          "Bob",
+          "PER",
+          10,
+          13
+        ],
+        [
+          "Paris",
+          "LOC",
+          17,
+          22
+        ],
+        [
+          "Microsoft",
+          "ORG",
+          24,
+          33
+        ],
+        [
+          "John Smith",
+          "PER",
+          40,
+          50
+        ]
+      ],
+      "exactMatch": true
+    },
+    {
+      "id": "1",
+      "text": "😀 Zoë spoke with José in São Paulo.",
+      "referenceSpans": [
+        [
+          "Zoë",
+          "PER",
+          5,
+          9
+        ],
+        [
+          "José",
+          "PER",
+          21,
+          26
+        ],
+        [
+          "São Paulo",
+          "LOC",
+          30,
+          40
+        ]
+      ],
+      "nativeSpans": [
+        [
+          "Zoë",
+          "PER",
+          5,
+          9
+        ],
+        [
+          "José",
+          "PER",
+          21,
+          26
+        ],
+        [
+          "São Paulo",
+          "LOC",
+          30,
+          40
+        ]
+      ],
+      "exactMatch": true
+    },
+    {
+      "id": "2",
+      "text": "Dr. Watson and Sherlock Holmes visited London on Tuesday.",
+      "referenceSpans": [
+        [
+          "Dr. Watson",
+          "PER",
+          0,
+          10
+        ],
+        [
+          "Sherlock Holmes",
+          "PER",
+          15,
+          30
+        ],
+        [
+          "London",
+          "LOC",
+          39,
+          45
+        ]
+      ],
+      "nativeSpans": [
+        [
+          "Dr. Watson",
+          "PER",
+          0,
+          10
+        ],
+        [
+          "Sherlock Holmes",
+          "PER",
+          15,
+          30
+        ],
+        [
+          "London",
+          "LOC",
+          39,
+          45
+        ]
+      ],
+      "exactMatch": true
+    },
+    {
+      "id": "3",
+      "text": "Alice said , ' I do n't know , Bob . ' Mary waited .",
+      "referenceSpans": [
+        [
+          "Alice",
+          "PER",
+          0,
+          5
+        ],
+        [
+          "Bob",
+          "PER",
+          31,
+          34
+        ],
+        [
+          "Mary",
+          "PER",
+          39,
+          43
+        ]
+      ],
+      "nativeSpans": [
+        [
+          "Alice",
+          "PER",
+          0,
+          5
+        ],
+        [
+          "Bob",
+          "PER",
+          31,
+          34
+        ],
+        [
+          "Mary",
+          "PER",
+          39,
+          43
+        ]
+      ],
+      "exactMatch": true
+    },
+    {
+      "id": "4",
+      "text": "No proper names appear here. A person watched the garden.",
+      "referenceSpans": [],
+      "nativeSpans": [],
+      "exactMatch": true
+    }
+  ],
+  "pass": true
+}

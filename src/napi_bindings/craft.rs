@@ -11,8 +11,20 @@
 use napi_derive::napi;
 use serde::Serialize;
 
-use crate::craft::{dialogue, dialogue_realism, lexical, pacing, prose_quality, subtext,
-                    syntax_tension, voice};
+use crate::craft::{
+    dialogue, dialogue_realism, lexical, pacing, prose_quality, readability, subtext,
+    syntax_tension, voice,
+};
+
+#[napi(
+    js_name = "analyzeSmog",
+    ts_return_type = "import('./standalone.generated').AnalyzeSmogResult"
+)]
+pub fn analyze_smog(text: String) -> napi::Result<serde_json::Value> {
+    super::bounded_texts([text.as_str()], 1)?;
+    serde_json::to_value(readability::analyze_smog(&text))
+        .map_err(|error| napi::Error::from_reason(error.to_string()))
+}
 
 // ---------------------------------------------------------------------------
 // Input DTOs (for functions whose real signature takes a struct produced by
@@ -21,34 +33,34 @@ use crate::craft::{dialogue, dialogue_realism, lexical, pacing, prose_quality, s
 
 #[napi(object)]
 pub struct PacingMetricsInput {
-    pub scene_id: u32,
+    pub scene_id: f64,
     pub dialogue_ratio: f64,
     pub is_talking_head: bool,
     pub velocity: f64,
-    pub word_count: u32,
+    pub word_count: f64,
     pub entity_density: f64,
     pub noun_density: f64,
     pub information_novelty: f64,
     pub action_density: f64,
 }
 
-fn to_pacing_metrics(m: PacingMetricsInput) -> pacing::PacingMetrics {
-    pacing::PacingMetrics {
-        scene_id: m.scene_id as usize,
-        dialogue_ratio: m.dialogue_ratio,
+fn to_pacing_metrics(m: PacingMetricsInput) -> napi::Result<pacing::PacingMetrics> {
+    Ok(pacing::PacingMetrics {
+        scene_id: super::unsigned_index(m.scene_id)?,
+        dialogue_ratio: super::finite_range(m.dialogue_ratio, 0.0, 1.0)?,
         is_talking_head: m.is_talking_head,
-        velocity: m.velocity,
-        word_count: m.word_count as usize,
-        entity_density: m.entity_density,
-        noun_density: m.noun_density,
-        information_novelty: m.information_novelty,
-        action_density: m.action_density,
-    }
+        velocity: super::finite_range(m.velocity, 0.0, u32::MAX as f64)?,
+        word_count: super::unsigned_index(m.word_count)?,
+        entity_density: super::finite_range(m.entity_density, 0.0, 100.0)?,
+        noun_density: super::finite_range(m.noun_density, 0.0, 100.0)?,
+        information_novelty: super::finite_range(m.information_novelty, 0.0, 1.0)?,
+        action_density: super::finite_range(m.action_density, 0.0, 100.0)?,
+    })
 }
 
 #[napi(object)]
 pub struct DialogueLineInput {
-    pub scene_id: u32,
+    pub scene_id: f64,
     pub quote: String,
     pub speaker: String,
     pub confidence: f64,
@@ -56,15 +68,15 @@ pub struct DialogueLineInput {
     pub tag_verb: Option<String>,
 }
 
-fn to_dialogue_line(l: DialogueLineInput) -> dialogue::DialogueLine {
-    dialogue::DialogueLine {
-        scene_id: l.scene_id as usize,
+fn to_dialogue_line(l: DialogueLineInput) -> napi::Result<dialogue::DialogueLine> {
+    Ok(dialogue::DialogueLine {
+        scene_id: super::unsigned_index(l.scene_id)?,
         quote: l.quote,
         speaker: l.speaker,
-        confidence: l.confidence,
+        confidence: super::finite_range(l.confidence, 0.0, 1.0)?,
         method: l.method,
         tag_verb: l.tag_verb,
-    }
+    })
 }
 
 #[napi(object)]
@@ -81,7 +93,9 @@ pub struct CharacterVoiceProfileInput {
     pub top_words: Vec<String>,
 }
 
-fn to_character_voice_profile(p: CharacterVoiceProfileInput) -> voice::CharacterVoiceProfile {
+pub(super) fn to_character_voice_profile(
+    p: CharacterVoiceProfileInput,
+) -> voice::CharacterVoiceProfile {
     voice::CharacterVoiceProfile {
         character: p.character,
         avg_sentence_length: p.avg_sentence_length,
@@ -103,19 +117,24 @@ fn to_character_voice_profile(p: CharacterVoiceProfileInput) -> voice::Character
 /// Analyze a single scene and return its pacing metrics.
 #[napi(
     js_name = "analyzePacing",
-    ts_return_type = "{ sceneId: number; dialogueRatio: number; isTalkingHead: boolean; velocity: number; wordCount: number; entityDensity: number; nounDensity: number; informationNovelty: number; actionDensity: number }"
+    ts_return_type = "import('./standalone.generated').AnalyzePacingResult"
 )]
 pub fn analyze_pacing(
-    scene_id: u32,
-    dialogue_tokens: u32,
-    total_tokens: u32,
-    sentences_count: u32,
+    scene_id: f64,
+    dialogue_tokens: f64,
+    total_tokens: f64,
+    sentences_count: f64,
 ) -> napi::Result<serde_json::Value> {
+    if dialogue_tokens > total_tokens {
+        return Err(napi::Error::from_reason(
+            "dialogue tokens must be a subset of total tokens",
+        ));
+    }
     let result = pacing::analyze_scene(
-        scene_id as usize,
-        dialogue_tokens as usize,
-        total_tokens as usize,
-        sentences_count as usize,
+        super::unsigned_index(scene_id)?,
+        super::unsigned_index(dialogue_tokens)?,
+        super::unsigned_index(total_tokens)?,
+        super::unsigned_index(sentences_count)?,
     );
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
@@ -140,6 +159,8 @@ pub fn analyze_scene_info_density(
     scene_text: String,
     seen_nouns: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
+    super::bounded_texts([scene_text.as_str()], 1)?;
+    super::bounded_texts(seen_nouns.iter().map(String::as_str), 1_000_000)?;
     let mut seen: std::collections::HashSet<String> = seen_nouns.into_iter().collect();
     let info = pacing::analyze_scene_info_density(&scene_text, &mut seen);
     let mut seen_nouns: Vec<String> = seen.into_iter().collect();
@@ -152,11 +173,18 @@ pub fn analyze_scene_info_density(
 /// `scene_metrics` is empty.
 #[napi(
     js_name = "aggregatePacing",
-    ts_return_type = "{ averageDialogueRatio: number; averageVelocity: number; perSceneVelocity: Array<number>; perSceneDialogueRatio: Array<number>; perSceneLabel: Array<string>; perSceneAssessment: Array<string>; talkingHeadScenes: Array<number>; thsCount: number; pacingTrend: string; velocityVariance: number; slowScenes: Array<number>; fastScenes: Array<number>; perSceneEntityDensity: Array<number>; perSceneActionDensity: Array<number>; perSceneNovelty: Array<number>; avgEntityDensity: number; avgActionDensity: number } | null"
+    ts_return_type = "import('./standalone.generated').AggregatePacingResult"
 )]
 pub fn aggregate_pacing(scene_metrics: Vec<PacingMetricsInput>) -> napi::Result<serde_json::Value> {
-    let metrics: Vec<pacing::PacingMetrics> =
-        scene_metrics.into_iter().map(to_pacing_metrics).collect();
+    if scene_metrics.len() > 10_000 {
+        return Err(napi::Error::from_reason(
+            "pacing metrics exceed10000 scenes",
+        ));
+    }
+    let metrics: Vec<pacing::PacingMetrics> = scene_metrics
+        .into_iter()
+        .map(to_pacing_metrics)
+        .collect::<napi::Result<_>>()?;
     let result = pacing::aggregate_pacing(&metrics);
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
@@ -168,28 +196,73 @@ pub fn aggregate_pacing(scene_metrics: Vec<PacingMetricsInput>) -> napi::Result<
 /// Extract dialogue from a scene and attribute each quote to a speaker.
 #[napi(
     js_name = "extractDialogue",
-    ts_return_type = "Array<{ sceneId: number; quote: string; speaker: string; confidence: number; method: string; tagVerb?: string }>"
+    ts_return_type = "import('./standalone.generated').ExtractDialogueResult"
 )]
 pub fn extract_dialogue(
     scene_text: String,
-    scene_id: u32,
+    scene_id: f64,
     known_characters: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
-    let result = dialogue::extract_dialogue(&scene_text, scene_id as usize, &known_characters);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let result = dialogue::extract_dialogue_checked(
+        &scene_text,
+        super::unsigned_index(scene_id)?,
+        &known_characters,
+        &dialogue::DialogueExtractionOptions {
+            attribution: dialogue::DialogueAttributionMode::ConservativeHeuristic,
+            include_indirect: true,
+        },
+    )
+    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(
+        result
+            .lines
+            .into_iter()
+            .map(|located| located.line)
+            .collect::<Vec<_>>(),
+    )
+}
+
+#[napi(
+    js_name = "extractDialogueChecked",
+    ts_args_type = "sceneText: string, sceneId: number, knownCharacters: string[], options?: Partial<import('./standalone.generated').DialogueExtractionOptions>",
+    ts_return_type = "import('./standalone.generated').ExtractDialogueCheckedResult"
+)]
+pub fn extract_dialogue_checked(
+    scene_text: String,
+    scene_id: f64,
+    known_characters: Vec<String>,
+    options: Option<serde_json::Value>,
+) -> napi::Result<serde_json::Value> {
+    let options: dialogue::DialogueExtractionOptions = super::decode_input(
+        options.unwrap_or_else(|| serde_json::json!({})),
+        "invalid dialogue extraction options",
+    )?;
+    let result = dialogue::extract_dialogue_checked(
+        &scene_text,
+        super::unsigned_index(scene_id)?,
+        &known_characters,
+        &options,
+    )
+    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
 }
 
 /// Analyze dialogue patterns across all extracted dialogue lines.
 #[napi(
     js_name = "analyzeDialoguePatterns",
-    ts_return_type = "{ totalLines: number; attributedLines: number; attributionRate: number; perCharacter: Record<string, { lineCount: number; wordCount: number; avgLineLength: number; vocabularyRichness: number; questionRate: number; exclamationRate: number }>; dialogueDistribution: Record<string, number>; mostTalkative: string; mostVerbose: string; voiceProfiles: Record<string, { avgWordLength: number; vocabularyRichness: number; questionFrequency: number; avgLineLength: number; formalityScore: number; tagVarietyScore: number; speechVerbsUsed: Array<string> }>; sameSoundingPairs: Array<{ characterA: string; characterB: string; similarity: number }>; conversationFlow: { edges: Array<{ from: string; to: string; count: number }>; dominators: Array<string>; neverInitiators: Array<string>; monologues: Array<{ speaker: string; lineCount: number; sceneId: number }> } }"
+    ts_return_type = "import('./standalone.generated').AnalyzeDialoguePatternsResult"
 )]
 pub fn analyze_dialogue_patterns(
     all_dialogue: Vec<DialogueLineInput>,
     known_characters: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
-    let lines: Vec<dialogue::DialogueLine> =
-        all_dialogue.into_iter().map(to_dialogue_line).collect();
+    crate::craft::measurements::validate_names(known_characters.iter().map(String::as_str))
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::bounded_texts(all_dialogue.iter().map(|line| line.quote.as_str()), 10_000)?;
+    let lines: Vec<dialogue::DialogueLine> = all_dialogue
+        .into_iter()
+        .map(to_dialogue_line)
+        .collect::<napi::Result<_>>()?;
     let result = dialogue::analyze_dialogue_patterns(&lines, &known_characters);
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
@@ -198,26 +271,31 @@ pub fn analyze_dialogue_patterns(
 // dialogue_realism.rs
 // ---------------------------------------------------------------------------
 
-/// Analyze dialogue realism: voice fingerprints, info dumps, formality
-/// issues, identical-voice pairs, and power dynamics between characters.
+/// Measure dialogue stylometry and located lexical cues, with sample coverage.
 #[napi(
     js_name = "analyzeDialogueRealism",
-    ts_return_type = "{ characterVoices: Array<{ character: string; avgTurnLength: number; vocabularyRichness: number; formalityLevel: number; contractionRate: number; questionRate: number; exclamationRate: number; frequentWords: Array<string> }>; voicePairs: Array<{ characterA: string; characterB: string; similarity: number }>; issues: Array<{ scene: number; issueType: string; description: string; severity: number; characters: Array<string> }>; powerDynamics: Array<{ characterA: string; characterB: string; dominant: string; indicators: Array<string> }>; overallRealism: number; voiceDistinctiveness: number; infoDumpCount: number }"
+    ts_return_type = "import('./standalone.generated').AnalyzeDialogueRealismResult"
 )]
 pub fn analyze_dialogue_realism(
-    turn_scenes: Vec<u32>,
+    turn_scenes: Vec<f64>,
     turn_speakers: Vec<String>,
     turn_texts: Vec<String>,
     characters: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
+    if turn_scenes.len() != turn_speakers.len() || turn_scenes.len() != turn_texts.len() {
+        return Err(napi::Error::from_reason(
+            "dialogue turn arrays must have equal lengths",
+        ));
+    }
     let dialogue_turns: Vec<(usize, String, String)> = turn_scenes
         .into_iter()
         .zip(turn_speakers)
         .zip(turn_texts)
-        .map(|((scene, speaker), text)| (scene as usize, speaker, text))
-        .collect();
+        .map(|((scene, speaker), text)| Ok((super::unsigned_index(scene)?, speaker, text)))
+        .collect::<napi::Result<_>>()?;
     let char_refs: Vec<&str> = characters.iter().map(String::as_str).collect();
-    let result = dialogue_realism::analyze_dialogue_realism(&dialogue_turns, &char_refs);
+    let result = dialogue_realism::analyze_dialogue_realism_checked(&dialogue_turns, &char_refs)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
@@ -228,9 +306,10 @@ pub fn analyze_dialogue_realism(
 /// Analyze syntax tension in scene text using the fallback (regex-only) path.
 #[napi(
     js_name = "analyzeSyntaxTension",
-    ts_return_type = "{ score: number; lengthVariation: number; burstCount: number; sentenceCount: number; avgSentenceLength: number; questionDensity: number; dialogueShiftScore: number; paragraphBurstScore: number; exclamationDensity: number; suspenseKeywordScore: number }"
+    ts_return_type = "import('./standalone.generated').AnalyzeSyntaxTensionResult"
 )]
 pub fn analyze_syntax_tension(scene_text: String) -> napi::Result<serde_json::Value> {
+    super::bounded_texts([scene_text.as_str()], 1)?;
     let result = syntax_tension::analyze_scene_text(&scene_text);
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
@@ -238,9 +317,17 @@ pub fn analyze_syntax_tension(scene_text: String) -> napi::Result<serde_json::Va
 /// Compute aggregate tension metrics from per-scene suspense scores.
 #[napi(
     js_name = "getTensionMetrics",
-    ts_return_type = "{ maxSuspenseScore: number; averageSuspenseScore: number; pacingStyle: string }"
+    ts_return_type = "import('./standalone.generated').GetTensionMetricsResult"
 )]
 pub fn get_tension_metrics(scene_scores: Vec<f64>) -> napi::Result<serde_json::Value> {
+    if scene_scores.len() > 10_000 {
+        return Err(napi::Error::from_reason(
+            "tension scores exceed10000 scenes",
+        ));
+    }
+    for value in &scene_scores {
+        super::finite_range(*value, 0.0, 1.0)?;
+    }
     let result = syntax_tension::get_tension_metrics(&scene_scores);
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
@@ -259,9 +346,12 @@ pub fn get_tension_metrics(scene_scores: Vec<f64>) -> napi::Result<serde_json::V
 pub fn reciprocal_rank_fusion(
     rankings: Vec<Vec<String>>,
     k: f64,
-    limit: u32,
+    limit: f64,
 ) -> napi::Result<serde_json::Value> {
-    let result = lexical::reciprocal_rank_fusion(&rankings, k, limit as usize);
+    super::finite_range(k, 0.0, f64::MAX)?;
+    let result =
+        lexical::reciprocal_rank_fusion_checked(&rankings, k, super::unsigned_index(limit)?)
+            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
@@ -274,9 +364,10 @@ pub fn reciprocal_rank_fusion(
 /// dialogue, filter words, monotonous rhythm, and purple prose.
 #[napi(
     js_name = "collectProseExamples",
-    ts_return_type = "Array<{ sceneId: number; issueType: string; snippet: string; suggestion: string }>"
+    ts_return_type = "import('./standalone.generated').CollectProseExamplesResult"
 )]
 pub fn collect_prose_examples(scenes: Vec<String>) -> napi::Result<serde_json::Value> {
+    super::bounded_texts(scenes.iter().map(String::as_str), 10_000)?;
     let result = prose_quality::collect_prose_examples(&scenes);
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
@@ -288,26 +379,45 @@ pub fn collect_prose_examples(scenes: Vec<String>) -> napi::Result<serde_json::V
 /// Build a character's voice profile from their dialogue lines.
 #[napi(
     js_name = "buildVoiceProfile",
-    ts_return_type = "{ character: string; avgSentenceLength: number; vocabularyRichness: number; questionRate: number; exclamationRate: number; contractionRate: number; formalityScore: number; avgWordLength: number; uniquePhrases: Array<string>; topWords: Array<string> }"
+    ts_return_type = "import('./standalone.generated').BuildVoiceProfileResult"
 )]
 pub fn build_voice_profile(
     character_name: String,
     dialogue_lines: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
-    let result = voice::build_voice_profile(&character_name, &dialogue_lines);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let result = voice::build_voice_profile_checked(&character_name, &dialogue_lines)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result.profile)
+}
+
+#[napi(
+    js_name = "buildVoiceProfileChecked",
+    ts_return_type = "import('./standalone.generated').BuildVoiceProfileCheckedResult"
+)]
+pub fn build_voice_profile_checked(
+    character_name: String,
+    dialogue_lines: Vec<String>,
+) -> napi::Result<serde_json::Value> {
+    let result = voice::build_voice_profile_checked(&character_name, &dialogue_lines)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
 }
 
 /// Pairwise-compare voice profiles and flag characters whose voices are too
 /// similar.
 #[napi(
     js_name = "compareVoices",
-    ts_return_type = "Array<{ charA: string; charB: string; similarity: number; mostSimilarDimension: string; suggestion: string }>"
+    ts_return_type = "import('./standalone.generated').CompareVoicesResult"
 )]
-pub fn compare_voices(profiles: Vec<CharacterVoiceProfileInput>) -> napi::Result<serde_json::Value> {
-    let profiles: Vec<voice::CharacterVoiceProfile> =
-        profiles.into_iter().map(to_character_voice_profile).collect();
-    let result = voice::compare_voices(&profiles);
+pub fn compare_voices(
+    profiles: Vec<CharacterVoiceProfileInput>,
+) -> napi::Result<serde_json::Value> {
+    let profiles: Vec<voice::CharacterVoiceProfile> = profiles
+        .into_iter()
+        .map(to_character_voice_profile)
+        .collect();
+    let result = voice::compare_voices_checked(&profiles)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
@@ -315,7 +425,7 @@ pub fn compare_voices(profiles: Vec<CharacterVoiceProfileInput>) -> napi::Result
 /// `baseline` (established) profile across the features both expose.
 #[napi(
     js_name = "measureVoiceDrift",
-    ts_return_type = "{ overall: number; perFeature: Array<{ feature: string; delta: number; baseline: number; current: number }>; notes: Array<string>; drifted: boolean }"
+    ts_return_type = "import('./standalone.generated').MeasureVoiceDriftResult"
 )]
 pub fn measure_voice_drift(
     baseline: CharacterVoiceProfileInput,
@@ -323,7 +433,8 @@ pub fn measure_voice_drift(
 ) -> napi::Result<serde_json::Value> {
     let baseline = to_character_voice_profile(baseline);
     let current = to_character_voice_profile(current);
-    let result = voice::measure_voice_drift(&baseline, &current);
+    let result = voice::measure_voice_drift_checked(&baseline, &current)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
@@ -331,7 +442,7 @@ pub fn measure_voice_drift(
 /// lines (same speaker/narrator label) and measure drift between them.
 #[napi(
     js_name = "measureVoiceDriftFromText",
-    ts_return_type = "{ overall: number; perFeature: Array<{ feature: string; delta: number; baseline: number; current: number }>; notes: Array<string>; drifted: boolean }"
+    ts_return_type = "import('./standalone.generated').MeasureVoiceDriftFromTextResult"
 )]
 pub fn measure_voice_drift_from_text(
     label: String,
@@ -339,25 +450,49 @@ pub fn measure_voice_drift_from_text(
     current_lines: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
     let result =
-        voice::measure_voice_drift_from_text(&label, &baseline_lines, &current_lines);
+        voice::measure_voice_drift_from_text_checked(&label, &baseline_lines, &current_lines)
+            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
 /// Build voice profiles for every character and flag same-sounding pairs.
 #[napi(
     js_name = "analyzeCharacterVoices",
-    ts_return_type = "{ profiles: Array<{ character: string; avgSentenceLength: number; vocabularyRichness: number; questionRate: number; exclamationRate: number; contractionRate: number; formalityScore: number; avgWordLength: number; uniquePhrases: Array<string>; topWords: Array<string> }>; similarities: Array<{ charA: string; charB: string; similarity: number; mostSimilarDimension: string; suggestion: string }>; distinctVoices: boolean }"
+    ts_return_type = "import('./standalone.generated').AnalyzeCharacterVoicesResult"
 )]
 pub fn analyze_character_voices(
     character_names: Vec<String>,
     character_dialogue_lines: Vec<Vec<String>>,
 ) -> napi::Result<serde_json::Value> {
+    if character_names.len() != character_dialogue_lines.len() {
+        return Err(napi::Error::from_reason(
+            "character dialogue arrays must have equal lengths",
+        ));
+    }
     let dialogue_data: Vec<(String, Vec<String>)> = character_names
         .into_iter()
         .zip(character_dialogue_lines)
         .collect();
-    let result = voice::analyze_character_voices(dialogue_data);
+    let result = voice::analyze_character_voices_checked(&dialogue_data)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+#[napi(
+    js_name = "analyzeSubtextAnnotations",
+    ts_args_type = "manuscript: import('./manuscript').Manuscript, annotations: import('./standalone.generated').AuthorSubtextAnnotation[]",
+    ts_return_type = "import('./standalone.generated').AnalyzeSubtextAnnotationsResult"
+)]
+pub fn analyze_subtext_annotations(
+    manuscript: serde_json::Value,
+    annotations: serde_json::Value,
+) -> napi::Result<serde_json::Value> {
+    let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
+    let annotations: Vec<subtext::AuthorSubtextAnnotation> =
+        super::decode_input(annotations, "invalid author subtext annotations")?;
+    let result = subtext::analyze_subtext_annotations(&manuscript, &annotations)
+        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    super::encode_result(result)
 }
 
 // ---------------------------------------------------------------------------
@@ -368,33 +503,48 @@ pub fn analyze_character_voices(
 /// always returns empty instances with zero density).
 #[napi(
     js_name = "analyzeSubtext",
-    ts_return_type = "{ instances: Array<{ scene: number; paragraph: number; surface: string; implied: string; subtextType: 'EmotionalDenial' | 'PowerPlay' | 'SelfDeception' | 'CodedCommunication' | 'DramaticIronySubtext' | 'Deflection' | 'VerbalIrony' | 'ActionContradiction'; density: number; evidence: Array<string>; characters: Array<string>; resolved: boolean; resolutionScene: number | null }>; sceneSummaries: Array<{ scene: number; averageDensity: number; instanceCount: number; dominantType: 'EmotionalDenial' | 'PowerPlay' | 'SelfDeception' | 'CodedCommunication' | 'DramaticIronySubtext' | 'Deflection' | 'VerbalIrony' | 'ActionContradiction' | null; appropriateness: number }>; globalDensity: number; genreCalibratedScore: number; onTheNose: Array<[number, string]>; unresolvedSubtext: Array<{ scene: number; paragraph: number; surface: string; implied: string; subtextType: 'EmotionalDenial' | 'PowerPlay' | 'SelfDeception' | 'CodedCommunication' | 'DramaticIronySubtext' | 'Deflection' | 'VerbalIrony' | 'ActionContradiction'; density: number; evidence: Array<string>; characters: Array<string>; resolved: boolean; resolutionScene: number | null }>; typeDistribution: Record<string, number>; characterPatterns: Record<string, [number, string]>; advice: Array<{ scene: number; issueType: string; quotedText: string; explanation: string; suggestion: string | null }>; craftNotes: Array<string> }"
+    ts_return_type = "import('./standalone.generated').AnalyzeSubtextResult"
 )]
 pub fn analyze_subtext(
     scenes: Vec<String>,
-    dialogue_segment_scenes: Vec<u32>,
+    dialogue_segment_scenes: Vec<f64>,
     dialogue_segment_speakers: Vec<String>,
     dialogue_segment_quotes: Vec<String>,
     dialogue_segment_contexts: Vec<String>,
     emotional_state_characters: Vec<String>,
-    emotional_state_scenes: Vec<u32>,
+    emotional_state_scenes: Vec<f64>,
     emotional_state_emotions: Vec<String>,
     genre: String,
 ) -> napi::Result<serde_json::Value> {
+    super::matching_lengths(&[
+        dialogue_segment_scenes.len(),
+        dialogue_segment_speakers.len(),
+        dialogue_segment_quotes.len(),
+        dialogue_segment_contexts.len(),
+    ])?;
+    super::matching_lengths(&[
+        emotional_state_characters.len(),
+        emotional_state_scenes.len(),
+        emotional_state_emotions.len(),
+    ])?;
     let scene_refs: Vec<&str> = scenes.iter().map(String::as_str).collect();
     let dialogue_segments: Vec<(usize, String, String, String)> = dialogue_segment_scenes
         .into_iter()
         .zip(dialogue_segment_speakers)
         .zip(dialogue_segment_quotes)
         .zip(dialogue_segment_contexts)
-        .map(|(((scene, speaker), quote), context)| (scene as usize, speaker, quote, context))
-        .collect();
+        .map(|(((scene, speaker), quote), context)| {
+            Ok((super::unsigned_index(scene)?, speaker, quote, context))
+        })
+        .collect::<napi::Result<_>>()?;
     let character_emotional_states: Vec<(String, usize, String)> = emotional_state_characters
         .into_iter()
         .zip(emotional_state_scenes)
         .zip(emotional_state_emotions)
-        .map(|((character, scene), emotion)| (character, scene as usize, emotion))
-        .collect();
+        .map(|((character, scene), emotion)| {
+            Ok((character, super::unsigned_index(scene)?, emotion))
+        })
+        .collect::<napi::Result<_>>()?;
     let result = subtext::analyze_subtext(
         &scene_refs,
         &dialogue_segments,

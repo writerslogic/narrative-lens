@@ -1,0 +1,672 @@
+[
+  {
+    "id": "entity-alias-bridge",
+    "result": [
+      {
+        "aliases": [
+          "Mary Smith",
+          "Smith"
+        ],
+        "canonical": "John Smith",
+        "confidence": 0.62,
+        "id": "ent-john-smith",
+        "kind": "character",
+        "mentionCount": 3,
+        "provenance": "ai_derived"
+      }
+    ]
+  },
+  {
+    "id": "entity-last-correction",
+    "result": [
+      {
+        "aliases": [
+          "Ghost"
+        ],
+        "canonical": "Alice",
+        "confidence": 0.24,
+        "id": "ent-alice",
+        "kind": "character",
+        "mentionCount": 1,
+        "provenance": "user_edited"
+      }
+    ]
+  },
+  {
+    "id": "voice-determinism",
+    "result": {
+      "uniqueResults": 24,
+      "samples": [
+        [
+          "willow",
+          "cedar",
+          "birch",
+          "apple",
+          "maple"
+        ],
+        [
+          "birch",
+          "apple",
+          "maple",
+          "cedar",
+          "willow"
+        ],
+        [
+          "willow",
+          "ash",
+          "cedar",
+          "apple",
+          "birch"
+        ],
+        [
+          "maple",
+          "willow",
+          "apple",
+          "ash",
+          "cedar"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "nonlinear-percentage",
+    "result": {
+      "beatDetails": [],
+      "healthPct": 1,
+      "matchedBeats": [],
+      "missingBeats": [],
+      "suggestedTemplate": "kishotenketsu",
+      "template": "nonlinear"
+    }
+  },
+  {
+    "id": "coreference-original-byte-offsets",
+    "result": {
+      "expectedAliceByteStart": 3,
+      "actual": {
+        "characterMentions": {
+          "Alice": 2
+        },
+        "mentions": [
+          {
+            "confidence": 0.95,
+            "isPronoun": false,
+            "resolvedTo": "Alice",
+            "start": 4,
+            "text": "lice "
+          },
+          {
+            "confidence": 0.55,
+            "isPronoun": true,
+            "resolvedTo": "Alice",
+            "start": 17,
+            "text": "She"
+          }
+        ],
+        "pronounResolutionRate": 1
+      }
+    }
+  },
+  {
+    "id": "world-explicit-acquisition",
+    "result": {
+      "characterKnowledge": [
+        {
+          "character": "Alice",
+          "currentLocation": null,
+          "knows": [
+            "the key was gone"
+          ],
+          "locationsVisited": [],
+          "toldBy": [],
+          "witnessed": []
+        }
+      ],
+      "continuityScore": 0.09999999999999998,
+      "informationFlow": [],
+      "locationTimeline": [],
+      "snapshots": [
+        {
+          "afterScene": 0,
+          "facts": [],
+          "invalidatedFacts": [],
+          "newFacts": []
+        },
+        {
+          "afterScene": 1,
+          "facts": [
+            {
+              "characterKnows": {
+                "character": "alice",
+                "information": "the key was gone"
+              }
+            }
+          ],
+          "invalidatedFacts": [],
+          "newFacts": [
+            {
+              "characterKnows": {
+                "character": "alice",
+                "information": "the key was gone"
+              }
+            }
+          ]
+        }
+      ],
+      "violations": [
+        {
+          "description": "Alice references 'the key was gone' but no valid information path exists.",
+          "fixSuggestion": "Add a scene where Alice learns 'the key was gone' — either witness it directly, be told by someone who knows, or find written evidence.",
+          "proof": "Character Alice acquires knowledge 'the key was gone' in scene 1, but: - Alice was not present when this information was established. - No character who knew this communicated with Alice before scene 1. - No written record of this information was accessible to Alice.",
+          "scene": 1,
+          "severity": 0.9,
+          "violationType": "ImpossibleKnowledge"
+        }
+      ],
+      "worldComplexity": 0.5
+    }
+  },
+  {
+    "id": "communication-character-order",
+    "result": [
+      [
+        [
+          0,
+          "alice",
+          "bob",
+          "the gate was open"
+        ]
+      ],
+      [
+        [
+          0,
+          "bob",
+          "alice",
+          "the gate was open"
+        ]
+      ]
+    ]
+  },
+  {
+    "id": "world-intrascene-location",
+    "result": {
+      "characterKnowledge": [
+        {
+          "character": "Alice",
+          "currentLocation": "garden",
+          "knows": [],
+          "locationsVisited": [
+            [
+              0,
+              "cellar"
+            ],
+            [
+              0,
+              "garden"
+            ]
+          ],
+          "toldBy": [],
+          "witnessed": []
+        }
+      ],
+      "continuityScore": 1,
+      "informationFlow": [],
+      "locationTimeline": [
+        [
+          0,
+          "garden",
+          [
+            "alice"
+          ]
+        ]
+      ],
+      "snapshots": [
+        {
+          "afterScene": 0,
+          "facts": [
+            {
+              "characterAt": {
+                "character": "alice",
+                "location": "garden"
+              }
+            },
+            {
+              "characterAt": {
+                "character": "alice",
+                "location": "cellar"
+              }
+            }
+          ],
+          "invalidatedFacts": [],
+          "newFacts": [
+            {
+              "characterAt": {
+                "character": "alice",
+                "location": "cellar"
+              }
+            },
+            {
+              "characterAt": {
+                "character": "alice",
+                "location": "garden"
+              }
+            }
+          ]
+        }
+      ],
+      "violations": [],
+      "worldComplexity": 2
+    }
+  },
+  {
+    "id": "paragraph-line-endings",
+    "result": {
+      "lf": {
+        "fkgl": 0.59,
+        "gunningFog": 1.8,
+        "smog": 0,
+        "ari": -0.86,
+        "colemanLiau": 0.49,
+        "fleschEase": 98.87,
+        "daleChall": 5.61,
+        "sentenceCount": 2,
+        "wordCount": 9,
+        "syllableCount": 11,
+        "charCount": 35,
+        "polysyllableCount": 0,
+        "gradeLevels": {
+          "fkgl": "Kindergarten",
+          "gunningFog": "1st grade",
+          "ari": "Kindergarten",
+          "colemanLiau": "Kindergarten",
+          "fleschEase": "5th grade (very easy)",
+          "daleChall": "5th-6th grade"
+        },
+        "readabilityVariance": 6.53
+      },
+      "crlf": {
+        "fkgl": 0.59,
+        "gunningFog": 1.8,
+        "smog": 0,
+        "ari": -0.86,
+        "colemanLiau": 0.49,
+        "fleschEase": 98.87,
+        "daleChall": 5.61,
+        "sentenceCount": 2,
+        "wordCount": 9,
+        "syllableCount": 11,
+        "charCount": 35,
+        "polysyllableCount": 0,
+        "gradeLevels": {
+          "fkgl": "Kindergarten",
+          "gunningFog": "1st grade",
+          "ari": "Kindergarten",
+          "colemanLiau": "Kindergarten",
+          "fleschEase": "5th grade (very easy)",
+          "daleChall": "5th-6th grade"
+        },
+        "readabilityVariance": 0
+      }
+    }
+  },
+  {
+    "id": "readability-trailing-sentence",
+    "result": {
+      "fkgl": 0.52,
+      "gunningFog": 2,
+      "smog": 0,
+      "ari": -0.09,
+      "colemanLiau": 1.8,
+      "fleschEase": 100.24,
+      "daleChall": 7.04,
+      "sentenceCount": 1,
+      "wordCount": 5,
+      "syllableCount": 6,
+      "charCount": 20,
+      "polysyllableCount": 0,
+      "gradeLevels": {
+        "fkgl": "Kindergarten",
+        "gunningFog": "2nd grade",
+        "ari": "Kindergarten",
+        "colemanLiau": "1st grade",
+        "fleschEase": "5th grade (very easy)",
+        "daleChall": "9th-10th grade"
+      },
+      "readabilityVariance": 0
+    }
+  },
+  {
+    "id": "answered-promise",
+    "result": {
+      "actBreakdown": [
+        {
+          "act": 1,
+          "netBalance": 9,
+          "outstandingWeight": 2.6,
+          "promisesFulfilled": 0,
+          "promisesMade": 9
+        },
+        {
+          "act": 2,
+          "netBalance": 0,
+          "outstandingWeight": 0,
+          "promisesFulfilled": 0,
+          "promisesMade": 0
+        },
+        {
+          "act": 3,
+          "netBalance": 0,
+          "outstandingWeight": 0,
+          "promisesFulfilled": 0,
+          "promisesMade": 0
+        }
+      ],
+      "brokenCount": 5,
+      "cascadePayoffs": [],
+      "contractNotes": [
+        {
+          "description": "The reader was promised 'Resolution of central conflict' and never received it. This breaks trust.",
+          "noteType": "broken_trust",
+          "promiseId": 0,
+          "suggestion": "Either: fulfill it (even late), explicitly subvert it (character acknowledges it won't happen), or retroactively show it was never really promised (tricky, requires rewrite).",
+          "urgency": 0.9
+        },
+        {
+          "description": "The reader was promised 'Character arc completion' and never received it. This breaks trust.",
+          "noteType": "broken_trust",
+          "promiseId": 1,
+          "suggestion": "Either: fulfill it (even late), explicitly subvert it (character acknowledges it won't happen), or retroactively show it was never really promised (tricky, requires rewrite).",
+          "urgency": 0.9
+        },
+        {
+          "description": "The reader was promised 'Thematic coherence' and never received it. This breaks trust.",
+          "noteType": "broken_trust",
+          "promiseId": 2,
+          "suggestion": "Either: fulfill it (even late), explicitly subvert it (character acknowledges it won't happen), or retroactively show it was never really promised (tricky, requires rewrite).",
+          "urgency": 0.9
+        },
+        {
+          "description": "The reader was promised 'Narrative question: Who stole the silver key?' and never received it. This breaks trust.",
+          "noteType": "broken_trust",
+          "promiseId": 3,
+          "suggestion": "Either: fulfill it (even late), explicitly subvert it (character acknowledges it won't happen), or retroactively show it was never really promised (tricky, requires rewrite).",
+          "urgency": 0.9
+        },
+        {
+          "description": "The reader was promised 'Opening hook promises an engaging story worth reading' and never received it. This breaks trust.",
+          "noteType": "broken_trust",
+          "promiseId": 4,
+          "suggestion": "Either: fulfill it (even late), explicitly subvert it (character acknowledges it won't happen), or retroactively show it was never really promised (tricky, requires rewrite).",
+          "urgency": 0.9
+        }
+      ],
+      "fulfillmentRatio": 0,
+      "gratificationDelays": [],
+      "investmentCurve": [
+        0.69,
+        1.3799999999999997,
+        2.07
+      ],
+      "maxNestingDepth": 0,
+      "overpaidMoments": [],
+      "promises": [
+        {
+          "children": [],
+          "description": "Resolution of central conflict",
+          "explicitness": 0.3,
+          "id": 0,
+          "investment": 2.0026,
+          "parent": null,
+          "payoffQuality": null,
+          "payoffScene": null,
+          "promiseType": {
+            "GenreContract": "general"
+          },
+          "scene": 0,
+          "status": "broken",
+          "urgency": 0.5,
+          "weight": 1
+        },
+        {
+          "children": [],
+          "description": "Character arc completion",
+          "explicitness": 0.3,
+          "id": 1,
+          "investment": 1.70221,
+          "parent": null,
+          "payoffQuality": null,
+          "payoffScene": null,
+          "promiseType": {
+            "GenreContract": "general"
+          },
+          "scene": 0,
+          "status": "broken",
+          "urgency": 0.5,
+          "weight": 0.85
+        },
+        {
+          "children": [],
+          "description": "Thematic coherence",
+          "explicitness": 0.3,
+          "id": 2,
+          "investment": 1.40182,
+          "parent": null,
+          "payoffQuality": null,
+          "payoffScene": null,
+          "promiseType": {
+            "GenreContract": "general"
+          },
+          "scene": 0,
+          "status": "broken",
+          "urgency": 0.5,
+          "weight": 0.7
+        },
+        {
+          "children": [],
+          "description": "Narrative question: Who stole the silver key?",
+          "explicitness": 0.9,
+          "id": 3,
+          "investment": 1.70221,
+          "parent": null,
+          "payoffQuality": null,
+          "payoffScene": null,
+          "promiseType": {
+            "ExplicitQuestion": "Who stole the silver key?"
+          },
+          "scene": 0,
+          "status": "broken",
+          "urgency": 0.7,
+          "weight": 0.85
+        },
+        {
+          "children": [],
+          "description": "Opening hook promises an engaging story worth reading",
+          "explicitness": 0.4,
+          "id": 4,
+          "investment": 1.8023400000000003,
+          "parent": null,
+          "payoffQuality": null,
+          "payoffScene": null,
+          "promiseType": "OpeningHook",
+          "scene": 0,
+          "status": "broken",
+          "urgency": 0.8,
+          "weight": 0.9
+        },
+        {
+          "children": [],
+          "description": "Structural beat 'Inciting Incident' expected",
+          "explicitness": 0.2,
+          "id": 5,
+          "investment": 1.3016900000000002,
+          "parent": null,
+          "payoffQuality": null,
+          "payoffScene": null,
+          "promiseType": {
+            "StructuralBeat": "Inciting Incident"
+          },
+          "scene": 0,
+          "status": "outstanding",
+          "urgency": 0.5,
+          "weight": 0.65
+        },
+        {
+          "children": [],
+          "description": "Structural beat 'Midpoint Reversal' expected",
+          "explicitness": 0.2,
+          "id": 6,
+          "investment": 1.3016900000000002,
+          "parent": null,
+          "payoffQuality": null,
+          "payoffScene": null,
+          "promiseType": {
+            "StructuralBeat": "Midpoint Reversal"
+          },
+          "scene": 0,
+          "status": "outstanding",
+          "urgency": 0.5,
+          "weight": 0.65
+        },
+        {
+          "children": [],
+          "description": "Structural beat 'Climax' expected",
+          "explicitness": 0.2,
+          "id": 7,
+          "investment": 1.3016900000000002,
+          "parent": null,
+          "payoffQuality": null,
+          "payoffScene": null,
+          "promiseType": {
+            "StructuralBeat": "Climax"
+          },
+          "scene": 0,
+          "status": "outstanding",
+          "urgency": 0.5,
+          "weight": 0.65
+        },
+        {
+          "children": [],
+          "description": "Structural beat 'Resolution' expected",
+          "explicitness": 0.2,
+          "id": 8,
+          "investment": 1.3016900000000002,
+          "parent": null,
+          "payoffQuality": null,
+          "payoffScene": null,
+          "promiseType": {
+            "StructuralBeat": "Resolution"
+          },
+          "scene": 0,
+          "status": "outstanding",
+          "urgency": 0.5,
+          "weight": 0.65
+        }
+      ],
+      "readerTrustAssessment": "The reader's contract trust is low. 0 promises fulfilled, 5 broken. The reader will feel cheated by unresolved setups.",
+      "unearnedCount": 0,
+      "unearnedPayoffs": [],
+      "weightedHealth": 0
+    }
+  },
+  {
+    "id": "model-required-coverage",
+    "error": "analysis failed: required NLI capability incomplete: onnx_feature_disabled"
+  },
+  {
+    "id": "causal-coherence-range",
+    "input": {
+      "scenes": [
+        "Alice opened the gate. Alice crossed the bridge. Alice reached the tower. Alice lit the lamp.",
+        "Alice decided to leave."
+      ],
+      "characters": [
+        "Alice"
+      ]
+    },
+    "result": {
+      "plotCoherence": 4,
+      "events": [
+        {
+          "agent": "Alice",
+          "description": "Alice opened the gate.",
+          "eventType": "Action",
+          "id": 0,
+          "scene": 0
+        },
+        {
+          "agent": "Alice",
+          "description": "Alice crossed the bridge.",
+          "eventType": "Action",
+          "id": 1,
+          "scene": 0
+        },
+        {
+          "agent": "Alice",
+          "description": "Alice reached the tower.",
+          "eventType": "Action",
+          "id": 2,
+          "scene": 0
+        },
+        {
+          "agent": "Alice",
+          "description": "Alice lit the lamp.",
+          "eventType": "Action",
+          "id": 3,
+          "scene": 0
+        },
+        {
+          "agent": "Alice",
+          "description": "Alice decided to leave.",
+          "eventType": "Decision",
+          "id": 4,
+          "scene": 1
+        }
+      ],
+      "links": [
+        {
+          "cause": 0,
+          "effect": 1,
+          "linkType": "Enabling",
+          "strength": 0.6
+        },
+        {
+          "cause": 0,
+          "effect": 2,
+          "linkType": "Enabling",
+          "strength": 0.6
+        },
+        {
+          "cause": 0,
+          "effect": 3,
+          "linkType": "Enabling",
+          "strength": 0.6
+        },
+        {
+          "cause": 3,
+          "effect": 4,
+          "linkType": "Enabling",
+          "strength": 0.6
+        }
+      ]
+    }
+  },
+  {
+    "id": "standalone-typescript-runtime-drift",
+    "result": {
+      "worldFactActualKeys": [
+        [
+          "characterAt"
+        ]
+      ],
+      "worldFactDeclaredTag": "CharacterAt",
+      "payoffActualStatuses": [
+        "\"broken\"",
+        "\"outstanding\""
+      ],
+      "payoffDeclaredLiterals": [
+        "Outstanding",
+        "Broken"
+      ]
+    }
+  }
+]

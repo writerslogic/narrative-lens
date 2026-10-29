@@ -1,0 +1,299 @@
+{
+  "status": "Frozen;3 owned files;no commits/pushes/dependency changes",
+  "worktree": "/Volumes/A/.codex-worktrees/narrative-lens-release-crosscutting",
+  "files": [
+    {
+      "path": "src/continuity/world_state.rs",
+      "base_sha256": "1dc16054489e0fb3b215d3c66ebe5a875106bb27ef325f7c61f475309c1efb63",
+      "sha256": "31ee8470a7b48eef9f06f833a8e5504f5fc03f11d637e98e0f95b610c632cb66"
+    },
+    {
+      "path": "tests/component_world_state.rs",
+      "base_sha256": null,
+      "sha256": "60c92fef4eb45883be62d9d497367c00b4c5dfd2cb5de8ffec9b8556bc9fa33b"
+    },
+    {
+      "path": "examples/component_world_state.rs",
+      "base_sha256": null,
+      "sha256": "973dcd037228b4e8cbc94416159094134276a96c2a2b2a5c75cc8825a73ca690"
+    }
+  ],
+  "api": [
+    "track_world_state_checked(scenes,characters)->crate::Result<WorldStateResult>",
+    "track_world_state_current(scenes,characters,&WorldStateOptions)->crate::Result<WorldStateCurrentResult>",
+    "WorldStateOptions{include_deltas:false,include_event_history:false};serde(default) bools;deny_unknown_fields",
+    "WorldStateDelta{after_scene,new_facts,invalidated_facts}:net changes;remove then add from initial empty set",
+    "WorldStateCurrentResult includes options,final facts,optional deltas and prior summary fields;after_scene zero-based last reduced scene,None for empty scenes/cast",
+    "Both results add serde(default) availability/diagnostics;valid Complete/[];legacy errors Unavailable with static diagnostic and score0"
+  ],
+  "critical_fixes": [
+    "Named lock/unlock uses configured actor location;unknown actor location cannot release another location.",
+    "Unconfigured named/pronominal prefixes abstain;bare/Someone/Somebody clause-level fallback preserved.",
+    "Validate names/counts/bytes before regex construction;all regex compile errors propagate static world_state_pattern_compile_failed;no Regex::new unwrap remains."
+  ],
+  "input_bounds": {
+    "name_utf8_bytes": "1..128,nonblank,no controls;reuses manuscript::config::validate_name",
+    "characters": 256,
+    "scenes": 10000,
+    "scene_bytes": 16777216,
+    "total_bytes": 67108864
+  },
+  "checks": [
+    {
+      "command": "cargo test --locked --test component_world_state",
+      "passed": 14,
+      "log": "docs/audit-2026-10-27/component-world-state-tests.log"
+    },
+    {
+      "command": "cargo test --locked --lib continuity::world_state",
+      "passed": 11,
+      "log": "docs/audit-2026-10-27/component-world-state-existing-tests.log"
+    },
+    {
+      "command": "cargo test --locked --test component_world_state oversized_names_fail",
+      "passed": 1,
+      "purpose": "Exact200000-byte name rejects without abort;static errors,no secret in diagnostics",
+      "log": "docs/audit-2026-10-27/component-world-state-200kb-name.log"
+    },
+    {
+      "command": "cargo clippy --locked --features bindings --lib --test component_world_state --example component_world_state -- -D warnings",
+      "result": "pass",
+      "log": "docs/audit-2026-10-27/component-world-state-clippy.log"
+    },
+    {
+      "command": "rustfmt --edition2024 --check src/continuity/world_state.rs tests/component_world_state.rs examples/component_world_state.rs",
+      "result": "pass"
+    }
+  ],
+  "validation_scope": [
+    "Independently replay every net delta against full scene snapshots,including within-scene transient transfers/movements/locks.",
+    "All4 retention-option combinations preserve final facts,current knowledge,violations,scores;full history option preserves optional histories.",
+    "Empty/unknown/Unicode/cast permutation/duplicates and option serde migration/default/rejection.",
+    "Name127/128/129,cast255/256/257,scene9999/10000/10001,scene16MiB-1/=/+1,total64MiB-1/=/+1;200000-byte name/internal-regex rejection."
+  ],
+  "performance": [
+    {
+      "workload": "growth",
+      "scenes": 128,
+      "mode": "full",
+      "final_facts": 256,
+      "retained_fact_entries": 16512,
+      "delta_entries": 0,
+      "median_ms": 0.858875,
+      "retained_requested_bytes": 2417506,
+      "peak_requested_bytes": 2477382,
+      "semantic_fingerprint": "4f8912884d46c4a8"
+    },
+    {
+      "workload": "growth",
+      "scenes": 128,
+      "mode": "current",
+      "final_facts": 256,
+      "retained_fact_entries": 256,
+      "delta_entries": 0,
+      "median_ms": 0.360667,
+      "retained_requested_bytes": 56272,
+      "peak_requested_bytes": 79181,
+      "semantic_fingerprint": "4f8912884d46c4a8"
+    },
+    {
+      "workload": "growth",
+      "scenes": 128,
+      "mode": "deltas",
+      "final_facts": 256,
+      "retained_fact_entries": 256,
+      "delta_entries": 256,
+      "median_ms": 0.38975000000000004,
+      "retained_requested_bytes": 87412,
+      "peak_requested_bytes": 107323,
+      "semantic_fingerprint": "4f8912884d46c4a8"
+    },
+    {
+      "workload": "growth",
+      "scenes": 128,
+      "mode": "minimal",
+      "final_facts": 256,
+      "retained_fact_entries": 256,
+      "delta_entries": 0,
+      "median_ms": 0.349333,
+      "retained_requested_bytes": 56272,
+      "peak_requested_bytes": 79181,
+      "semantic_fingerprint": "4f8912884d46c4a8"
+    },
+    {
+      "workload": "growth",
+      "scenes": 512,
+      "mode": "full",
+      "final_facts": 1024,
+      "retained_fact_entries": 262656,
+      "delta_entries": 0,
+      "median_ms": 8.22975,
+      "retained_requested_bytes": 37975586,
+      "peak_requested_bytes": 38213654,
+      "semantic_fingerprint": "e72b92dd912e5918"
+    },
+    {
+      "workload": "growth",
+      "scenes": 512,
+      "mode": "current",
+      "final_facts": 1024,
+      "retained_fact_entries": 1024,
+      "delta_entries": 0,
+      "median_ms": 1.420958,
+      "retained_requested_bytes": 218320,
+      "peak_requested_bytes": 305389,
+      "semantic_fingerprint": "e72b92dd912e5918"
+    },
+    {
+      "workload": "growth",
+      "scenes": 512,
+      "mode": "deltas",
+      "final_facts": 1024,
+      "retained_fact_entries": 1024,
+      "delta_entries": 1024,
+      "median_ms": 1.516375,
+      "retained_requested_bytes": 343540,
+      "peak_requested_bytes": 418539,
+      "semantic_fingerprint": "e72b92dd912e5918"
+    },
+    {
+      "workload": "growth",
+      "scenes": 512,
+      "mode": "minimal",
+      "final_facts": 1024,
+      "retained_fact_entries": 1024,
+      "delta_entries": 0,
+      "median_ms": 1.4025,
+      "retained_requested_bytes": 218320,
+      "peak_requested_bytes": 305389,
+      "semantic_fingerprint": "e72b92dd912e5918"
+    },
+    {
+      "workload": "growth",
+      "scenes": 1024,
+      "mode": "full",
+      "final_facts": 2048,
+      "retained_fact_entries": 1049600,
+      "delta_entries": 0,
+      "median_ms": 30.47625,
+      "retained_requested_bytes": 151523802,
+      "peak_requested_bytes": 151999806,
+      "semantic_fingerprint": "19e0573ca754c128"
+    },
+    {
+      "workload": "growth",
+      "scenes": 1024,
+      "mode": "current",
+      "final_facts": 2048,
+      "retained_fact_entries": 2048,
+      "delta_entries": 0,
+      "median_ms": 2.820292,
+      "retained_requested_bytes": 434480,
+      "peak_requested_bytes": 607221,
+      "semantic_fingerprint": "19e0573ca754c128"
+    },
+    {
+      "workload": "growth",
+      "scenes": 1024,
+      "mode": "deltas",
+      "final_facts": 2048,
+      "retained_fact_entries": 2048,
+      "delta_entries": 2048,
+      "median_ms": 3.059375,
+      "retained_requested_bytes": 685188,
+      "peak_requested_bytes": 833715,
+      "semantic_fingerprint": "19e0573ca754c128"
+    },
+    {
+      "workload": "growth",
+      "scenes": 1024,
+      "mode": "minimal",
+      "final_facts": 2048,
+      "retained_fact_entries": 2048,
+      "delta_entries": 0,
+      "median_ms": 2.814959,
+      "retained_requested_bytes": 434480,
+      "peak_requested_bytes": 607221,
+      "semantic_fingerprint": "19e0573ca754c128"
+    },
+    {
+      "workload": "activity",
+      "scenes": 512,
+      "mode": "full",
+      "final_facts": 1028,
+      "retained_fact_entries": 264704,
+      "delta_entries": 0,
+      "median_ms": 14.320583,
+      "retained_requested_bytes": 39539872,
+      "peak_requested_bytes": 39820978,
+      "semantic_fingerprint": "28e29abb9bbaf2ff"
+    },
+    {
+      "workload": "activity",
+      "scenes": 512,
+      "mode": "current",
+      "final_facts": 1028,
+      "retained_fact_entries": 1028,
+      "delta_entries": 0,
+      "median_ms": 5.954792,
+      "retained_requested_bytes": 741130,
+      "peak_requested_bytes": 850888,
+      "semantic_fingerprint": "28e29abb9bbaf2ff"
+    },
+    {
+      "workload": "activity",
+      "scenes": 512,
+      "mode": "deltas",
+      "final_facts": 1028,
+      "retained_fact_entries": 1028,
+      "delta_entries": 3072,
+      "median_ms": 6.871541,
+      "retained_requested_bytes": 1037350,
+      "peak_requested_bytes": 1147108,
+      "semantic_fingerprint": "28e29abb9bbaf2ff"
+    },
+    {
+      "workload": "activity",
+      "scenes": 512,
+      "mode": "minimal",
+      "final_facts": 1028,
+      "retained_fact_entries": 1028,
+      "delta_entries": 0,
+      "median_ms": 5.832042,
+      "retained_requested_bytes": 525798,
+      "peak_requested_bytes": 606812,
+      "semantic_fingerprint": "205ecbd0a1cf5234"
+    }
+  ],
+  "measurement": {
+    "host": "Apple M4 arm64;32GiB RAM",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "profile": "release,default features,5 samples per mode;sequential processes;allocator accounting enabled;CPU not isolated",
+    "scope": "Rust allocator requested live bytes above pre-call live allocation;retained includes returned result and any remaining lazy regex-cache growth;peak includes reducer intermediates;excludes caller input,allocator metadata,stack,binary,OS RSS,non-Rust allocations",
+    "equivalence": "full/current/deltas semantic fingerprints match at each workload/size;minimal intentionally omits optional histories;unit tests additionally compare exact fields and scene-by-scene sets"
+  },
+  "evidence": {
+    "baseline": "docs/audit-2026-10-27/component-world-state-before.json",
+    "final": "docs/audit-2026-10-27/component-world-state-after.json",
+    "original_named_actor_red": "docs/audit-2026-10-27/component-world-state-red.log",
+    "unknown_actor_red": "docs/audit-2026-10-27/component-world-state-unknown-actor-red.log",
+    "root_only_prerequisite_sync": "docs/audit-2026-10-27/component-world-state-prerequisites.json"
+  },
+  "reproduction": {
+    "target": "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-crosscutting",
+    "build": "cargo build --locked --release --example component_world_state",
+    "benchmark": "<target>/release/examples/component_world_state <128|512|1024> 5 <full|current|deltas|minimal> growth;512 5 <mode> activity"
+  },
+  "limits": [
+    "Full history still requires Omega(sum of cumulative fact payloads);checked input bounds are not a returned-output heap budget.",
+    "Current mode is one-shot reduction,not a resumable incremental tracker;optional net deltas cannot recover within-scene event chronology.",
+    "Physical fact invalidation/colocation still has existing scan/pair costs;no general linear-runtime claim.",
+    "Numbers are allocator-instrumented synthetic workload observations on one unisolated host;no RSS or broad production-latency claim.",
+    "Actor fallback is deliberately conservative for unrecognized subjects/modifiers;this is a limited explicit-English event reducer,not general semantic parsing."
+  ],
+  "excluded_from_integration": [
+    "src/substrate/utils.rs (copied root-owned derive prerequisite only)",
+    "Cargo.toml",
+    "Cargo.lock"
+  ]
+}

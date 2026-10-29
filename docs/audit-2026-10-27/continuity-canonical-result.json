@@ -1,0 +1,61 @@
+{
+  "status": "frozen",
+  "base_coreference_sha256": "8c885d6251aa3857ded23e9e9d0a0d2f7c78c91f207faa0e87f79acc3cc6c9f7",
+  "files": [
+    {
+      "path": "src/continuity/coreference.rs",
+      "sha256": "e28f5b2b8f8fa20d6e63e1a3be1a1dc65f272cbb9724fe7be847c457244145e7"
+    },
+    {
+      "path": "tests/component_continuity_canonical.rs",
+      "sha256": "ce48d8552d434f9176476538d356b0f1b8a9776d9c5e3798f85156530d006c15"
+    }
+  ],
+  "api": [
+    "CoreferenceResolver::resolve_characters_checked(text,&[entity::Entity],ID-keyed optional gender hints)",
+    "CanonicalCoreferenceResult{characters:Vec<Entity>,analysis:CorefResult}; analysis targets/count keys use stable character IDs"
+  ],
+  "checks": [
+    {
+      "command": "cargo test --locked --features bindings --test component_continuity_canonical --test component_continuity_resolution --test component_continuity_chains --test component_continuity_scopes",
+      "passed": 21,
+      "log": "continuity-canonical-tests.log"
+    },
+    {
+      "command": "cargo test --locked --features bindings --lib continuity::coreference::tests",
+      "passed": 11,
+      "log": "continuity-canonical-unit.log"
+    },
+    {
+      "command": "cargo clippy --locked --features onnx,bindings --lib --test component_continuity_canonical --test component_continuity_resolution --test component_continuity_chains --test component_continuity_scopes -- -D warnings",
+      "exit": 0,
+      "log": "continuity-canonical-clippy.log"
+    }
+  ],
+  "fixes": [
+    "Existing Entity IDs and alias ownership compose into coreference without flattening aliases into separate people",
+    "Distinct supplied IDs never merge; shared/case-equivalent alias owners remain unresolved barriers",
+    "Character display renames preserve reference targets and ID-keyed hints/counts",
+    "Flat/canonical modes share one bounded bulk Unicode literal matcher and the same pronoun reducer; source case/UTF16/punctuation preserved",
+    "Complete atomic cast validation for duplicate IDs/aliases, kinds, hints, confidence and metadata limits"
+  ],
+  "bounds": {
+    "characters": 256,
+    "name_alias_forms_including_canonical": 4096,
+    "ID_bytes": 256,
+    "name_bytes": 128,
+    "cast_string_bytes": 262144,
+    "matcher_bytes_each": 16777216,
+    "name_and_pronoun_mentions": 10000
+  },
+  "composition": [
+    "Use existing entity::resolve_checked(Character) on the distinct source surfaces in PersonExtractionResult.mentions; no artificial weighted-vector expansion needed",
+    "Automatic entity grouping remains a candidate heuristic; explicit supplied Entity records are authoritative grouping input,not merged by this API"
+  ],
+  "limits": [
+    "No semantic accuracy score claimed; parent measures flat/canonical/detected pipelines separately on frozen development records",
+    "Identity/alias assertions remain supplied metadata,not text entailment or learned character semantics",
+    "Regex compiler resource cap can reject unusually complex aliases within other count limits; no silent truncation",
+    "Shared quotation scanner prerequisites remain excluded and recorded by continuity-provenance payload"
+  ]
+}

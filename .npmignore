@@ -3,11 +3,13 @@
 /tests
 /examples
 /docs
+/scripts
 /.github
 Cargo.toml
 Cargo.lock
 build.rs
 *.rs
+*.log
 .gitignore
 .editorconfig
 deny.toml

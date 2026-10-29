@@ -1,3 +1,4 @@
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StructureBeat {
@@ -26,6 +27,7 @@ impl StructureBeat {
     }
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StructureTemplate {
@@ -51,6 +53,7 @@ impl StructureTemplate {
     }
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BeatMatch {
@@ -61,6 +64,7 @@ pub struct BeatMatch {
     pub confidence: f64,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StructureReport {
@@ -377,7 +381,7 @@ fn score_template(
     // Special case for nonlinear
     if template.beats.is_empty() {
         let health = score_nonlinear(scene_tensions);
-        return (health, vec![], vec![], vec![]);
+        return (health * 100.0, vec![], vec![], vec![]);
     }
 
     let mut beat_details = Vec::new();
@@ -387,7 +391,7 @@ fn score_template(
     let mut earned_weight = 0.0;
     let n = scene_tensions.len();
 
-    let match_threshold = 0.3 * template.flexibility + 0.1; // more flexible = lower threshold
+    let match_threshold = 0.3 * (1.0 - template.flexibility) + 0.1;
 
     for b in &template.beats {
         let weight = if b.required { 2.0 } else { 1.0 };

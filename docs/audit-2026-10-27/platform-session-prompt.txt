@@ -1,0 +1,19 @@
+/goal Close the remaining release, packaging and platform-assurance issues from the narrative-lens review, targeting evidence-backed scores of at least 8/10 for this scope.
+
+Primary repository: /Volumes/A/narrative-lens. Another session and two subagents actively own feature implementations, Rust source, inference, evaluation, API bindings and schemas. Avoid those areas.
+
+Create your own worktree at /Volumes/A/.codex-worktrees/narrative-lens-platform-assurance and use a private Cargo target directory. Do not work in the primary checkout. Overlay docs/audit-2026-10-27/platform-session-baseline.tar.gz from the primary repository onto your worktree, after verifying its SHA-256 against platform-session-baseline.json. This snapshot includes the current uncommitted implementation; HEAD alone is stale. Preserve every unrelated change. Read improvement-program.json, assessment.json D12/A10, and the completed remediation/component/state evidence before investigating.
+
+You exclusively own these paths:
+- .github/workflows/release.yml and publish-crate.yml; optionally add platform-assurance.yml.
+- scripts/release_artifacts.mjs, verify_tested_artifacts.mjs and test_package.mjs.
+- tests/node/release.test.cjs and tests/release_integrity.rs.
+- docs/audit-2026-10-27/platform-assurance/ for durable evidence and your report.
+
+Do not edit src/, bindings, exports, generated contracts, corpus/evaluation code, Cargo/package manifests or locks, .github/workflows/ci.yml, or the shared improvement-program.json. Propose changes outside ownership as unapplied patches for the coordinating session.
+
+Verify freshly packed root/platform archives, actual native loading, CJS/ESM/TypeScript consumers, notices, metadata, checksums and publication gates. Cover the declared macOS arm64/x64, Linux x64 GNU and Windows x64 MSVC targets and Node 18/20/22/24/26 wherever actual local/free runtimes permit. Fix demonstrated assurance defects, add meaningful regressions and verify rejection of missing, stale or tampered artifacts. Keep supported targets intact. Compilation or configured CI is not proof of successful runtime installation; mark unexecuted checks U.
+
+Use local/free development resources only. Do not spend paid API/cloud credits, trigger paid CI, commit, push, publish, deploy or contact others. No permission loops for routine reversible work. Continue through all independent authorized work.
+
+Return a compact report and SHA-256 manifest identifying baseline/final hashes for changed owned files, exact commands/results, tested artifact hashes, remaining platform evidence gaps and any unapplied integration patches. Keep build artifacts in your worktree/private target; never copy them over the primary checkout. Do not inflate scores or weaken gates to claim completion.

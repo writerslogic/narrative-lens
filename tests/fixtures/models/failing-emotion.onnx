@@ -1,0 +1,20 @@
+narrative-lens engineering test:ï
+'
+position_idslogits"Cast*	
+to narrative-lens-contract-fixtureZ&
+	input_ids
+
+batch
+tokensZ+
+attention_mask
+
+batch
+tokensZ)
+position_ids
+
+batch
+tokensb#
+logits
+
+batch
+tokensB

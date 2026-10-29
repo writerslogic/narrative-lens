@@ -1,0 +1,94 @@
+{
+  "worktree": "/Volumes/A/.codex-worktrees/narrative-lens-release-critical",
+  "finding": "A13: source-backed author-confirmed epistemic reducer",
+  "files": {
+    "src/continuity/author_knowledge.rs": {
+      "previous_sha256": null,
+      "sha256": "0e22664572aa770cc5f9e1e4f23d035e4236cb606aa2acb8a1e456f361c12d96"
+    },
+    "src/manuscript/author_source.rs": {
+      "previous_sha256": null,
+      "sha256": "3f8ae87f301f2e4f3f6315bc15d727ac889121a5ab264d0813664d6fb7c358ad"
+    },
+    "src/structure/author_events.rs": {
+      "previous_sha256": "d84142f55ddf44afd8a180ceebb9713c49643963be27694b44b17d2303df0d6a",
+      "sha256": "bf56954bfe0b216063afe64a9700fef208953757483c883dadfe0aab4e26b5f8"
+    },
+    "tests/component_author_knowledge.rs": {
+      "previous_sha256": null,
+      "sha256": "52a1b06e2aa2fd6bc6c970d9900509a52d5c0a048bba4d1172f3646dd531abd2"
+    }
+  },
+  "module_edits": [
+    {
+      "path": "src/continuity/mod.rs",
+      "insert_after": "pub mod anachronism;",
+      "line": "pub mod author_knowledge;"
+    },
+    {
+      "path": "src/manuscript/mod.rs",
+      "insert_after": "//! Optional orchestration over the standalone analyzers; no I/O or persistence.",
+      "line": "pub(crate) mod author_source;"
+    }
+  ],
+  "module_integration": "Apply these one-line insertions if absent; do not copy either whole module file because root has concurrent unrelated changes.",
+  "api": "continuity::author_knowledge::analyze_author_knowledge(&Manuscript,&[AuthorProposition],&[AuthorKnowledgeEvent])->Result<AuthorKnowledgeLedger>",
+  "semantics": [
+    "Ground truth is explicit True/False/Unknown author metadata; Truth events update that declaration. No text entailment, chronology, intent, reader learning or knowledge is inferred.",
+    "Actor is typed Reader or Character with an exact validated manuscript.known_characters reference. A character named reader remains distinct.",
+    "Know and Knowledge uptake require matching currently known declared truth plus an explicit author knowledge attestation. Correct belief is a separate classification; unknown truth does not become falsity.",
+    "Believe, Uncertain and Forget produce distinct raw assertions; absent pairs remain Unassessed. Later truth changes reclassify current assertions as correct/false/unverified beliefs or unverified/contradicted knowledge without automatic actor learning.",
+    "Communication preserves sender, recipient, said value, explicit uptake, source evidence and prior sender/recipient event IDs. A message may disagree with sender assertion/truth; testimony does not establish truth or require speaker belief.",
+    "Unique u32 sequences define one total replay order; event vectors and scene presentation order do not determine it. Duplicate IDs/sequences, invalid references/source or impossible new knowledge assertions reject the entire pure snapshot.",
+    "Current assertions are sparse; transitions store constant-size assertion/provenance deltas, not complete state-history clones. Asymmetries compare only supplied current character pairs against explicit or Unassessed reader state.",
+    "Source validation is shared with existing author promise analysis. Public structure::author_events::AuthorSource and its wire shape are preserved through re-export."
+  ],
+  "bounds": {
+    "propositions": 10000,
+    "events": 10000,
+    "annotation_string_bytes": 4194304,
+    "id_bytes": 256,
+    "description_bytes": 4096,
+    "source_quote_bytes": 65536,
+    "sequence_max": 4294967295,
+    "manuscript_limits": "existing validated Manuscript limits"
+  },
+  "tests": [
+    {
+      "command": "cargo test --locked --features bindings --test component_author_knowledge --test component_author_events",
+      "knowledge_passed": 11,
+      "existing_promise_passed": 6,
+      "failed": 0,
+      "log": "author-knowledge-tests.log"
+    },
+    {
+      "command": "cargo clippy --locked --features bindings --lib --test component_author_knowledge --test component_author_events -- -D warnings",
+      "passed": true,
+      "log": "author-knowledge-clippy.log"
+    }
+  ],
+  "coverage": [
+    "False and unknown truth, correct/false/unverified belief, explicit knowledge vs belief, truth corrections, knowledge invalidation, forgetting, repeated revelation and explicit uncertainty.",
+    "Deceptive multi-hop communication, unchanged uptake, explicit knowledge uptake, sender prior evidence and recipient direction, reader/character-reader separation.",
+    "Replay/replacement/reordering, sequence max and invalid numeric forms, duplicate/dangling references, invalid actors and atomic rejection.",
+    "Unicode BOM/astral source coordinates, UTF16 surrogate splits, stale/changed sources and explicit reanchoring, all source evidence original byte/UTF16 slices.",
+    "Count/ID/description/quote/annotation-byte limit-1/equal/limit+1; sparse 10000-proposition and10000-event cases.",
+    "Strict tagged-unit deserializers reject Reader role smuggling and extra value fields on raw unit assertions while preserving public Rust/JSON variants.",
+    "Parent-owned tests/fixtures/author-knowledge.json parses and produces exactly4 states,4 unassessed pairs and expected sender provenance; existing6 promise regressions pass unchanged."
+  ],
+  "prerequisites_copied_unchanged_from_root": [
+    "src/structure/mod.rs",
+    "src/substrate/utils.rs",
+    "tests/component_author_events.rs",
+    "tests/fixtures/author-knowledge.json"
+  ],
+  "target_dir": "/Volumes/C/rust-target-narrative-lens-release-critical",
+  "limits": [
+    "Author annotations are authoritative inputs, not independently verified story truth or justified learning. Quotes establish location only; matching quoted text cannot detect all semantic staleness after surrounding edits.",
+    "One annotation replay order does not simultaneously recover diegetic and presentation chronology. Context/time-dependent propositions require distinct IDs.",
+    "Omitted actor/proposition states are unassessed; asymmetries are annotation-state differences, not suspense/entropy/intent metrics or complete manuscript coverage.",
+    "This is full snapshot replay, not persistent/incremental ingestion; duplicate events inside a snapshot are rejected, while replaying an identical snapshot is idempotent.",
+    "ts-rs12 prints cosmetic unsupported deny_unknown_fields notices for tagged enums; primary macro source confirms supported tags remain parsed, and runtime Serde rejection is independently tested.",
+    "Parent owns Node adapters, generated contracts, docs and final integrated feature/MSRV/package gates."
+  ]
+}

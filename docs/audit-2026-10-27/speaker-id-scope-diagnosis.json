@@ -1,0 +1,63 @@
+{
+  "status": "evaluator_corrected_in_protocol_v4",
+  "scope": "development only,76 works;no heldout labels inspected",
+  "symptom": "Quotation speaker suffix was incorrectly compared directly to coreference cluster ID.",
+  "evidence": {
+    "suffix_consistent": 587,
+    "suffix_inconsistent": 319,
+    "no_exact_canonical_alias_in_scoped_inventory": 438
+  },
+  "examples": [
+    {
+      "work": "24",
+      "quotationSpeaker": "a_little_Swede_boy-35",
+      "coreferenceGroupsForExactName": [
+        "37"
+      ]
+    },
+    {
+      "work": "24",
+      "quotationSpeaker": "his_sister-39",
+      "coreferenceGroupsForExactName": [
+        "41"
+      ]
+    },
+    {
+      "work": "24",
+      "quotationSpeaker": "a_little_Swede_boy-35",
+      "coreferenceGroupsForExactName": [
+        "37"
+      ]
+    },
+    {
+      "work": "24",
+      "quotationSpeaker": "his_sister-39",
+      "coreferenceGroupsForExactName": [
+        "41"
+      ]
+    },
+    {
+      "work": "24",
+      "quotationSpeaker": "his_sister-39",
+      "coreferenceGroupsForExactName": [
+        "41"
+      ]
+    }
+  ],
+  "correction": "Link canonical speaker name (underscores\u2192spaces) to an exact unique coreference alias group;leave absent/ambiguous identities unassessed. Retain all gold in coverage and lower-bound recall. No inferred cross-annotation numeric equivalence.",
+  "unaffected": [
+    "quotation detection/boundaries",
+    "NER",
+    "coreference"
+  ],
+  "superseded_speaker_scores": [
+    "literary-development-baseline.json",
+    "literary-development-baseline-v2.json",
+    "literary-development-baseline-v3.json",
+    "literary-development-candidate.json",
+    "literary-development-ner.json",
+    "literary-development-tokens.json"
+  ],
+  "regression": "scripts/test_literary_benchmark.py::ScoringContracts::test_quotation_suffix_ids_do_not_share_coreference_namespace",
+  "new_gold_sha256": "f5955889aa888bd836c459b314190cec3f858a47d50f741e6f43401aa7f0985f"
+}

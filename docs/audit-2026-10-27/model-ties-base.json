@@ -1,0 +1,12 @@
+{
+  "source": "/Volumes/A/narrative-lens",
+  "files": {
+    "src/onnx/model.rs": "8e5fa32321be2817af0d7fa6d5eff696656d49f77ae8bd072223194e100cc1e4",
+    "src/onnx/mod.rs": "5e39e4f44ea840507112b3b28e9f74c917745a740ebc59df2a241b35df8b1568",
+    "src/onnx/decode.rs": "450d201060b8b7b1a7ea9dee5752cac6274a540ce277c6d90762baa38d968b41",
+    "src/onnx/ort_backend.rs": "487e3a424edb31e0163e08f89fba363eeab635c1910808a0897003b1861b0c2f",
+    "src/onnx/tract_backend.rs": "c3f8855cd7f0f3fb2f81a638bc28553cb1cc1b085901cba6dd874c122d1ba28d",
+    "tests/component_models.rs": "d4387b90428d915d43df8273e269ca5e1a642022d7d9b56c706dc9ec726ee30d",
+    "tests/component_models_wasi.cjs": "de332a2752cf2734a3db8c5fb1338456a2bb2d785f077ffcb3aa33959c22843b"
+  }
+}

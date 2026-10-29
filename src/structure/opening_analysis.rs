@@ -1,5 +1,19 @@
+//! Source-grounded opening measurements and explicitly uncalibrated heuristic
+//! indices; reader continuation, agent decisions and editorial quality are unassessed.
+mod measurement;
+use crate::craft::{
+    lexicon::WordMatcher,
+    measurements,
+    voice::{CharacterVoiceProfile, VoiceDrift, VoiceSampleCounts},
+};
+use crate::manuscript::TextRange;
+use crate::substrate::utils::AnalysisAvailability;
+pub use measurement::{OpeningCue, OpeningCueKind, OpeningParagraph};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
+use std::sync::OnceLock;
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum HookType {
     Action,
@@ -10,9 +24,28 @@ pub enum HookType {
     Image,
 }
 
+#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OpeningAnalysisResult {
+    #[serde(default)]
+    pub availability: AnalysisAvailability,
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
+    #[serde(default)]
+    pub quality_assessed: bool,
+    #[serde(default)]
+    pub first_line_range: Option<TextRange>,
+    #[serde(default)]
+    pub first_sentence_range: Option<TextRange>,
+    #[serde(default)]
+    pub paragraphs: Vec<OpeningParagraph>,
+    #[serde(default)]
+    pub cues: Vec<OpeningCue>,
+    #[serde(default)]
+    pub voice_comparison: Option<VoiceDrift>,
+    #[serde(default)]
+    pub voice_sample: VoiceSampleCounts,
     pub hook_type: Option<HookType>,
     pub hook_score: f64,
     pub first_line_quality: f64,
@@ -21,7 +54,9 @@ pub struct OpeningAnalysisResult {
     pub voice_establishment: f64,
     pub engagement_trajectory: Vec<f64>,
     pub promises_made: Vec<String>,
+    /// Legacy alias: capped capitalized-token candidates, not verified introductions.
     pub characters_introduced: usize,
+    /// Legacy alias: setting/sensory wordlist threshold, not verified world clarity.
     pub world_established: bool,
     pub genre_alignment: f64,
     pub read_on_prediction: f64,
@@ -78,7 +113,6 @@ const ACTION_INDICATORS: &[&str] = &[
 
 /// Question/mystery indicators.
 const QUESTION_INDICATORS: &[&str] = &[
-    "?",
     "who",
     "why",
     "what if",
@@ -87,11 +121,12 @@ const QUESTION_INDICATORS: &[&str] = &[
     "strange",
     "impossible",
     "shouldn't have",
+    "shouldn’t have",
     "disappeared",
 ];
 
 /// Voice/character indicators.
-const VOICE_INDICATORS: &[&str] = &["i ", "my ", "me ", "we ", "our "];
+const VOICE_INDICATORS: &[&str] = &["i", "my", "me", "we", "our"];
 
 /// Situation/setting indicators.
 const SITUATION_INDICATORS: &[&str] = &[
@@ -127,144 +162,93 @@ fn genre_opening_preferences(genre: &str) -> (Vec<&'static str>, f64) {
     }
 }
 
+fn action_matcher() -> &'static WordMatcher {
+    static M: OnceLock<WordMatcher> = OnceLock::new();
+    M.get_or_init(|| WordMatcher::new(ACTION_INDICATORS))
+}
+fn question_matcher() -> &'static WordMatcher {
+    static M: OnceLock<WordMatcher> = OnceLock::new();
+    M.get_or_init(|| WordMatcher::new(QUESTION_INDICATORS))
+}
+fn voice_matcher() -> &'static WordMatcher {
+    static M: OnceLock<WordMatcher> = OnceLock::new();
+    M.get_or_init(|| WordMatcher::new(VOICE_INDICATORS))
+}
+fn situation_matcher() -> &'static WordMatcher {
+    static M: OnceLock<WordMatcher> = OnceLock::new();
+    M.get_or_init(|| WordMatcher::new(SITUATION_INDICATORS))
+}
+fn image_matcher() -> &'static WordMatcher {
+    static M: OnceLock<WordMatcher> = OnceLock::new();
+    M.get_or_init(|| WordMatcher::new(IMAGE_INDICATORS))
+}
+fn backstory_matcher() -> &'static WordMatcher {
+    static M: OnceLock<WordMatcher> = OnceLock::new();
+    M.get_or_init(|| WordMatcher::new(BACKSTORY_MARKERS))
+}
+fn distinct_matches(matcher: &WordMatcher, text: &str) -> usize {
+    matcher
+        .find_iter(text)
+        .map(|m| m.text.to_ascii_lowercase())
+        .collect::<BTreeSet<_>>()
+        .len()
+}
+
 fn classify_hook(first_line: &str, first_paragraph: &str) -> (Option<HookType>, f64) {
-    let line_lower = first_line.to_lowercase();
-    let para_lower = first_paragraph.to_lowercase();
-
-    let mut scores: Vec<(HookType, f64)> = Vec::new();
-
-    // Action
-    let action_count = ACTION_INDICATORS
-        .iter()
-        .filter(|w| line_lower.contains(*w))
-        .count();
-    if action_count > 0 {
-        scores.push((HookType::Action, 0.5 + action_count as f64 * 0.15));
+    let action = distinct_matches(action_matcher(), first_line);
+    let question = distinct_matches(question_matcher(), first_paragraph)
+        + usize::from(first_paragraph.contains('?'));
+    let voice = distinct_matches(voice_matcher(), first_line);
+    let situation = distinct_matches(situation_matcher(), first_paragraph);
+    let image = distinct_matches(image_matcher(), first_paragraph);
+    let character = count_characters_introduced(first_paragraph);
+    let mut scores = Vec::new();
+    if action > 0 {
+        scores.push((HookType::Action, 0.5 + action as f64 * 0.15));
     }
-
-    // Question
-    let question_count = QUESTION_INDICATORS
-        .iter()
-        .filter(|w| para_lower.contains(*w))
-        .count();
-    if question_count > 0 || first_line.contains('?') {
-        let bonus = if first_line.contains('?') { 0.2 } else { 0.0 };
+    if question > 0 {
         scores.push((
             HookType::Question,
-            0.4 + question_count as f64 * 0.1 + bonus,
+            0.4 + question as f64 * 0.1 + if first_line.contains('?') { 0.2 } else { 0.0 },
         ));
     }
-
-    // Voice (first person, distinctive)
-    let voice_count = VOICE_INDICATORS
-        .iter()
-        .filter(|w| line_lower.starts_with(*w) || line_lower.contains(*w))
-        .count();
-    if voice_count > 0 {
-        scores.push((HookType::Voice, 0.3 + voice_count as f64 * 0.15));
+    if voice > 0 {
+        scores.push((HookType::Voice, 0.3 + voice as f64 * 0.15));
     }
-
-    // Situation
-    let situation_count = SITUATION_INDICATORS
-        .iter()
-        .filter(|w| para_lower.contains(*w))
-        .count();
-    if situation_count > 0 {
-        scores.push((HookType::Situation, 0.3 + situation_count as f64 * 0.1));
+    if situation > 0 {
+        scores.push((HookType::Situation, 0.3 + situation as f64 * 0.1));
     }
-
-    // Image
-    let image_count = IMAGE_INDICATORS
-        .iter()
-        .filter(|w| para_lower.contains(*w))
-        .count();
-    if image_count > 0 {
-        scores.push((HookType::Image, 0.4 + image_count as f64 * 0.12));
+    if image > 0 {
+        scores.push((HookType::Image, 0.4 + image as f64 * 0.12));
     }
-
-    // Character (proper nouns approximation: capitalized words not at start of sentence)
-    let words: Vec<&str> = first_paragraph.split_whitespace().collect();
-    let char_signals = words
-        .iter()
-        .skip(1)
-        .filter(|w| w.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) && w.len() > 1)
-        .count();
-    if char_signals > 1 {
+    if character > 1 {
         scores.push((
             HookType::Character,
-            0.3 + (char_signals as f64 * 0.08).min(0.4),
+            0.3 + (character as f64 * 0.08).min(0.4),
         ));
     }
-
-    scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-
-    if let Some((hook_type, score)) = scores.into_iter().next() {
-        (Some(hook_type), score.min(1.0))
-    } else {
-        (None, 0.2)
-    }
+    scores.sort_by(|a, b| b.1.total_cmp(&a.1));
+    scores
+        .into_iter()
+        .next()
+        .map_or((None, 0.0), |(kind, score)| (Some(kind), score.min(1.0)))
 }
 
 fn calculate_backstory_ratio(text: &str) -> f64 {
-    let sentences: Vec<&str> = text
-        .split(['.', '!', '?'])
-        .filter(|s| !s.trim().is_empty())
-        .collect();
-
-    if sentences.is_empty() {
-        return 0.0;
-    }
-
-    let backstory_sentences = sentences
-        .iter()
-        .filter(|s| {
-            let lower = s.to_lowercase();
-            BACKSTORY_MARKERS
-                .iter()
-                .any(|marker| lower.contains(marker))
-        })
-        .count();
-
-    backstory_sentences as f64 / sentences.len() as f64
-}
-
-fn detect_promises(text: &str) -> Vec<String> {
-    let mut promises = Vec::new();
-    let lower = text.to_lowercase();
-
-    if lower.contains("secret") || lower.contains("hidden") {
-        promises.push("A secret to be revealed".to_string());
-    }
-    if lower.contains("danger") || lower.contains("threat") || lower.contains("warning") {
-        promises.push("Danger ahead for the protagonist".to_string());
-    }
-    if lower.contains("mystery") || lower.contains("strange") || lower.contains("unexplained") {
-        promises.push("A mystery to solve".to_string());
-    }
-    if lower.contains("love") || lower.contains("attraction") || lower.contains("beautiful") {
-        promises.push("A romantic element".to_string());
-    }
-    if lower.contains("quest") || lower.contains("journey") || lower.contains("mission") {
-        promises.push("A journey or quest".to_string());
-    }
-    if lower.contains("revenge") || lower.contains("justice") || lower.contains("wrong") {
-        promises.push("Justice or revenge to pursue".to_string());
-    }
-    if lower.contains("dead") || lower.contains("death") || lower.contains("kill") {
-        promises.push("Death and its consequences".to_string());
-    }
-    if text.contains('?') {
-        promises.push("A question to answer".to_string());
-    }
-
-    promises.dedup();
-    promises
+    let sentences = crate::substrate::text::split_sentences(text);
+    crate::substrate::utils::safe_div(
+        sentences
+            .iter()
+            .filter(|s| backstory_matcher().is_match(s))
+            .count() as f64,
+        sentences.len() as f64,
+    )
 }
 
 fn count_characters_introduced(text: &str) -> usize {
     // Heuristic: count capitalized words that appear in dialogue attribution or as subjects
     let words: Vec<&str> = text.split_whitespace().collect();
-    let mut names: Vec<String> = Vec::new();
+    let mut names: BTreeSet<String> = BTreeSet::new();
 
     for (i, word) in words.iter().enumerate() {
         // Skip first word of sentences
@@ -286,9 +270,7 @@ fn count_characters_introduced(text: &str) -> usize {
             && word.chars().all(|c| c.is_alphabetic())
         {
             let name = word.to_string();
-            if !names.contains(&name) {
-                names.push(name);
-            }
+            names.insert(name);
         }
     }
 
@@ -305,16 +287,16 @@ fn count_characters_introduced(text: &str) -> usize {
 /// Returns per-paragraph engagement scores derived purely from structural signals:
 /// dialogue presence, question marks, paragraph length, and backstory markers.
 /// No IMAGE/ACTION wordlist hits are used here.
-fn engagement_per_paragraph(paragraphs: &[&str]) -> Vec<f64> {
+fn engagement_per_paragraph(paragraphs: &[&str], measured: &[OpeningParagraph]) -> Vec<f64> {
     paragraphs
         .iter()
-        .map(|para| {
-            let lower = para.to_lowercase();
-            let word_count = para.split_whitespace().count();
+        .zip(measured)
+        .map(|(para, measured)| {
+            let word_count = measured.word_count;
             let mut score = 0.5;
 
             // Dialogue boosts engagement (structural: punctuation-based)
-            if para.contains('"') || para.contains('\u{201C}') {
+            if measured.quotation_candidate_count > 0 {
                 score += 0.2;
             }
 
@@ -333,10 +315,7 @@ fn engagement_per_paragraph(paragraphs: &[&str]) -> Vec<f64> {
             }
 
             // Backstory penalty (structural: tense/phrase markers)
-            let backstory = BACKSTORY_MARKERS
-                .iter()
-                .filter(|m| lower.contains(*m))
-                .count();
+            let backstory = distinct_matches(backstory_matcher(), para);
             score -= backstory as f64 * 0.1;
 
             score.clamp(0.1, 1.0)
@@ -344,31 +323,21 @@ fn engagement_per_paragraph(paragraphs: &[&str]) -> Vec<f64> {
         .collect()
 }
 
-/// Computes the paragraph-length trajectory: word counts per paragraph.
-fn paragraph_word_counts(paragraphs: &[&str]) -> Vec<usize> {
-    paragraphs
-        .iter()
-        .map(|p| p.split_whitespace().count())
-        .collect()
-}
-
-/// Returns the index of the first paragraph containing dialogue, or None.
-fn dialogue_onset(paragraphs: &[&str]) -> Option<usize> {
-    paragraphs
-        .iter()
-        .position(|p| p.contains('"') || p.contains('\u{201C}') || p.contains('\u{2018}'))
-}
-
-pub fn analyze_opening(
+pub fn analyze_opening_checked(
     text: &str,
     genre: &str,
-    full_manuscript_voice_fingerprint: Option<&[f64]>,
-) -> OpeningAnalysisResult {
-    let paragraphs: Vec<&str> = text
-        .split("\n\n")
-        .map(|p| p.trim())
-        .filter(|p| !p.is_empty())
-        .collect();
+    baseline: Option<&CharacterVoiceProfile>,
+) -> crate::Result<OpeningAnalysisResult> {
+    if genre.len() > 128 || genre.chars().any(char::is_control) {
+        return Err(measurements::invalid(
+            "opening genre label exceeds supported format",
+        ));
+    }
+    if let Some(base) = baseline {
+        crate::craft::voice::measure_voice_drift_checked(base, base)?;
+    }
+    let measured = measurement::measure(text)?;
+    let paragraphs = crate::substrate::text::split_paragraphs(text);
 
     let first_line = text.lines().next().unwrap_or("").trim();
     let first_paragraph = paragraphs.first().copied().unwrap_or("");
@@ -379,13 +348,16 @@ pub fn analyze_opening(
     // --- Structural sub-signals ---
 
     // First-line word count
-    let first_line_word_count = first_line.split_whitespace().count();
+    let first_line_word_count = measurements::tokens(first_line).len();
 
     // Paragraph-length trajectory
-    let para_word_counts = paragraph_word_counts(&paragraphs);
+    let para_word_counts: Vec<_> = measured.paragraphs.iter().map(|p| p.word_count).collect();
 
     // Dialogue onset
-    let dialogue_onset_paragraph = dialogue_onset(&paragraphs);
+    let dialogue_onset_paragraph = measured
+        .paragraphs
+        .iter()
+        .position(|p| p.quotation_candidate_count > 0);
 
     // First line quality: purely structural (word count range, backstory penalty)
     let first_line_quality = {
@@ -397,8 +369,7 @@ pub fn analyze_opening(
             q -= 0.2;
         }
         // Penalty for starting with backstory markers
-        let lower = first_line.to_lowercase();
-        if BACKSTORY_MARKERS.iter().any(|m| lower.contains(*m)) {
+        if backstory_matcher().is_match(first_line) {
             q -= 0.3;
         }
         q.clamp(0.0, 1.0)
@@ -407,13 +378,17 @@ pub fn analyze_opening(
     // First paragraph quality: structural (word count range, backstory ratio, dialogue)
     let first_paragraph_quality = {
         let mut q = 0.5;
-        let para_words = first_paragraph.split_whitespace().count();
+        let para_words = measurements::tokens(first_paragraph).len();
         if (20..=150).contains(&para_words) {
             q += 0.15;
         }
         let backstory_ratio_para = calculate_backstory_ratio(first_paragraph);
         q -= backstory_ratio_para * 0.3;
-        if first_paragraph.contains('"') || first_paragraph.contains('\u{201C}') {
+        if measured
+            .paragraphs
+            .first()
+            .is_some_and(|p| p.quotation_candidate_count > 0)
+        {
             q += 0.1;
         }
         q.clamp(0.0, 1.0)
@@ -429,40 +404,26 @@ pub fn analyze_opening(
         if lower.starts_with("i ") || lower.contains(" i ") {
             score += 0.3;
         }
-        let words: Vec<&str> = first_paragraph.split_whitespace().collect();
-        let long_words = words.iter().filter(|w| w.len() > 8).count();
+        let words = measurements::tokens(first_paragraph);
+        let long_words = words.iter().filter(|w| w.chars().count() > 8).count();
         if long_words > 2 {
-            score += 0.1;
-        }
-        if let Some(fp) = full_manuscript_voice_fingerprint
-            && !fp.is_empty()
-        {
             score += 0.1;
         }
         score.clamp(0.0, 1.0)
     };
 
     // Engagement trajectory (structural signals only)
-    let engagement_trajectory = engagement_per_paragraph(&paragraphs);
+    let engagement_trajectory = engagement_per_paragraph(&paragraphs, &measured.paragraphs);
 
     // Promises
-    let promises_made = detect_promises(text);
+    let promises_made = Vec::new();
 
     // Characters introduced
     let characters_introduced = count_characters_introduced(text);
 
     // World establishment
-    let lower_text = text.to_lowercase();
-    let world_established = SITUATION_INDICATORS
-        .iter()
-        .filter(|s| lower_text.contains(*s))
-        .count()
-        >= 2
-        || IMAGE_INDICATORS
-            .iter()
-            .filter(|s| lower_text.contains(*s))
-            .count()
-            >= 3;
+    let world_established = distinct_matches(situation_matcher(), text) >= 2
+        || distinct_matches(image_matcher(), text) >= 3;
 
     // Genre alignment
     let (preferred_hooks, genre_weight) = genre_opening_preferences(genre);
@@ -531,119 +492,70 @@ pub fn analyze_opening(
             .clamp(0.0, 1.0)
     };
 
-    // Issues and strengths
     let mut issues = Vec::new();
     let mut strengths = Vec::new();
-
     if backstory_ratio > 0.4 {
-        issues.push(
-            "Opening is heavy with backstory/exposition; consider starting in media res"
-                .to_string(),
-        );
+        issues.push(format!("Backstory-phrase cues occur in {:.0}% of segmented sentences; flashback content is unverified.",backstory_ratio*100.0));
     }
     if first_line_word_count > 40 {
-        issues.push(
-            "First sentence is very long; consider a shorter, punchier opening line".to_string(),
-        );
+        issues.push("The first physical line exceeds the heuristic 40-token band; a line may contain several sentences.".into());
     }
     if characters_introduced > 4 {
         issues.push(format!(
-            "Too many characters introduced ({}) in the opening; this can overwhelm readers",
+            "{} capitalized-token name candidates; character introductions are unverified.",
             characters_introduced
         ));
     }
     if hook_type.is_none() {
-        issues.push("No clear hook detected in the opening; the first page should create an immediate reason to read on".to_string());
-    }
-    if !world_established {
-        issues.push("Setting not clearly established in opening pages".to_string());
-    }
-    if engagement_trajectory.len() > 2 {
-        let last_few: Vec<f64> = engagement_trajectory
-            .iter()
-            .rev()
-            .take(2)
-            .copied()
-            .collect();
-        if last_few.iter().all(|&e| e < 0.4) {
-            issues.push("Engagement drops in later opening paragraphs; consider adding a complication or question".to_string());
-        }
-    }
-    if dialogue_onset_paragraph.is_none() && paragraphs.len() > 3 {
         issues.push(
-            "No dialogue in the opening; consider introducing a voice early to anchor the reader"
-                .to_string(),
+            "No configured opening cue threshold was reached; hook quality is unassessed.".into(),
         );
     }
-
+    if !world_established {
+        issues.push(
+            "Setting/sensory cue threshold not reached; setting clarity is unassessed.".into(),
+        );
+    }
     if first_line_quality > 0.7 {
-        strengths.push("Excellent first line with strong specificity and energy".to_string());
+        strengths
+            .push("First-line length lies in the configured 5–25-token heuristic band.".into());
     }
     if backstory_ratio < 0.1 {
-        strengths.push("Opening is present-focused with minimal backstory".to_string());
+        strengths.push("Few configured backstory-phrase cues in segmented sentences.".into());
     }
-    if voice_establishment > 0.7 {
-        strengths.push("Distinctive voice established immediately".to_string());
+    if dialogue_onset_paragraph.is_some_and(|i| i < 2) {
+        strengths.push("Paired quotation candidates appear in the first two paragraphs.".into());
     }
-    if !promises_made.is_empty() {
-        strengths.push(format!(
-            "Clear narrative promises made: {} implicit questions raised",
-            promises_made.len()
-        ));
-    }
-    if dialogue_onset_paragraph.map(|i| i < 2).unwrap_or(false) {
-        strengths
-            .push("Dialogue appears early, grounding the reader in character voice".to_string());
-    }
+    let agent_perspective="Agent interest and reader continuation are unassessed; numeric opening signals are uncalibrated heuristics.".into();
+    let first_line_feedback = format!(
+        "The first physical line contains {} tokens. Inspect its source range separately from the first segmented sentence.",
+        first_line_word_count
+    );
+    let revision_suggestion="Use the source cues and paragraph trajectory to inspect choices against your intended opening; no particular hook or revision is mandatory.".into();
+    let label = baseline.map_or("Opening", |p| p.character.as_str());
+    let voice = crate::craft::voice::profile_measurement(label, &[text]);
+    let voice_comparison = baseline
+        .map(|base| crate::craft::voice::measure_voice_drift_checked(base, &voice.profile))
+        .transpose()?;
+    let mut diagnostics=vec!["opening_indices_are_uncalibrated_signals;editorial_quality_and_read_on_probability_unassessed".into(),
+        "character_and_world_fields_are_wordlist_proxies;promises_and_author_intent_not_inferred".into(),
+        "typed_voice_comparison_uses_entire_opening;comparable_baseline_sampling_is_caller_responsibility".into()];
+    diagnostics.extend(measured.diagnostics);
+    Ok(OpeningAnalysisResult {
+        availability: if text.trim().is_empty() {
+            AnalysisAvailability::Unavailable
+        } else {
+            AnalysisAvailability::Partial
+        },
+        diagnostics,
+        quality_assessed: false,
+        first_line_range: measured.first_line_range,
+        first_sentence_range: measured.first_sentence_range,
+        paragraphs: measured.paragraphs,
+        cues: measured.cues,
+        voice_comparison,
+        voice_sample: voice.sample,
 
-    // Agent perspective — what a literary agent thinks after reading page 1
-    let agent_perspective = if read_on_prediction > 0.75 {
-        format!(
-            "Strong opening. The {} hook creates immediate engagement, and the voice is distinctive enough to sustain interest. An agent would likely read to page 10.",
-            hook_type_name
-        )
-    } else if hook_type.is_some() && backstory_ratio < 0.5 {
-        format!(
-            "Competent opening but not yet compelling. The writing is clean but the reader lacks a REASON to continue — {}. An agent might skim to page 5 looking for a reason to invest.",
-            if promises_made.is_empty() { "no narrative question is raised" }
-            else if backstory_ratio > 0.3 { "too much backstory delays the story's start" }
-            else { "the stakes aren't clear enough yet" }
-        )
-    } else {
-        format!(
-            "This opening would likely result in a form rejection. The primary issue: {}. Agents read hundreds of openings weekly — yours needs to be undeniable within 3 paragraphs.",
-            if backstory_ratio > 0.4 { "the story hasn't started — the reader is receiving history, not experiencing story" }
-            else if hook_score < 0.3 { "there's no hook — nothing makes the reader need to know what happens next" }
-            else if characters_introduced > 5 { "too many characters overwhelm before the reader has invested in any one" }
-            else { "the writing lacks the specificity and energy that signals a distinctive voice" }
-        )
-    };
-
-    // First line feedback
-    let first_line_feedback = if first_line_quality > 0.7 {
-        "Your opening line works. It's specific, energetic, and immediately places the reader in a moment.".to_string()
-    } else if first_line_quality > 0.4 {
-        "Your opening line is adequate but forgettable. A great first line is either: (1) an image so specific it could only exist in THIS story, (2) a voice so distinctive the reader trusts it immediately, or (3) a question so compelling the reader must have the answer.".to_string()
-    } else {
-        "Your opening line isn't doing enough work. It should be the most carefully crafted sentence in the entire manuscript. Every word must earn its place. Try: start with action, start with a contradiction, or start with the most interesting moment in the first chapter and work backward.".to_string()
-    };
-
-    // Revision suggestion
-    let revision_suggestion = if backstory_ratio > 0.3 && hook_score < 0.5 {
-        "Start later. Find the first moment of CONFLICT or DECISION in your opening chapter and begin there. Move backstory to chapter 2-3, delivered through character action, not narration.".to_string()
-    } else if hook_score > 0.6 && voice_establishment < 0.4 {
-        "Your hook is working but your voice isn't distinctive yet. Read your opening aloud — does it sound like only YOU could have written it? Infuse the narration with your protagonist's worldview, vocabulary, and rhythm.".to_string()
-    } else if characters_introduced > 4 {
-        format!("Reduce opening characters to 2-3. Introduce {} others later, after the reader has someone to care about.", characters_introduced - 2)
-    } else if engagement_trajectory.len() > 3
-        && engagement_trajectory.last().copied().unwrap_or(0.5) < 0.3
-    {
-        "Your opening starts well but loses momentum. End your first scene on a QUESTION — something the reader must turn the page to answer. Not a mystery; a human question about what your character will do next.".to_string()
-    } else {
-        "Consider: what would happen if you cut your first paragraph entirely? Often the real opening is hiding in paragraph 2 or 3.".to_string()
-    };
-
-    OpeningAnalysisResult {
         hook_type,
         hook_score,
         first_line_quality,
@@ -664,7 +576,27 @@ pub fn analyze_opening(
         agent_perspective,
         first_line_feedback,
         revision_suggestion,
+    })
+}
+
+pub fn analyze_opening(
+    text: &str,
+    genre: &str,
+    legacy_fingerprint: Option<&[f64]>,
+) -> OpeningAnalysisResult {
+    let mut result = analyze_opening_checked(text, genre, None).unwrap_or_else(|_| {
+        let mut unavailable = analyze_opening_checked("", "", None).expect("empty bounded opening");
+        unavailable
+            .diagnostics
+            .push("invalid_opening_input;use_checked_api".into());
+        unavailable
+    });
+    if legacy_fingerprint.is_some_and(|values| !values.is_empty()) {
+        result
+            .diagnostics
+            .push("legacy_arbitrary_voice_fingerprint_unsupported;use_typed_baseline".into());
     }
+    result
 }
 
 #[cfg(test)]
@@ -684,7 +616,12 @@ mod tests {
         let text = "She had always been a quiet child. Growing up in the small town, she had been known for her love of books. Years ago, her mother used to read to her every night. Back when things were simpler, the family had been happy.";
         let result = analyze_opening(text, "literary", None);
         assert!(result.backstory_ratio > 0.3);
-        assert!(result.issues.iter().any(|i| i.contains("backstory")));
+        assert!(
+            result
+                .issues
+                .iter()
+                .any(|i| i.to_ascii_lowercase().contains("backstory"))
+        );
     }
 
     #[test]

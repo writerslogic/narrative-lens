@@ -14,7 +14,13 @@
 use aho_corasick::AhoCorasick;
 
 fn is_word_char(c: char) -> bool {
-    c.is_alphanumeric() || c == '_'
+    if c.is_ascii() {
+        return c.is_ascii_alphanumeric() || c == '_';
+    }
+    static WORD: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let mut bytes = [0; 4];
+    WORD.get_or_init(|| regex::Regex::new(r"^\w$").expect("Unicode word character"))
+        .is_match(c.encode_utf8(&mut bytes))
 }
 
 fn is_word_start(text: &str, start: usize) -> bool {
@@ -136,6 +142,16 @@ mod tests {
         assert!(m.is_match("they ASKED twice"));
         assert!(!m.is_match("unsaid words"));
         assert!(!m.is_match("scatterbrained"));
+    }
+
+    #[test]
+    fn combining_marks_stay_inside_words() {
+        let matcher = WordMatcher::new(&["cafe"]);
+        assert!(!matcher.is_match("cafe\u{301}"));
+        assert!(matcher.is_match("cafe 🖋"));
+        let matcher = WordMatcher::new(&["cafe\u{301}"]);
+        let found = matcher.find_first("😀 cafe\u{301} 雪").unwrap();
+        assert_eq!(&"😀 cafe\u{301} 雪"[found.start..found.end], "cafe\u{301}");
     }
 
     #[test]

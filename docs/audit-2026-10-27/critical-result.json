@@ -1,0 +1,65 @@
+{
+  "worktree": "/Volumes/A/.codex-worktrees/narrative-lens-release-critical",
+  "changed_files": {
+    "src/continuity/ner.rs": "5ee791b6076f97372f27f684542bc3112467ef982614a2568314d701c1ec9cad",
+    "src/continuity/entity.rs": "6c68c2a8e9f4f3640345ccfbeb189b42044556ba9cb742dcddcfc5afd81e504a",
+    "src/continuity/world_state.rs": "0058246df92c09374307fdedb6340e67e17f7ecf804d58f71910fe5aa98843a0",
+    "src/continuity/anachronism.rs": "da312150ce5b33a584c51f0073d6b236bd6a04499d252151adb15242b8d84463",
+    "src/structure/foreshadow.rs": "8cd2601a9d6604b1e569223e74af77af5d437e1bbe8716cffeb2e8634206d680",
+    "src/substrate/nlp.rs": "65364df255a73cf6253e887f68788392b45c1161357ebb52925801bc1b7bc187",
+    "src/bin/narrative-lens.rs": "143d9dbef54fa8620ec8ed78e5333df5486b32d2a0996abc79aeb40effb74406",
+    "src/manuscript/comparison.rs": "c7130bc6a50677addd7850c21ae875246e4da37c0a014f3bfeaddf8d9d09e444",
+    "tests/cli.rs": "7bd3819db2f3f943a4a440fe189a30549df81066ab79a7a779d0aeeb5a62d3c6",
+    "tests/release_integrity.rs": "f2d81ef323ae75d556efcf4f27bce92a56b261fd4f44289e824ea2b1473711d1",
+    "fuzz/fuzz_targets/text_analysis.rs": "760c5d0ec4137270f2e9b027a0667c3b350a392ebe58139d598ce24ba604554f"
+  },
+  "findings_fixed": [
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5/SARIF BOM",
+    "D6/foreshadow ties"
+  ],
+  "tests": {
+    "command": "CARGO_TARGET_DIR=/Volumes/C/rust-target-narrative-lens-release-critical cargo test --locked --features cli",
+    "passed": 648,
+    "failed": 0,
+    "suite_counts": [
+      574,
+      2,
+      6,
+      6,
+      6,
+      1,
+      1,
+      14,
+      19,
+      0,
+      1,
+      0,
+      12,
+      5,
+      1
+    ],
+    "log": "/Volumes/A/.codex-worktrees/narrative-lens-release-critical/docs/audit-2026-10-27/critical-final-tests.log"
+  },
+  "clippy": {
+    "command": "cargo clippy --locked --all-targets --features cli -- -D warnings",
+    "passed": true,
+    "log": "/Volumes/A/.codex-worktrees/narrative-lens-release-critical/docs/audit-2026-10-27/critical-clippy.log"
+  },
+  "fuzz_check": {
+    "command": "cargo check --locked --manifest-path fuzz/Cargo.toml",
+    "passed": true,
+    "log": "/Volumes/A/.codex-worktrees/narrative-lens-release-critical/docs/audit-2026-10-27/critical-fuzz-check.log"
+  },
+  "integration_notes": [
+    "Regenerate manuscript schema/TS for RevisionComparison.complete; imported old comparisons default complete=false.",
+    "RevisionComparison::is_complete validates report omissions, candidate-limit metadata and unassessed results rather than trusting complete.",
+    "CLI sourceBomUtf16 maps each scene to0/1; old baselines without BOM metadata retain originalEvidence instead of invented SARIF text regions.",
+    "WorldStateSnapshot public facts remains HashSet; serialize_facts sorts wire arrays.",
+    "entity::resolve_counted is crate-private, checked, count-preserving and used by both NER and public NLP alias merger.",
+    "General unobserved knowledge, temporal and object-location reasoning remains unavailable; explicit supported acquisition/physical transitions are conservative heuristics."
+  ]
+}
