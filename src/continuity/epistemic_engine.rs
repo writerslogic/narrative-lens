@@ -96,19 +96,28 @@ pub struct EpistemicState {
     pub uncertain_about: HashSet<usize>,
 }
 
-/// Legacy reader state shape; prose alone cannot establish knowledge.
-#[deprecated(
-    since = "0.2.0",
-    note = "prose cannot establish reader knowledge; use `EpistemicCandidate` for lexical candidates or author-supplied `AuthorEpistemicQuery` answers"
-)]
-#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ReaderEpistemicState {
-    #[serde(serialize_with = "serialize_sorted_ids")]
-    pub knows: HashSet<usize>,
-    pub scene: usize,
+// The ts-rs and schemars derives name the deprecated type in generated impls,
+// which an item-level allow does not cover; the module-level allow does.
+#[allow(deprecated)]
+mod legacy {
+    use super::*;
+
+    /// Legacy reader state shape; prose alone cannot establish knowledge.
+    #[deprecated(
+        since = "0.2.0",
+        note = "prose cannot establish reader knowledge; use `EpistemicCandidate` for lexical candidates or author-supplied `AuthorEpistemicQuery` answers"
+    )]
+    #[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct ReaderEpistemicState {
+        #[serde(serialize_with = "serialize_sorted_ids")]
+        pub knows: HashSet<usize>,
+        pub scene: usize,
+    }
 }
+#[allow(deprecated)]
+pub use legacy::ReaderEpistemicState;
 
 /// Epistemic asymmetry measurement.
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
