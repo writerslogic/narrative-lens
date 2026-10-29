@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) +
 
 ## [Unreleased]
 
+### Added
+- The LitBank holdout split was scored once at 548a033 (heuristic and local-NER modes);
+  the records are `docs/benchmarks/evidence/literary-holdout-{heuristic,ner}-v1.json` and
+  `docs/EVALUATION.md` shows them beside the development figures.
+
 ### Changed
 - `count_syllables` no longer allocates per call; results are unchanged.
 - Heuristic person extraction segments each scene into sentences once and reuses the

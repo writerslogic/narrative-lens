@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | [Finding-level accuracy](#finding-level-evaluation) | 52 agent-authored fiction cases | Supported patterns, controls, and regressions; not editorial accuracy on published novels |
 | [Analyzer-family baseline](#original-analyzer-family-baseline) | 56 older cases | Binary any-finding detection per family |
-| [LitBank persons and coreference](#litbank-development-split-benchmark) | 100 public-domain novel excerpts, development split only | Person spans, cast inventory, and pronoun resolution against human annotations; the holdout split is unscored |
+| [LitBank persons and coreference](#litbank-benchmark) | 100 public-domain novel excerpts: 76 development, 24 holdout scored once | Person spans, cast inventory, and pronoun resolution against human annotations |
 | [Pronunciation reference](#pronunciation-reference) | CMUdict development split | Syllable-count compatibility with a published dictionary |
 | [Performance](#performance) | Two deterministic 160-scene workloads | Latency and retained memory on one machine; no real-time guarantee |
 | [Model parity](#pinned-pretrained-model-parity) | One pinned MiniLM export, one pinned NER export | Native and WASI runtime fidelity against Python ONNX Runtime; not model accuracy |
@@ -80,7 +80,7 @@ fixed 0.8 comparison score for legacy confidence, not individual finding accurac
 broader genre coverage (fantasy, thriller, romance, literary, horror, historical) stays
 useful regression input.
 
-## LitBank development-split benchmark
+## LitBank benchmark
 
 [LitBank](https://github.com/dbamman/litbank) (Bamman et al., 2019 and 2020, CC-BY-4.0)
 annotates entities, quotations, and coreference in 100 English novel excerpts.
@@ -88,9 +88,10 @@ annotates entities, quotations, and coreference in 100 English novel excerpts.
 file hashes, and an author-grouped split: a seeded hash assigns about one fifth of the
 authors to `final_holdout` and the rest to `development`.
 
-**All figures below are development-split numbers used while tuning the heuristics.
-The holdout split has not been scored and its labels are never inspected during
-development; no generalization claim is made.**
+**The development split (76 excerpts, 57 authors) is the tuning surface. The holdout
+split (24 excerpts, 18 authors) was scored once, on 2026-10-29 at commit 548a033
+(v0.2.0 plus two performance-only commits); its labels were never inspected and it is
+not re-scored while tuning.**
 
 ```sh
 uv run --no-project scripts/fetch_literary_benchmark.py --download     # pinned corpus into target/external-validation
@@ -102,25 +103,33 @@ uv run --no-project scripts/literary_benchmark.py score --folder target/external
 
 `prepare` and `score` never modify the pinned labels or train anything. The example
 runs the heuristic `continuity::ner` and `CoreferenceResolver` paths, or the verified
-local NER model when `--ner-cache` points at a pinned export. The scored v6 runs are
-kept as [benchmarks/evidence/literary-development-{heuristic,ner}-v6.json](benchmarks/evidence/);
-new runs write to `target/evaluation/` by default.
+local NER model when `--ner-cache` points at a pinned export. The scored runs are kept
+as [benchmarks/evidence/literary-development-{heuristic,ner}-v6.json](benchmarks/evidence/)
+and [benchmarks/evidence/literary-holdout-{heuristic,ner}-v1.json](benchmarks/evidence/);
+new runs write to `target/evaluation/` by default. Both the example and the script
+refuse `final_holdout` without `--finalize`, so a holdout run is always a deliberate
+one-off.
 
-| Metric (development split, v6, 2026-10-28) | Heuristic | With local NER model |
-| --- | ---: | ---: |
-| Proper person name spans, F1 | 0.354 | 0.598 |
-| Named character inventory, F1 | 0.399 | 0.636 |
-| Model person spans, exact, F1 | n/a | 0.816 |
-| Coreference with supplied cast, precision / recall / F1 | 0.779 / 0.325 / 0.458 | 0.779 / 0.325 / 0.458 |
-| Coreference with detected cast, precision / recall / F1 | 0.626 / 0.252 / 0.359 | 0.671 / 0.284 / 0.399 |
-| Dialogue spans with supplied cast, F1 | 0.854 | 0.854 |
-| Explicit speaker attribution with supplied cast, precision / recall | 0.982 / 0.128 | 0.982 / 0.128 |
+| Metric | Heuristic, dev | Heuristic, holdout | With NER model, dev | With NER model, holdout |
+| --- | ---: | ---: | ---: | ---: |
+| Proper person name spans, F1 | 0.354 | 0.380 | 0.598 | 0.556 |
+| Named character inventory, F1 | 0.399 | 0.368 | 0.636 | 0.552 |
+| Model person spans, exact, F1 | n/a | n/a | 0.816 | 0.843 |
+| Coreference with supplied cast, P / R / F1 | 0.779 / 0.325 / 0.458 | 0.759 / 0.301 / 0.431 | 0.779 / 0.325 / 0.458 | 0.759 / 0.301 / 0.431 |
+| Coreference with detected cast, P / R / F1 | 0.626 / 0.252 / 0.359 | 0.543 / 0.205 / 0.298 | 0.671 / 0.284 / 0.399 | 0.734 / 0.296 / 0.422 |
+| Dialogue spans with supplied cast, F1 | 0.854 | 0.933 | 0.854 | 0.933 |
+| Explicit speaker attribution with supplied cast, P / R | 0.982 / 0.128 | 0.870 / 0.112 | 0.982 / 0.128 | 0.870 / 0.112 |
+
+Development: v6, 2026-10-28, 76 excerpts. Holdout: v1, 2026-10-29, 24 excerpts.
+Holdout figures land within 0.09 of the development figures in both directions, except
+explicit speaker attribution precision, which drops 0.11 on 23 decisions.
 
 Coreference abstains on ambiguity by design, which is why precision stays well above
 recall. Gold pronouns outside any cast entry (about 22%) and plural `they` (about 12%)
-cap heuristic coreference near F1 0.46-0.48 on this split; substantially higher recall
-needs a neural coreference model. The LitBank text has one sentence per line and no
-blank-line paragraphs, so paragraph-scoped heuristics see one paragraph per excerpt.
+cap heuristic coreference near F1 0.46-0.48 on the development split; substantially
+higher recall needs a neural coreference model. The LitBank text has one sentence per
+line and no blank-line paragraphs, so paragraph-scoped heuristics see one paragraph per
+excerpt.
 
 ## Pronunciation reference
 
