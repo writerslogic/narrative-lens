@@ -1,4 +1,7 @@
 #![cfg(feature = "cli")]
+#[cfg(feature = "onnx")]
+#[path = "support/digest.rs"]
+mod digest;
 use serde_json::Value;
 use std::{
     fs,
@@ -650,7 +653,6 @@ fn cli_loads_pinned_nli_and_reports_identity_then_rejects_tampering() {
         checked::ModelKind,
         model::{ModelManifest, ModelProfile},
     };
-    use sha2::{Digest, Sha256};
     let f = Fixture::new();
     let first = f.file("first.txt", "Alice stayed in the cellar.");
     let second = f.file("second.txt", "Alice left the cellar.");
@@ -674,8 +676,8 @@ fn cli_loads_pinned_nli_and_reports_identity_then_rejects_tampering() {
         schema_version: 1,
         kind: ModelKind::Nli,
         profile: ModelProfile::HuggingFaceNli3V1,
-        model_sha256: format!("{:x}", Sha256::digest(model)),
-        tokenizer_sha256: format!("{:x}", Sha256::digest(tokenizer.as_bytes())),
+        model_sha256: digest::sha256_hex(model),
+        tokenizer_sha256: digest::sha256_hex(tokenizer.as_bytes()),
         max_tokens: 512,
         padding_token_id: 0,
         labels: ["contradiction", "neutral", "entailment"]

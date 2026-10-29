@@ -7,6 +7,10 @@ use narrative_lens::{
     },
 };
 
+#[cfg(feature = "onnx")]
+#[path = "support/digest.rs"]
+mod digest;
+
 struct Backend {
     kind: ModelKind,
     replace_during_inference: bool,
@@ -177,7 +181,6 @@ fn actual_verified_model_identity_is_attached_to_nli_report() {
         return;
     }
     use onnx::model::{ModelManifest, ModelProfile};
-    use sha2::{Digest, Sha256};
     let model = include_bytes!("fixtures/models/valid-nli.onnx");
     let vocab = tokenizers::models::wordlevel::WordLevel::builder()
         .vocab([("[UNK]".into(), 0)].into_iter().collect())
@@ -192,8 +195,8 @@ fn actual_verified_model_identity_is_attached_to_nli_report() {
         schema_version: 1,
         kind: ModelKind::Nli,
         profile: ModelProfile::HuggingFaceNli3V1,
-        model_sha256: format!("{:x}", Sha256::digest(model)),
-        tokenizer_sha256: format!("{:x}", Sha256::digest(&tokenizer)),
+        model_sha256: digest::sha256_hex(model),
+        tokenizer_sha256: digest::sha256_hex(&tokenizer),
         max_tokens: 512,
         padding_token_id: 0,
         labels: ["contradiction", "neutral", "entailment"]
