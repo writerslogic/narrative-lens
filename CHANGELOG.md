@@ -12,6 +12,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) +
 - `scripts/ner_finetune.py` fine-tunes the pinned DistilBERT NER export on LitBank
   development works and exports a drop-in int8 model; on held-out authors exact person
   span F1 rises from 0.660 to 0.864 (`docs/benchmarks/evidence/ner-litbank-cv-v1.json`).
+- Multi-task narrative model candidate: `scripts/narrative_corpus.py` (LitBank development
+  split plus the pinned PDNC revision, `docs/benchmarks/pdnc-source.json`) and
+  `scripts/multitask_train.py` (one DistilBERT encoder; entity, nominal-mention,
+  coreference, and quotation-attribution heads; single int8 ONNX export). LitBank-only
+  cross-validation is recorded in `docs/benchmarks/evidence/narrative-multitask-cv-litbank-v1.json`;
+  the crate does not load the graph yet.
 
 ### Changed
 - `count_syllables` no longer allocates per call; results are unchanged.
