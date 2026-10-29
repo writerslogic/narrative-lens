@@ -72,6 +72,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) +
 ### Fixed
 - Supply-chain hardening: pinned action SHAs, `cargo deny` with unsound advisories
   denied, provenance-checked fixtures and readability resources.
+- `sha2` 0.11 for the `onnx` feature, which moves `block-buffer` past GHSA-qwgh-2vcv-g2f7.
 
 ## [0.1.0] - 2026-09-15
 

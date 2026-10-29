@@ -160,13 +160,12 @@ impl ModelMetadata {
         model: &[u8],
         tokenizer: &[u8],
     ) -> Result<Self, ModelFailure> {
-        use sha2::{Digest, Sha256};
         manifest.validate(expected)?;
         validate_artifact_sizes(model, tokenizer)?;
-        if format!("{:x}", Sha256::digest(model)) != manifest.model_sha256 {
+        if sha256_hex(model) != manifest.model_sha256 {
             return Err(ModelFailure::incompatible("model_digest_mismatch"));
         }
-        if format!("{:x}", Sha256::digest(tokenizer)) != manifest.tokenizer_sha256 {
+        if sha256_hex(tokenizer) != manifest.tokenizer_sha256 {
             return Err(ModelFailure::incompatible("tokenizer_digest_mismatch"));
         }
         let canonical = canonical_labels(expected);
@@ -289,4 +288,16 @@ pub(super) fn validate_artifact_sizes(model: &[u8], tokenizer: &[u8]) -> Result<
         return Err(ModelFailure::incompatible("model_file_size_or_type"));
     }
     Ok(())
+}
+
+#[cfg(feature = "onnx")]
+fn sha256_hex(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    use std::fmt::Write;
+    Sha256::digest(bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut hex, byte| {
+            let _ = write!(hex, "{byte:02x}");
+            hex
+        })
 }
