@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/Priya22/project-dialogism-novel-corpus",
+  "revision": "e507a27b89a85c1e9710a897ad0b3f5a9ad73dc4",
+  "license": "CC BY 4.0 as stated in the repository ReadMe; novel texts are Project Gutenberg / gutenberg.ca downloads",
+  "citation": "Vishnubhotla, Hammond, Hirst. The Project Dialogism Novel Corpus. LREC 2022.",
+  "archive": "https://codeload.github.com/Priya22/project-dialogism-novel-corpus/tar.gz/e507a27b89a85c1e9710a897ad0b3f5a9ad73dc4",
+  "cache": "target/external-validation/pdnc",
+  "holdoutPolicy": "Novels whose LitBank excerpt is in the final_holdout split are excluded from every use so the holdout stays unseen.",
+  "archiveSha256": "afd07a203fa48dd094233c621933ea874df0d230c634b8523007ec4a4ba952da",
+  "excludedNovels": [
+    "Emma",
+    "Persuasion",
+    "Pride and Prejudice",
+    "The Picture Of Dorian Gray"
+  ]
+}

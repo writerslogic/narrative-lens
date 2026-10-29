@@ -157,6 +157,60 @@ data; for the record it moved model spans F1 0.816 to 0.934, proper person names
 The pinned model stays the default until the candidate is hosted and scored once on the
 holdout split; the holdout labels were not used anywhere in training.
 
+### Multi-task narrative model (candidate)
+
+`scripts/narrative_corpus.py` builds one training corpus from LitBank's development
+split (proper, nominal, and pronoun person mentions, coreference clusters, quotations
+with speaker clusters) and from the [Project Dialogism Novel Corpus](benchmarks/pdnc-source.json)
+(CC BY 4.0; 24 of its 28 novels, because the four whose LitBank excerpt is in the holdout
+split are excluded from every use). `scripts/multitask_train.py` trains one DistilBERT
+encoder with four heads and exports a single int8 ONNX graph:
+
+| Head | Output | Trained on |
+| --- | --- | --- |
+| `entity` | 9-label BIO token tags, the pinned NER manifest's label set | LitBank proper person spans |
+| `nominal` | O / B-NOM / I-NOM token tags for "her mother", "the old man" | LitBank nominal person spans |
+| `coref` | antecedent score for every earlier mention in a 400-token window, plus a no-antecedent column | LitBank clusters; PDNC alias mentions |
+| `attribution` | speaker score for every person mention near a quotation, plus a speaker-not-in-window column | LitBank and PDNC quotations |
+
+```sh
+uv run --no-project scripts/narrative_corpus.py litbank
+uv run --no-project scripts/narrative_corpus.py pdnc        # downloads and verifies the pinned revision
+uv run --no-project --with torch --with transformers --with onnx --with onnxruntime scripts/multitask_train.py cv --sources litbank
+uv run --no-project --with torch --with transformers --with onnx --with onnxruntime scripts/multitask_train.py export --sources litbank pdnc
+```
+
+Five author-disjoint folds on LitBank alone, pooled
+([benchmarks/evidence/narrative-multitask-cv-litbank-v1.json](benchmarks/evidence/narrative-multitask-cv-litbank-v1.json),
+3 epochs, learning rate 3e-5, 400-token windows):
+
+| Measurement on unseen authors | Value |
+| --- | ---: |
+| Proper person spans, exact F1 | 0.772 |
+| Nominal person mentions, exact F1 | 0.514 |
+| Antecedent accuracy, pronouns (11,604) | 0.841 |
+| Antecedent accuracy, nominal mentions (4,593) | 0.754 |
+| Antecedent accuracy, proper names (2,003) | 0.610 |
+| Quotation speaker accuracy (1,037 quotes) | 0.312 |
+
+Antecedent accuracy counts a mention as correct when its top-scored earlier mention in
+the window is in the same gold cluster, or when it correctly scores no antecedent; it is
+a within-window measure, not CoNLL coreference F1.
+
+Adding PDNC (40 quotation-bearing windows per novel) and re-running the first fold with
+its authors' novels held out as well
+([benchmarks/evidence/narrative-multitask-cv-litbank-pdnc-fold0-v1.json](benchmarks/evidence/narrative-multitask-cv-litbank-pdnc-fold0-v1.json)):
+speaker accuracy over 2,100 held-out quotations from both corpora was 0.426, against
+0.225 on that fold's LitBank quotations alone, while the token heads lost about 0.04
+(entity 0.718, nominal 0.474) because PDNC windows carry no span labels. Loss weighting
+for the mix is the next tuning step. The entity head trails the single-task
+fine-tune above (0.864) at these settings; the shared encoder has not been tuned for the
+mix yet. The graph is not consumed by the crate: the next step is a model kind that
+builds windows with mention and quotation indices, runs it, and decodes both pair
+matrices, after which the heuristic coreference and attribution paths become fallbacks.
+GUM was considered for coreference but deferred: its annotations are CC BY 4.0 while the
+fiction, essay, letter, and podcast texts are CC BY-NC-SA and Reddit is non-commercial.
+
 ## Pronunciation reference
 
 `scripts/pronunciation_benchmark.py` pins a [CMUdict](https://github.com/cmusphinx/cmudict)
