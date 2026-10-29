@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::author_knowledge::AuthorSource;
 use crate::craft::lexicon::WordMatcher;
-use crate::substrate::utils::split_sentences;
+use crate::substrate::text::split_sentences;
 use crate::{
     Error, Result,
     manuscript::{
@@ -288,23 +288,20 @@ fn sentences_share_content(a: &str, b: &str, characters: &[&str]) -> bool {
         }
     }
 
-    // Check for pronoun chains or shared significant words (4+ chars, not stopwords)
-    let stopwords: HashSet<&str> = [
+    // Shared significant words (4+ chars, not stopwords)
+    const STOPWORDS: &[&str] = &[
         "that", "this", "with", "from", "they", "them", "their", "have", "been", "were", "would",
         "could", "should", "about", "which", "there", "these", "those", "what", "when", "where",
         "will", "into", "then", "than", "also", "just", "more", "some", "very", "much", "only",
-    ]
-    .iter()
-    .copied()
-    .collect();
+    ];
 
     let words_a: HashSet<&str> = a_lower
         .split_whitespace()
-        .filter(|w| w.len() >= 4 && !stopwords.contains(w))
+        .filter(|w| w.len() >= 4 && !STOPWORDS.contains(w))
         .collect();
     let words_b: HashSet<&str> = b_lower
         .split_whitespace()
-        .filter(|w| w.len() >= 4 && !stopwords.contains(w))
+        .filter(|w| w.len() >= 4 && !STOPWORDS.contains(w))
         .collect();
 
     let shared = words_a.intersection(&words_b).count();
@@ -421,10 +418,9 @@ fn analyze_causality_inner(
     let mut scene_sentences: Vec<Vec<(usize, String)>> = Vec::new(); // (event_id, sentence_text) per scene
 
     for (scene_idx, &scene_text) in scenes.iter().enumerate() {
-        let sentences = split_sentences(scene_text);
         let mut scene_evts: Vec<(usize, String)> = Vec::new();
 
-        for sentence in &sentences {
+        for sentence in split_sentences(scene_text) {
             if sentence.split_whitespace().count() < 4 {
                 continue; // skip very short fragments
             }
@@ -441,11 +437,11 @@ fn analyze_causality_inner(
             events.push(CausalEvent {
                 id,
                 scene: scene_idx,
-                description: sentence.clone(),
+                description: sentence.to_string(),
                 agent,
                 event_type,
             });
-            scene_evts.push((id, sentence.clone()));
+            scene_evts.push((id, sentence.to_string()));
         }
         scene_sentences.push(scene_evts);
     }

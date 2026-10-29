@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
 """Prepare and score an independent,pinned pronunciation reference;no production downloads."""
 
 import argparse
@@ -111,7 +115,7 @@ def main():
     parser.add_argument('--predictions',type=Path)
     parser.add_argument('--split',choices=['development','final_holdout'],default='development')
     parser.add_argument('--finalize',action='store_true')
-    parser.add_argument('--output',type=Path,default=ROOT/'docs/audit-2026-10-27/pronunciation-development.json')
+    parser.add_argument('--output',type=Path,default=ROOT/'target/evaluation/pronunciation-development.json')
     args=parser.parse_args()
     if args.mode=='prepare':
         prepare(args.folder)

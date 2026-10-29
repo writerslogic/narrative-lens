@@ -49,6 +49,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) +
   may differ from 0.1.0.
 - Minimum supported Rust is 1.89 for the core crate (1.92 for native ONNX, 1.91 for
   wasm ONNX). `ort` is pinned to 2.0.0-rc.15 and `Cargo.lock` is committed.
+- Unearned-payoff detection segments climactic sentences with the shared sentence
+  splitter instead of splitting on periods.
+
+### Deprecated
+- `continuity::epistemic_engine::ReaderEpistemicState`, `manuscript::finding::adapt_explanation`,
+  `manuscript::Scene::from_timeline`, `types::Options`, and `types::AnalysisResult` have no
+  callers and will be removed in 0.3.0.
+
+### Removed
+- Uncalled public helpers: the atmosphere/sensory analysis in `substrate::text`
+  (`analyze_atmosphere`, `detect_sensory_words`, `compute_sensory_balance`, `grounding_words`
+  and their types), the numeric helpers and duplicate `Genre`/`split_sentences` in
+  `substrate::utils`, `common_types::safe_substr`, `text::count_paragraphs`,
+  `voice::build_voice_profile_py`/`compare_voices_py`, `pacing::get_action_verbs`/
+  `enrich_with_info_density`, and `emotion::classify_text`/`classify_batch`.
+- Audit evidence under `docs/audit-2026-10-27/`; the referenced measurement files moved to
+  `docs/benchmarks/evidence/`, and the benchmark scripts now write new reports to
+  `target/evaluation/`.
+- `scripts/create_evaluation_v2.mjs`; the fixture it generated is frozen in the repo.
 
 ### Fixed
 - Supply-chain hardening: pinned action SHAs, `cargo deny` with unsound advisories

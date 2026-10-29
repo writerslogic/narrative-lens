@@ -278,12 +278,7 @@ pub fn analyze_dialogue_patterns(
 
         let all_words: Vec<String> = lines
             .iter()
-            .flat_map(|q| q.quote.split_whitespace())
-            .map(|w| {
-                w.to_lowercase()
-                    .trim_matches(&['.', ',', '!', '?', ';', ':', '"', '\''][..])
-                    .to_string()
-            })
+            .flat_map(|q| crate::substrate::text::tokenize_words(&q.quote))
             .collect();
 
         let total_words = all_words.len();
@@ -385,13 +380,7 @@ fn compute_voice_profiles(
         let n = lines.len();
         let all_words: Vec<String> = lines
             .iter()
-            .flat_map(|q| q.quote.split_whitespace())
-            .map(|w| {
-                w.to_lowercase()
-                    .trim_matches(&['.', ',', '!', '?', ';', ':', '"', '\''][..])
-                    .to_string()
-            })
-            .filter(|w| !w.is_empty())
+            .flat_map(|q| crate::substrate::text::tokenize_words(&q.quote))
             .collect();
 
         let total_words = all_words.len();

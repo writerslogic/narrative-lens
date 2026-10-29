@@ -12,7 +12,7 @@ use crate::{
         author_source::validate_sources,
         config::{validate_id, validate_name},
     },
-    substrate::utils::AnalysisAvailability,
+    substrate::{offsets::OffsetIndex, utils::AnalysisAvailability},
 };
 
 static MALE_PRONOUNS: &[&str] = &["he", "him", "his", "himself"];
@@ -21,6 +21,9 @@ static NEUTRAL_PRONOUNS: &[&str] = &["they", "them", "their", "theirs", "themsel
 pub const MAX_COREFERENCE_MENTIONS: usize = 10_000;
 pub const MAX_COREFERENCE_CHAIN_DEPTH: u8 = 16;
 pub const MAX_AUTHOR_COREFERENCE_BYTES: usize = 4 * 1024 * 1024;
+// Byte distances from a pronoun back to its candidate antecedent name.
+const NEAR_ANTECEDENT_BYTES: usize = 80;
+const FAR_ANTECEDENT_BYTES: usize = 200;
 
 fn pronoun_matcher() -> &'static WordMatcher {
     static M: OnceLock<WordMatcher> = OnceLock::new();
@@ -80,8 +83,8 @@ fn compute_confidence(
     }
     match kind {
         PronounKind::Possessive | PronounKind::Reflexive => 0.40,
-        _ if exact_gender && same_paragraph && distance < 80 => 0.85,
-        _ if exact_gender && distance < 200 => 0.70,
+        _ if exact_gender && same_paragraph && distance < NEAR_ANTECEDENT_BYTES => 0.85,
+        _ if exact_gender && distance < FAR_ANTECEDENT_BYTES => 0.70,
         _ if !exact_gender && same_paragraph => 0.55,
         _ if exact_gender => 0.45,
         _ => 0.35,
@@ -474,8 +477,13 @@ fn finish_genders(
         .collect()
 }
 fn stamp_ranges(text: &str, mentions: &mut [Mention]) -> Result<()> {
-    let mut wanted = Vec::with_capacity(mentions.len() * 2);
-    for mention in mentions.iter() {
+    let offsets = OffsetIndex::new(text)?;
+    let boundary = |byte: usize| {
+        offsets.utf16(byte).ok_or_else(|| {
+            Error::InvalidInput("coreference range is not a character boundary".into())
+        })
+    };
+    for mention in mentions {
         let end = mention
             .start
             .checked_add(mention.text.len())
@@ -485,41 +493,11 @@ fn stamp_ranges(text: &str, mentions: &mut [Mention]) -> Result<()> {
                 "coreference mention differs from original source".into(),
             ));
         }
-        wanted.extend([mention.start, end]);
-    }
-    wanted.sort_unstable();
-    wanted.dedup();
-    let mut offsets = Vec::with_capacity(wanted.len());
-    let mut next = 0;
-    let mut units = 0u32;
-    for (byte, ch) in text.char_indices() {
-        if next == wanted.len() {
-            break;
-        }
-        if wanted[next] == byte {
-            offsets.push(units);
-            next += 1;
-        }
-        units += ch.len_utf16() as u32;
-    }
-    if wanted.get(next) == Some(&text.len()) {
-        offsets.push(units);
-        next += 1;
-    }
-    if next != wanted.len() {
-        return Err(Error::InvalidInput(
-            "coreference range is not a character boundary".into(),
-        ));
-    }
-    for mention in mentions {
-        let end = mention.start + mention.text.len();
         mention.range = Some(TextRange {
             byte_start: mention.start,
             byte_end: end,
-            utf16_start: offsets[wanted
-                .binary_search(&mention.start)
-                .expect("requested start")],
-            utf16_end: offsets[wanted.binary_search(&end).expect("requested end")],
+            utf16_start: boundary(mention.start)?,
+            utf16_end: boundary(end)?,
         });
     }
     Ok(())

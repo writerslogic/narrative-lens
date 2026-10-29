@@ -60,6 +60,10 @@ impl Scene {
             purpose: String::new(),
         }
     }
+    #[deprecated(
+        since = "0.2.0",
+        note = "use `Scene::new` and set `chronology` / `chronology_lane` from the timeline entry directly"
+    )]
     pub fn from_timeline(
         entry: &crate::continuity::timeline::TimelineEntry,
         text: impl Into<String>,
@@ -181,6 +185,34 @@ pub struct Coverage {
     pub analyzed_units: usize,
     pub unit: String,
     pub diagnostics: Vec<String>,
+}
+impl Coverage {
+    /// Scene-unit coverage: a selected analyzer saw `analyzed` of `eligible`
+    /// nonempty scenes out of `total`; diagnostics start empty.
+    pub(crate) fn scenes(
+        analyzer: &str,
+        selected: bool,
+        analyzed: usize,
+        eligible: usize,
+        total: usize,
+    ) -> Self {
+        Self {
+            analyzer: analyzer.into(),
+            status: if !selected {
+                Status::Unavailable
+            } else if analyzed == 0 {
+                Status::InsufficientInput
+            } else if analyzed < eligible {
+                Status::HeuristicFallback
+            } else {
+                Status::Complete
+            },
+            total_units: total,
+            analyzed_units: if selected { analyzed } else { 0 },
+            unit: "scenes".into(),
+            diagnostics: Vec::new(),
+        }
+    }
 }
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

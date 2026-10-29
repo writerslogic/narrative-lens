@@ -6,6 +6,7 @@ use std::sync::OnceLock;
 
 use super::measurements;
 use crate::Result;
+use crate::substrate::text::{split_sentences, tokenize_words, word_slices};
 use crate::substrate::utils::{AnalysisAvailability, safe_div};
 
 // ---------------------------------------------------------------------------
@@ -13,6 +14,29 @@ use crate::substrate::utils::{AnalysisAvailability, safe_div};
 // ---------------------------------------------------------------------------
 
 const SIMILARITY_THRESHOLD: f64 = 0.85;
+
+/// Function words only: `top_words` must keep common verbs and nouns so that
+/// a voice profile reflects the character's vocabulary, which the broader
+/// `text::stopwords` list would strip.
+fn stopwords() -> &'static HashSet<&'static str> {
+    static INST: OnceLock<HashSet<&str>> = OnceLock::new();
+    INST.get_or_init(|| {
+        [
+            "the", "a", "an", "and", "but", "or", "nor", "for", "yet", "so", "is", "am", "are",
+            "was", "were", "be", "been", "do", "does", "did", "has", "have", "had", "may", "might",
+            "must", "shall", "should", "will", "would", "can", "could", "i", "me", "my", "we",
+            "us", "our", "you", "your", "he", "him", "his", "she", "her", "it", "its", "they",
+            "them", "their", "this", "that", "these", "those", "who", "whom", "whose", "which",
+            "what", "when", "where", "why", "how", "all", "each", "both", "few", "more", "most",
+            "some", "no", "not", "one", "two", "just", "if", "then", "than", "too", "as", "at",
+            "by", "in", "of", "on", "to", "up", "with", "from", "out", "off", "own", "here",
+            "there", "once", "about", "after", "again", "also", "before", "because", "between",
+            "into", "very", "really", "much", "well", "back", "still", "even", "now",
+        ]
+        .into_iter()
+        .collect()
+    })
+}
 
 fn contractions() -> &'static HashSet<&'static str> {
     static INST: OnceLock<HashSet<&str>> = OnceLock::new();
@@ -58,26 +82,6 @@ fn contractions() -> &'static HashSet<&'static str> {
             "here's",
             "there's",
             "let's",
-        ]
-        .into_iter()
-        .collect()
-    })
-}
-
-fn stopwords() -> &'static HashSet<&'static str> {
-    static INST: OnceLock<HashSet<&str>> = OnceLock::new();
-    INST.get_or_init(|| {
-        [
-            "the", "a", "an", "and", "but", "or", "nor", "for", "yet", "so", "is", "am", "are",
-            "was", "were", "be", "been", "do", "does", "did", "has", "have", "had", "may", "might",
-            "must", "shall", "should", "will", "would", "can", "could", "i", "me", "my", "we",
-            "us", "our", "you", "your", "he", "him", "his", "she", "her", "it", "its", "they",
-            "them", "their", "this", "that", "these", "those", "who", "whom", "whose", "which",
-            "what", "when", "where", "why", "how", "all", "each", "both", "few", "more", "most",
-            "some", "no", "not", "one", "two", "just", "if", "then", "than", "too", "as", "at",
-            "by", "in", "of", "on", "to", "up", "with", "from", "out", "off", "own", "here",
-            "there", "once", "about", "after", "again", "also", "before", "because", "between",
-            "into", "very", "really", "much", "well", "back", "still", "even", "now",
         ]
         .into_iter()
         .collect()
@@ -199,7 +203,7 @@ pub(crate) fn profile_measurement(
     let mut sentence_words = 0usize;
     for line in dialogue_lines {
         let line = line.as_ref();
-        let tokens = measurements::tokens(line);
+        let tokens = tokenize_words(line);
         if tokens.is_empty() {
             continue;
         }
@@ -207,8 +211,8 @@ pub(crate) fn profile_measurement(
         sample.word_count += tokens.len();
         questions += usize::from(line.trim_end().ends_with('?'));
         exclamations += usize::from(line.contains('!'));
-        for sentence in crate::substrate::text::split_sentences(line) {
-            let count = measurements::tokens(sentence).len();
+        for sentence in split_sentences(line) {
+            let count = word_slices(sentence).count();
             if count > 0 {
                 sample.sentence_count += 1;
                 sentence_words += count;
@@ -708,7 +712,7 @@ fn refine_unique_phrases(profiles: &mut [CharacterVoiceProfile], data: &[(String
     }
     for (index, (_, lines)) in data.iter().enumerate() {
         for line in lines {
-            let tokens = measurements::tokens(line);
+            let tokens = tokenize_words(line);
             for n in [2, 3] {
                 for phrase in extract_ngrams(&tokens, n) {
                     if let Some(owner) = owners.get_mut(&phrase)
@@ -726,17 +730,6 @@ fn refine_unique_phrases(profiles: &mut [CharacterVoiceProfile], data: &[(String
             .retain(|phrase| owners[phrase] == Some(index));
         profile.unique_phrases.truncate(10);
     }
-}
-
-pub fn build_voice_profile_py(
-    character_name: &str,
-    dialogue_lines: Vec<String>,
-) -> CharacterVoiceProfile {
-    build_voice_profile(character_name, &dialogue_lines)
-}
-
-pub fn compare_voices_py(profiles: Vec<CharacterVoiceProfile>) -> Vec<VoiceSimilarity> {
-    compare_voices(&profiles)
 }
 
 pub fn analyze_character_voices_checked(

@@ -247,6 +247,10 @@ pub(crate) fn adapt_grammar_indexed(
 }
 
 /// Adapter for legacy explanations that have no source span. Never invents one.
+#[deprecated(
+    since = "0.2.0",
+    note = "build a `Finding` with located `Evidence::new` spans; unlocated legacy explanations are not emitted by the facade"
+)]
 pub fn adapt_explanation(
     document_id: &str,
     rule_id: &str,

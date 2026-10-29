@@ -24,7 +24,7 @@ pub fn analyze_thematic_annotations(
         super::decode_input(annotations, "invalid author thematic annotations")?;
     let result =
         thematic_argument::analyze_thematic_annotations(&manuscript, &theses, &annotations)
-            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+            .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -37,13 +37,12 @@ pub fn analyze_promise_events(
     manuscript: serde_json::Value,
     events: serde_json::Value,
 ) -> napi::Result<serde_json::Value> {
-    let manuscript = serde_json::from_value(manuscript)
-        .map_err(|_| napi::Error::from_reason("invalid manuscript object"))?;
-    let events: Vec<author_events::AuthorPromiseEvent> = serde_json::from_value(events)
-        .map_err(|_| napi::Error::from_reason("invalid author promise events"))?;
-    let ledger = author_events::analyze_promise_events(&manuscript, &events)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(ledger).map_err(|error| napi::Error::from_reason(error.to_string()))
+    let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
+    let events: Vec<author_events::AuthorPromiseEvent> =
+        super::decode_input(events, "invalid author promise events")?;
+    let ledger =
+        author_events::analyze_promise_events(&manuscript, &events).map_err(super::reason)?;
+    super::encode_result(ledger)
 }
 
 /// Look up a built-in narrative structure template by name.
@@ -52,9 +51,8 @@ pub fn analyze_promise_events(
     ts_return_type = "import('./standalone.generated').GetStructureTemplateResult"
 )]
 pub fn get_structure_template(name: String) -> napi::Result<serde_json::Value> {
-    let result = structure::get_structure_template(&name)
-        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let result = structure::get_structure_template(&name).map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Score how well a set of scene tensions/purposes matches a structure template.
@@ -68,8 +66,8 @@ pub fn validate_structure(
     scene_purposes: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
     let result = structure::validate_structure(&template_name, scene_tensions, scene_purposes)
-        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+        .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Suggest the best-fitting structure template for a set of scene tensions/purposes.
@@ -79,7 +77,7 @@ pub fn suggest_best_template(
     scene_purposes: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
     let result = structure::suggest_best_template(scene_tensions, scene_purposes);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Analyze foreshadowing setup-payoff arcs across scenes.
@@ -93,7 +91,7 @@ pub fn analyze_foreshadowing(
 ) -> napi::Result<serde_json::Value> {
     let result =
         foreshadow::analyze_foreshadowing(scenes_tokens, super::unsigned_index(total_scenes)?);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Build the promise-payoff ledger from analysis data.
@@ -133,7 +131,7 @@ pub fn build_promise_payoff_ledger(
         &structure_template,
         super::unsigned_index(total_scenes)?,
     );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Track the thematic argument across the manuscript.
@@ -161,7 +159,7 @@ pub fn track_thematic_argument(
         &decisions,
         &genre,
     );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Analyze the opening pages of a manuscript for hook strength and agent appeal.
@@ -174,8 +172,8 @@ pub fn analyze_opening(
     genre: String,
     full_manuscript_voice_fingerprint: Option<Vec<f64>>,
 ) -> napi::Result<serde_json::Value> {
-    let mut result = opening_analysis::analyze_opening_checked(&text, &genre, None)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    let mut result =
+        opening_analysis::analyze_opening_checked(&text, &genre, None).map_err(super::reason)?;
     if full_manuscript_voice_fingerprint.is_some_and(|values| !values.is_empty()) {
         result.diagnostics.push("legacy_voice_vector_has_no_declared_feature_contract;use_analyzeOpeningChecked_with_typed_baseline".into());
     }
@@ -194,7 +192,7 @@ pub fn analyze_opening_checked(
 ) -> napi::Result<serde_json::Value> {
     let baseline = baseline.map(super::craft::to_character_voice_profile);
     let result = opening_analysis::analyze_opening_checked(&text, &genre, baseline.as_ref())
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+        .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -230,8 +228,8 @@ pub fn check_genre_compliance(
             ..Default::default()
         },
     )
-    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 #[napi(
@@ -245,7 +243,7 @@ pub fn check_genre_compliance_checked(
 ) -> napi::Result<serde_json::Value> {
     let evidence = super::decode_input(evidence, "invalid genre evidence")?;
     let result = genre_compliance::check_genre_compliance_checked(&genre, &evidence)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+        .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -271,8 +269,8 @@ pub fn compute_narrative_entropy(
         &genre,
         &character_arcs,
     )
-    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 #[napi(
@@ -288,7 +286,7 @@ pub fn measure_narrative_uncertainty(
     let observations: Vec<narrative_entropy::SuppliedUncertainty> =
         super::decode_input(observations, "invalid uncertainty observations")?;
     let result = narrative_entropy::measure_narrative_uncertainty(&manuscript, &observations)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+        .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -306,7 +304,7 @@ pub fn measure_semantic_novelty(
         "invalid semantic novelty options",
     )?;
     let result = narrative_entropy::measure_semantic_novelty(&embeddings, &options)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+        .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -317,7 +315,7 @@ pub fn measure_semantic_novelty(
 )]
 pub fn genre_from_label(label: String) -> napi::Result<serde_json::Value> {
     let result = genre::genre_from_label(&label);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Detect genre using SBERT cosine similarity against genre descriptions when the
@@ -333,7 +331,7 @@ pub fn detect_genre(
     fkgl: f64,
 ) -> napi::Result<serde_json::Value> {
     let result = genre::detect_genre(themes, tension_pattern, dialogue_ratio, fkgl);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Detect genre from a raw manuscript sample using SBERT cosine similarity when
@@ -351,7 +349,7 @@ pub fn detect_genre_smart(
 ) -> napi::Result<serde_json::Value> {
     let result =
         genre::detect_genre_smart(&sample_text, themes, tension_pattern, dialogue_ratio, fkgl);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Evaluate manuscript metrics against a genre's expected quantitative profile.
@@ -380,7 +378,7 @@ pub fn evaluate_against_genre(
         super::unsigned_index(tonal_whiplash_count)?,
         super::unsigned_index(word_count)?,
     );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Get the expected quantitative profile for a genre, by label.
@@ -393,7 +391,7 @@ pub fn get_genre_profile(genre_label: String) -> napi::Result<serde_json::Value>
         napi::Error::from_reason(format!("Unknown genre label: '{}'", genre_label))
     })?;
     let result = genre::get_genre_profile(genre);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Detect themes using SBERT if available, falling back to keyword detection.
@@ -406,7 +404,7 @@ pub fn detect_themes_smart(
     scenes_tokens: Vec<Vec<String>>,
 ) -> napi::Result<serde_json::Value> {
     let result = theme::detect_themes_smart(&scenes, &scenes_tokens);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Analyze how detected themes evolve and resolve across the manuscript.
@@ -418,5 +416,5 @@ pub fn analyze_resolution(
     scene_themes: Vec<std::collections::HashMap<String, f64>>,
 ) -> napi::Result<serde_json::Value> {
     let result = theme::analyze_resolution(&scene_themes);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }

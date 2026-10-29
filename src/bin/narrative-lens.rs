@@ -65,13 +65,8 @@ struct Args {
     model_profile: Option<String>,
 }
 fn severity(value: &str) -> Result<Severity, String> {
-    match value {
-        "info" => Ok(Severity::Info),
-        "suggestion" => Ok(Severity::Suggestion),
-        "warning" => Ok(Severity::Warning),
-        "error" => Ok(Severity::Error),
-        _ => Err("severity must be info, suggestion, warning or error".into()),
-    }
+    serde_json::from_value(Value::String(value.into()))
+        .map_err(|_| "severity must be info, suggestion, warning or error".into())
 }
 fn parse() -> Result<Option<Args>, String> {
     let mut a = Args {

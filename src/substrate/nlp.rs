@@ -970,12 +970,12 @@ pub(crate) fn theme_keywords() -> &'static ThemeMap {
 
 /// Detect theme scores per scene based on keyword presence.
 pub fn detect_themes_keywords(
-    scenes_tokens: Vec<Vec<String>>,
+    scenes_tokens: &[Vec<String>],
 ) -> Result<Vec<HashMap<String, f64>>, crate::error::Error> {
     let themes = theme_keywords();
     let mut results = Vec::with_capacity(scenes_tokens.len());
 
-    for tokens in &scenes_tokens {
+    for tokens in scenes_tokens {
         let word_count = tokens.len();
         let token_set: HashSet<&str> = tokens.iter().map(|t| t.as_str()).collect();
         let mut scene_themes = HashMap::new();
@@ -1010,28 +1010,24 @@ pub fn build_cooccurrence_edges(
     scenes: Vec<Vec<String>>,
     characters: Vec<String>,
 ) -> Result<Vec<(String, String, usize)>, crate::error::Error> {
-    // Build regex patterns for each character (case-insensitive word boundary)
-    let patterns: Vec<(String, Regex)> = characters
-        .iter()
-        .map(|name| {
-            (
-                name.clone(),
-                crate::substrate::text::word_boundary_regex(name),
-            )
-        })
-        .collect();
+    let names: Vec<&str> = characters.iter().map(String::as_str).collect();
+    let matcher = crate::craft::lexicon::WordMatcher::new(&names);
+    let lowered: Vec<String> = characters.iter().map(|name| name.to_lowercase()).collect();
 
     let mut edge_counts: HashMap<(String, String), usize> = HashMap::new();
 
     for scene_tokens in &scenes {
         let scene_text = scene_tokens.join(" ");
-        let mut present: Vec<&str> = Vec::new();
-
-        for (name, re) in &patterns {
-            if re.is_match(&scene_text) {
-                present.push(name);
-            }
-        }
+        let found: HashSet<String> = matcher
+            .find_iter(&scene_text)
+            .map(|m| m.text.to_lowercase())
+            .collect();
+        let present: Vec<&str> = names
+            .iter()
+            .zip(&lowered)
+            .filter(|(_, lower)| found.contains(lower.as_str()))
+            .map(|(name, _)| *name)
+            .collect();
 
         // Generate all unique pairs
         for i in 0..present.len() {
@@ -1434,7 +1430,7 @@ mod tests {
             "the".into(),
             "story".into(),
         ]];
-        let result = detect_themes_keywords(scenes).unwrap();
+        let result = detect_themes_keywords(&scenes).unwrap();
         assert_eq!(result.len(), 1);
         assert!(result[0].contains_key("love"));
         assert!(result[0]["love"] > 0.0);
@@ -1443,7 +1439,7 @@ mod tests {
     #[test]
     fn test_themes_no_match() {
         let scenes = vec![vec!["the".into(), "cat".into(), "sat".into()]];
-        let result = detect_themes_keywords(scenes).unwrap();
+        let result = detect_themes_keywords(&scenes).unwrap();
         assert_eq!(result.len(), 1);
         assert!(result[0].is_empty());
     }
@@ -1456,20 +1452,20 @@ mod tests {
             "kill".into(),
             "heart".into(),
         ]];
-        let result = detect_themes_keywords(scenes).unwrap();
+        let result = detect_themes_keywords(&scenes).unwrap();
         assert!(result[0].contains_key("love"));
         assert!(result[0].contains_key("death"));
     }
 
     #[test]
     fn test_themes_empty() {
-        let result = detect_themes_keywords(vec![]).unwrap();
+        let result = detect_themes_keywords(&[]).unwrap();
         assert!(result.is_empty());
     }
 
     #[test]
     fn test_themes_empty_scene() {
-        let result = detect_themes_keywords(vec![vec![]]).unwrap();
+        let result = detect_themes_keywords(&[vec![]]).unwrap();
         assert_eq!(result.len(), 1);
         assert!(result[0].is_empty());
     }

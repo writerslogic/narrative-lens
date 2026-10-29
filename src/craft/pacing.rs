@@ -155,11 +155,6 @@ pub struct AggregatedPacing {
 // Public API
 // ---------------------------------------------------------------------------
 
-/// Returns a reference to the static action verbs set (exposed for reuse).
-pub fn get_action_verbs() -> &'static HashSet<&'static str> {
-    action_verbs()
-}
-
 /// Analyze a single scene and return its pacing metrics.
 pub fn analyze_scene(
     scene_id: usize,
@@ -274,18 +269,6 @@ pub fn analyze_scene_info_density(
         new_noun_count,
         total_noun_count,
     }
-}
-
-/// Enrich a `PacingMetrics` with info density values computed from scene text.
-pub fn enrich_with_info_density(metrics: &mut PacingMetrics, info: &SceneInfoDensity) {
-    metrics.entity_density = info.entity_density;
-    metrics.action_density = info.action_density;
-    metrics.noun_density = info.noun_density;
-    metrics.information_novelty = if info.total_noun_count > 0 {
-        info.new_noun_count as f64 / info.total_noun_count as f64
-    } else {
-        0.0
-    };
 }
 
 fn is_function_word(w: &str) -> bool {
@@ -606,15 +589,6 @@ mod tests {
     }
 
     #[test]
-    fn test_action_verbs_set() {
-        let verbs = get_action_verbs();
-        assert!(verbs.contains("ran"));
-        assert!(verbs.contains("sprinted"));
-        assert!(verbs.contains("darted"));
-        assert!(!verbs.contains("walked"));
-    }
-
-    #[test]
     fn test_velocity_variance() {
         // All same velocity => variance 0
         let scenes: Vec<PacingMetrics> =
@@ -694,22 +668,5 @@ mod tests {
             novelty2,
             novelty1
         );
-    }
-
-    #[test]
-    fn test_enrich_with_info_density() {
-        let mut m = analyze_scene(0, 50, 500, 25);
-        assert!((m.entity_density).abs() < 1e-9);
-        let info = SceneInfoDensity {
-            entity_density: 3.5,
-            action_density: 2.1,
-            noun_density: 15.0,
-            new_noun_count: 10,
-            total_noun_count: 20,
-        };
-        enrich_with_info_density(&mut m, &info);
-        assert!((m.entity_density - 3.5).abs() < 1e-9);
-        assert!((m.action_density - 2.1).abs() < 1e-9);
-        assert!((m.information_novelty - 0.5).abs() < 1e-9);
     }
 }

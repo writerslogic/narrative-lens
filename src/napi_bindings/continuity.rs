@@ -19,16 +19,14 @@ pub fn analyze_author_knowledge(
     propositions: serde_json::Value,
     events: serde_json::Value,
 ) -> napi::Result<serde_json::Value> {
-    let manuscript = serde_json::from_value(manuscript)
-        .map_err(|_| napi::Error::from_reason("invalid manuscript object"))?;
+    let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
     let propositions: Vec<author_knowledge::AuthorProposition> =
-        serde_json::from_value(propositions)
-            .map_err(|_| napi::Error::from_reason("invalid author propositions"))?;
-    let events: Vec<author_knowledge::AuthorKnowledgeEvent> = serde_json::from_value(events)
-        .map_err(|_| napi::Error::from_reason("invalid author knowledge events"))?;
+        super::decode_input(propositions, "invalid author propositions")?;
+    let events: Vec<author_knowledge::AuthorKnowledgeEvent> =
+        super::decode_input(events, "invalid author knowledge events")?;
     let ledger = author_knowledge::analyze_author_knowledge(&manuscript, &propositions, &events)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(ledger).map_err(|error| napi::Error::from_reason(error.to_string()))
+        .map_err(super::reason)?;
+    super::encode_result(ledger)
 }
 
 #[napi(
@@ -41,14 +39,15 @@ pub fn track_world_state_current(
     characters: Vec<String>,
     options: Option<serde_json::Value>,
 ) -> napi::Result<serde_json::Value> {
-    let options: world_state::WorldStateOptions =
-        serde_json::from_value(options.unwrap_or_else(|| serde_json::json!({})))
-            .map_err(|_| napi::Error::from_reason("invalid world state options"))?;
+    let options: world_state::WorldStateOptions = super::decode_input(
+        options.unwrap_or_else(|| serde_json::json!({})),
+        "invalid world state options",
+    )?;
     let scenes: Vec<&str> = scenes.iter().map(String::as_str).collect();
     let characters: Vec<&str> = characters.iter().map(String::as_str).collect();
     let result = world_state::track_world_state_current(&scenes, &characters, &options)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|error| napi::Error::from_reason(error.to_string()))
+        .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Analyze a scene's tokens for anachronistic words given a target historical year.
@@ -67,7 +66,7 @@ pub fn analyze_scene(
         super::signed_integer(target_year)?,
         super::unsigned_index(scene_id)?,
     )
-    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    .map_err(super::reason)?;
     super::encode_result(result.items)
 }
 
@@ -85,7 +84,7 @@ pub fn analyze_scene_checked(
         super::signed_integer(target_year)?,
         super::unsigned_index(scene_id)?,
     )
-    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -113,7 +112,7 @@ pub fn analyze_historical_catalogue(
         super::signed_integer(target_year)?,
         super::unsigned_index(tolerance_years)? as u32,
     )
-    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -123,8 +122,7 @@ pub fn analyze_historical_catalogue(
 )]
 pub fn extract_named_entities(texts: Vec<String>) -> napi::Result<serde_json::Value> {
     let texts: Vec<_> = texts.iter().map(String::as_str).collect();
-    let result = ner::ner_extract_entities_batch_checked(&texts)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    let result = ner::ner_extract_entities_batch_checked(&texts).map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -133,8 +131,7 @@ pub fn extract_named_entities(texts: Vec<String>) -> napi::Result<serde_json::Va
     ts_return_type = "import('./standalone.generated').ExtractPersonsResult"
 )]
 pub fn extract_persons(scenes: Vec<String>) -> napi::Result<serde_json::Value> {
-    let result = ner::ner_extract_persons_checked(&scenes)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    let result = ner::ner_extract_persons_checked(&scenes).map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -149,9 +146,9 @@ pub fn analyze_causality(
 ) -> napi::Result<serde_json::Value> {
     let scenes: Vec<&str> = scenes.iter().map(String::as_str).collect();
     let characters: Vec<&str> = characters.iter().map(String::as_str).collect();
-    let result = causal_engine::analyze_causality_checked(&scenes, &characters)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let result =
+        causal_engine::analyze_causality_checked(&scenes, &characters).map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 #[napi(
@@ -170,7 +167,7 @@ pub fn analyze_author_causality(
     let interventions: Vec<causal_engine::AuthorIntervention> =
         super::decode_input(interventions, "invalid author interventions")?;
     let result = causal_engine::analyze_author_causality(&manuscript, &nodes, &interventions)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+        .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -190,7 +187,7 @@ pub fn build_author_mental_model(
     let events: Vec<author_knowledge::AuthorKnowledgeEvent> =
         super::decode_input(events, "invalid author knowledge events")?;
     let result = mental_model::build_author_mental_model(&manuscript, &propositions, &events)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+        .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -219,9 +216,8 @@ pub fn resolve_entities(
         .into_iter()
         .map(|(surface, context)| entity::Mention::new(surface, context))
         .collect();
-    let result = entity::resolve_checked(&mentions, kind)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let result = entity::resolve_checked(&mentions, kind).map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Resolve mentions, then apply the writer's persisted corrections (each a JSON
@@ -245,14 +241,13 @@ pub fn resolve_entities_with_corrections(
         .into_iter()
         .map(|(surface, context)| entity::Mention::new(surface, context))
         .collect();
-    let corrections: Vec<entity::EntityCorrection> = corrections
-        .into_iter()
-        .map(serde_json::from_value)
-        .collect::<Result<_, _>>()
-        .map_err(|_| napi::Error::from_reason("invalid entity corrections"))?;
+    let corrections: Vec<entity::EntityCorrection> = super::decode_input(
+        serde_json::Value::Array(corrections),
+        "invalid entity corrections",
+    )?;
     let result = entity::resolve_with_corrections_checked(&mentions, kind, &corrections)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+        .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Build the reader's evolving mental model (belief trajectory, dramatic
@@ -273,7 +268,7 @@ pub fn build_mental_model(
     let theme_keywords: Vec<&str> = theme_keywords.iter().map(String::as_str).collect();
     let result =
         mental_model::build_mental_model(&scenes, &characters, &pov_characters, &theme_keywords);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Analyze narrative gaps based on signals from other analysis modules: broken
@@ -316,8 +311,8 @@ pub fn analyze_gaps(
         super::unsigned_index(total_scenes)?,
         super::unsigned_index(climax_scene)?,
     )
-    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Track per-character and reader epistemic states across scenes, computing
@@ -335,8 +330,8 @@ pub fn track_epistemics(
     let characters: Vec<&str> = characters.iter().map(String::as_str).collect();
     let pov_characters: Vec<&str> = pov_characters.iter().map(String::as_str).collect();
     let result = epistemic_engine::track_epistemics_checked(&scenes, &characters, &pov_characters)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+        .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 #[napi(
@@ -359,7 +354,7 @@ pub fn analyze_author_epistemics(
         super::decode_input(queries, "invalid author epistemic queries")?;
     let result =
         epistemic_engine::analyze_author_epistemics(&manuscript, &propositions, &events, &queries)
-            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+            .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -374,15 +369,13 @@ pub fn build_timeline(
     documents: Vec<(String, String)>,
     overrides: Option<serde_json::Value>,
 ) -> napi::Result<serde_json::Value> {
-    let mut result = timeline::build_timeline_checked(&documents)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    let mut result = timeline::build_timeline_checked(&documents).map_err(super::reason)?;
     if let Some(overrides) = overrides {
         let overrides: Vec<timeline::TimelineOverride> =
             super::decode_input(overrides, "invalid timeline overrides")?;
-        timeline::apply_overrides_checked(&mut result, &overrides)
-            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+        timeline::apply_overrides_checked(&mut result, &overrides).map_err(super::reason)?;
     }
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Analyze scenes and characters to produce a full world state analysis
@@ -397,9 +390,9 @@ pub fn track_world_state(
 ) -> napi::Result<serde_json::Value> {
     let scenes: Vec<&str> = scenes.iter().map(String::as_str).collect();
     let characters: Vec<&str> = characters.iter().map(String::as_str).collect();
-    let result = world_state::track_world_state_checked(&scenes, &characters)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let result =
+        world_state::track_world_state_checked(&scenes, &characters).map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Resolve pronoun references to character names within a scene. `gender_map`
@@ -421,8 +414,8 @@ pub fn resolve_coreferences(
     let resolver = coreference::CoreferenceResolver::new();
     let result = resolver
         .resolve_checked(&scene_text, &known_characters, gender_map.as_ref())
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+        .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Scan multiple scenes to infer a gender ("male"/"female"/"unknown") for each
@@ -442,8 +435,8 @@ pub fn build_character_gender_map(
     let resolver = coreference::CoreferenceResolver::new();
     let result = resolver
         .build_character_gender_map_checked(&scenes, &characters)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+        .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 #[napi(
@@ -458,7 +451,7 @@ pub fn resolve_author_coreference(
     let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
     let links: Vec<coreference::AuthorCoreferenceLink> =
         super::decode_input(links, "invalid author coreference links")?;
-    let result = coreference::resolve_author_coreference(&manuscript, &links)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    let result =
+        coreference::resolve_author_coreference(&manuscript, &links).map_err(super::reason)?;
     super::encode_result(result)
 }

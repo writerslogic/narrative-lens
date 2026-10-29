@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
 """Acquire a pinned public development corpus; production analysis never downloads it."""
 
 import argparse

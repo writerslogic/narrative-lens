@@ -22,8 +22,7 @@ use crate::craft::{
 )]
 pub fn analyze_smog(text: String) -> napi::Result<serde_json::Value> {
     super::bounded_texts([text.as_str()], 1)?;
-    serde_json::to_value(readability::analyze_smog(&text))
-        .map_err(|error| napi::Error::from_reason(error.to_string()))
+    super::encode_result(readability::analyze_smog(&text))
 }
 
 // ---------------------------------------------------------------------------
@@ -136,7 +135,7 @@ pub fn analyze_pacing(
         super::unsigned_index(total_tokens)?,
         super::unsigned_index(sentences_count)?,
     );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 #[derive(Serialize)]
@@ -166,7 +165,7 @@ pub fn analyze_scene_info_density(
     let mut seen_nouns: Vec<String> = seen.into_iter().collect();
     seen_nouns.sort();
     let combined = SceneInfoDensityWithSeenNouns { info, seen_nouns };
-    serde_json::to_value(combined).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(combined)
 }
 
 /// Aggregate pacing metrics across all scenes. Returns `null` when
@@ -186,7 +185,7 @@ pub fn aggregate_pacing(scene_metrics: Vec<PacingMetricsInput>) -> napi::Result<
         .map(to_pacing_metrics)
         .collect::<napi::Result<_>>()?;
     let result = pacing::aggregate_pacing(&metrics);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 // ---------------------------------------------------------------------------
@@ -212,7 +211,7 @@ pub fn extract_dialogue(
             include_indirect: true,
         },
     )
-    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    .map_err(super::reason)?;
     super::encode_result(
         result
             .lines
@@ -243,7 +242,7 @@ pub fn extract_dialogue_checked(
         &known_characters,
         &options,
     )
-    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -257,14 +256,14 @@ pub fn analyze_dialogue_patterns(
     known_characters: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
     crate::craft::measurements::validate_names(known_characters.iter().map(String::as_str))
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+        .map_err(super::reason)?;
     super::bounded_texts(all_dialogue.iter().map(|line| line.quote.as_str()), 10_000)?;
     let lines: Vec<dialogue::DialogueLine> = all_dialogue
         .into_iter()
         .map(to_dialogue_line)
         .collect::<napi::Result<_>>()?;
     let result = dialogue::analyze_dialogue_patterns(&lines, &known_characters);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 // ---------------------------------------------------------------------------
@@ -295,8 +294,8 @@ pub fn analyze_dialogue_realism(
         .collect::<napi::Result<_>>()?;
     let char_refs: Vec<&str> = characters.iter().map(String::as_str).collect();
     let result = dialogue_realism::analyze_dialogue_realism_checked(&dialogue_turns, &char_refs)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+        .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 // ---------------------------------------------------------------------------
@@ -311,7 +310,7 @@ pub fn analyze_dialogue_realism(
 pub fn analyze_syntax_tension(scene_text: String) -> napi::Result<serde_json::Value> {
     super::bounded_texts([scene_text.as_str()], 1)?;
     let result = syntax_tension::analyze_scene_text(&scene_text);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Compute aggregate tension metrics from per-scene suspense scores.
@@ -329,7 +328,7 @@ pub fn get_tension_metrics(scene_scores: Vec<f64>) -> napi::Result<serde_json::V
         super::finite_range(*value, 0.0, 1.0)?;
     }
     let result = syntax_tension::get_tension_metrics(&scene_scores);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 // ---------------------------------------------------------------------------
@@ -351,8 +350,8 @@ pub fn reciprocal_rank_fusion(
     super::finite_range(k, 0.0, f64::MAX)?;
     let result =
         lexical::reciprocal_rank_fusion_checked(&rankings, k, super::unsigned_index(limit)?)
-            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+            .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 // ---------------------------------------------------------------------------
@@ -369,7 +368,7 @@ pub fn reciprocal_rank_fusion(
 pub fn collect_prose_examples(scenes: Vec<String>) -> napi::Result<serde_json::Value> {
     super::bounded_texts(scenes.iter().map(String::as_str), 10_000)?;
     let result = prose_quality::collect_prose_examples(&scenes);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 // ---------------------------------------------------------------------------
@@ -386,7 +385,7 @@ pub fn build_voice_profile(
     dialogue_lines: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
     let result = voice::build_voice_profile_checked(&character_name, &dialogue_lines)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+        .map_err(super::reason)?;
     super::encode_result(result.profile)
 }
 
@@ -399,7 +398,7 @@ pub fn build_voice_profile_checked(
     dialogue_lines: Vec<String>,
 ) -> napi::Result<serde_json::Value> {
     let result = voice::build_voice_profile_checked(&character_name, &dialogue_lines)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+        .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -416,9 +415,8 @@ pub fn compare_voices(
         .into_iter()
         .map(to_character_voice_profile)
         .collect();
-    let result = voice::compare_voices_checked(&profiles)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let result = voice::compare_voices_checked(&profiles).map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Measure how far a `current` (revised) voice profile has drifted from a
@@ -433,9 +431,8 @@ pub fn measure_voice_drift(
 ) -> napi::Result<serde_json::Value> {
     let baseline = to_character_voice_profile(baseline);
     let current = to_character_voice_profile(current);
-    let result = voice::measure_voice_drift_checked(&baseline, &current)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let result = voice::measure_voice_drift_checked(&baseline, &current).map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Convenience: build both profiles from baseline-text and current-text
@@ -451,8 +448,8 @@ pub fn measure_voice_drift_from_text(
 ) -> napi::Result<serde_json::Value> {
     let result =
         voice::measure_voice_drift_from_text_checked(&label, &baseline_lines, &current_lines)
-            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+            .map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 /// Build voice profiles for every character and flag same-sounding pairs.
@@ -473,9 +470,8 @@ pub fn analyze_character_voices(
         .into_iter()
         .zip(character_dialogue_lines)
         .collect();
-    let result = voice::analyze_character_voices_checked(&dialogue_data)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    let result = voice::analyze_character_voices_checked(&dialogue_data).map_err(super::reason)?;
+    super::encode_result(result)
 }
 
 #[napi(
@@ -490,8 +486,8 @@ pub fn analyze_subtext_annotations(
     let manuscript = super::decode_input(manuscript, "invalid manuscript object")?;
     let annotations: Vec<subtext::AuthorSubtextAnnotation> =
         super::decode_input(annotations, "invalid author subtext annotations")?;
-    let result = subtext::analyze_subtext_annotations(&manuscript, &annotations)
-        .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    let result =
+        subtext::analyze_subtext_annotations(&manuscript, &annotations).map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -551,5 +547,5 @@ pub fn analyze_subtext(
         &character_emotional_states,
         &genre,
     );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }

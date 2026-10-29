@@ -13,7 +13,7 @@
 
 use aho_corasick::AhoCorasick;
 
-fn is_word_char(c: char) -> bool {
+pub(crate) fn is_word_char(c: char) -> bool {
     if c.is_ascii() {
         return c.is_ascii_alphanumeric() || c == '_';
     }
