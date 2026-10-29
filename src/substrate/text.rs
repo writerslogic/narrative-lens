@@ -3,8 +3,9 @@
 use regex::Regex;
 use std::collections::HashMap;
 use std::sync::OnceLock;
+use unicode_segmentation::UnicodeSegmentation;
 
-use crate::craft::lexicon::WordMatcher;
+use crate::craft::lexicon::{WordMatcher, is_word_char};
 
 // ---------------------------------------------------------------------------
 // Static initializers
@@ -291,30 +292,75 @@ fn common_overrides() -> &'static HashMap<&'static str, usize> {
     })
 }
 
-fn dialogue_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| {
-        Regex::new(concat!(
-            r"(?xs)",
-            // curly double quotes (non-greedy to handle multiple on same line)
-            r"\x{201c}(.*?)\x{201d}",
-            r"|",
-            // curly single quotes
-            r"\x{2018}(.*?)\x{2019}",
-            r"|",
-            // straight double quotes (non-greedy, dotall spans newlines)
-            r#""(.*?)""#,
-            r"|",
-            // multi-paragraph: opening curly quote without closing, to end of text
-            r"\x{201c}(.*)\z",
-        ))
-        .expect("invalid dialogue regex")
+/// Word segments of `text` with their byte offsets.
+///
+/// Segment rule: `text` is cut at UAX #29 word boundaries
+/// (`split_word_bound_indices`) and a segment is kept iff it contains at least
+/// one alphanumeric character (`char::is_alphanumeric`). So "don't", "o'clock",
+/// "rock'n'roll", "3.14", "1,000", "U.S.A", "snake_case" and a decomposed
+/// "cafe\u{301}" are single words; whitespace, punctuation runs, lone quotation
+/// marks and symbols are dropped; a hyphen or dash splits ("well-known" gives
+/// "well", "known"); each CJK ideograph is its own word. A kept word never
+/// starts or ends with a quotation mark and never contains whitespace.
+pub(crate) fn unicode_words(text: &str) -> impl Iterator<Item = (usize, &str)> {
+    text.split_word_bound_indices()
+        .filter(|(_, segment)| segment.chars().any(char::is_alphanumeric))
+}
+
+/// Maximal runs of word characters ([`is_word_char`]) with byte offsets: the
+/// regex `\w+`. Unlike [`unicode_words`], apostrophes, periods and commas always
+/// split ("don't" gives "don", "t"; "3.14" gives "3", "14"), so a run is exactly
+/// the text a `\b`-anchored pattern would see.
+pub(crate) fn word_char_runs(text: &str) -> impl Iterator<Item = (usize, &str)> {
+    let mut chars = text.char_indices().peekable();
+    std::iter::from_fn(move || {
+        let (start, _) = chars.by_ref().find(|&(_, c)| is_word_char(c))?;
+        let mut end = text.len();
+        while let Some(&(i, c)) = chars.peek() {
+            if !is_word_char(c) {
+                end = i;
+                break;
+            }
+            chars.next();
+        }
+        Some((start, &text[start..end]))
     })
 }
 
-pub(crate) fn word_split_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"[^\w'‘’]+").expect("invalid word split regex"))
+/// Text inside each quotation: straight double quotes, curly double quotes
+/// and curly single quotes, scanned left to right without overlap and closed
+/// by the nearest matching mark (newlines included). An opening curly double
+/// quote with no closing mark runs to the end of the text (multi-paragraph
+/// dialogue); any other unpaired opening mark is skipped.
+fn quoted_spans(text: &str) -> impl Iterator<Item = &str> {
+    let mut at = 0;
+    std::iter::from_fn(move || {
+        while let Some(open) = text[at..].chars().next() {
+            let close = match open {
+                '\u{201c}' => '\u{201d}',
+                '\u{2018}' => '\u{2019}',
+                '"' => '"',
+                _ => {
+                    at += open.len_utf8();
+                    continue;
+                }
+            };
+            let body = at + open.len_utf8();
+            at = body;
+            match text[body..].find(close) {
+                Some(len) => {
+                    at = body + len + close.len_utf8();
+                    return Some(&text[body..body + len]);
+                }
+                None if open == '\u{201c}' => {
+                    at = text.len();
+                    return Some(&text[body..]);
+                }
+                None => {}
+            }
+        }
+        None
+    })
 }
 
 /// Passive-voice regex: a `be`-form auxiliary followed by an `-ed`/`-en` participle.
@@ -410,19 +456,9 @@ pub fn count_sentences(text: &str) -> usize {
 /// Count words inside quoted text. Supports straight double quotes, curly
 /// double quotes, curly single quotes, and multi-paragraph dialogue.
 pub fn estimate_dialogue_tokens(text: &str) -> usize {
-    let re = dialogue_regex();
-    let ws_re = word_split_regex();
-    let mut total = 0;
-
-    for caps in re.captures_iter(text) {
-        for i in 1..=4 {
-            if let Some(m) = caps.get(i) {
-                total += ws_re.split(m.as_str()).filter(|s| !s.is_empty()).count();
-            }
-        }
-    }
-
-    total
+    quoted_spans(text)
+        .map(|quote| unicode_words(quote).count())
+        .sum()
 }
 
 // ---------------------------------------------------------------------------
@@ -435,14 +471,12 @@ pub fn tokenize_words(text: &str) -> Vec<String> {
     word_slices(text).map(normalize_word).collect()
 }
 
-/// Word boundaries in the `\w` sense (letters, digits, underscore, internal
-/// apostrophes). `craft::readability::word_slices` deliberately differs: it keeps
-/// only alphabetic runs because syllable counting has no use for digits.
+/// The words of [`unicode_words`] (letters, digits, underscore, internal
+/// apostrophes and number punctuation). `craft::readability::word_slices`
+/// deliberately differs: it keeps only alphabetic runs because syllable
+/// counting has no use for digits.
 pub(crate) fn word_slices(text: &str) -> impl Iterator<Item = &str> {
-    word_split_regex()
-        .split(text)
-        .map(|word| word.trim_matches(['\'', '‘', '’']))
-        .filter(|word| !word.is_empty())
+    unicode_words(text).map(|(_, word)| word)
 }
 
 /// The prefix of `text` holding approximately its first `n` whitespace-delimited
@@ -1061,14 +1095,6 @@ fn echo_stopwords() -> &'static std::collections::HashSet<&'static str> {
     })
 }
 
-/// Echo detection runs on lowercased text and compares ASCII letter runs only,
-/// so "well-known" contributes "well" and "known"; this is intentionally
-/// narrower than [`word_slices`].
-fn word_tokenize_re() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"[a-z]+").expect("word tokenize regex"))
-}
-
 pub fn detect_word_echoes(scene_text: &str, scene_id: usize) -> Vec<ProseIssue> {
     const WINDOW_SIZE: usize = 100;
     const STEP: usize = 50;
@@ -1076,9 +1102,15 @@ pub fn detect_word_echoes(scene_text: &str, scene_id: usize) -> Vec<ProseIssue> 
     const MIN_REPEATS: usize = 3;
     const MAX_ISSUES: usize = 10;
 
+    // Echo detection runs on lowercased text and compares ASCII letter runs
+    // only, so "well-known" contributes "well" and "known" and "don't"
+    // contributes "don" and "t"; this is intentionally narrower than
+    // [`word_slices`].
     let lower = scene_text.to_lowercase();
-    let re = word_tokenize_re();
-    let words: Vec<&str> = re.find_iter(&lower).map(|m| m.as_str()).collect();
+    let words: Vec<&str> = lower
+        .split(|c: char| !c.is_ascii_lowercase())
+        .filter(|word| !word.is_empty())
+        .collect();
 
     if words.is_empty() {
         return Vec::new();
@@ -1420,6 +1452,58 @@ mod tests {
         let text = "He said \"hello there\" and \"goodbye\"\n\u{201c}This is curly\u{201d} she said\n\"Unclosed quote across\ntwo lines\" she finished";
         // "hello there"=2, "goodbye"=1, "This is curly"=3, multiline=5 => 11
         assert_eq!(estimate_dialogue_tokens(text), 11);
+    }
+
+    // -- unicode_words / word_char_runs --
+
+    #[test]
+    fn word_iterators_map_offsets_back_and_skip_non_words() {
+        let text = "“Don’t,” said O'Brien — 3.14 _x_ cafe\u{301}!\n\t‘’ … naïve/you";
+        let words: Vec<(usize, &str)> = unicode_words(text).collect();
+        let runs: Vec<(usize, &str)> = word_char_runs(text).collect();
+        for list in [&words, &runs] {
+            assert!(!list.is_empty());
+            let mut last_end = 0;
+            for &(start, word) in list.iter() {
+                assert_eq!(&text[start..start + word.len()], word);
+                assert!(start >= last_end, "words are in order and disjoint");
+                last_end = start + word.len();
+                assert!(!word.is_empty());
+                assert!(word.chars().any(char::is_alphanumeric), "{word:?}");
+                assert!(!word.chars().any(char::is_whitespace), "{word:?}");
+                assert!(!word.starts_with(['“', '‘', '’', '”', '\'']));
+                assert!(!word.ends_with(['“', '‘', '’', '”', '\'']));
+            }
+        }
+        assert_eq!(
+            words.iter().map(|(_, w)| *w).collect::<Vec<_>>(),
+            [
+                "Don’t",
+                "said",
+                "O'Brien",
+                "3.14",
+                "_x_",
+                "cafe\u{301}",
+                "naïve",
+                "you"
+            ]
+        );
+        assert_eq!(
+            runs.iter().map(|(_, w)| *w).collect::<Vec<_>>(),
+            [
+                "Don",
+                "t",
+                "said",
+                "O",
+                "Brien",
+                "3",
+                "14",
+                "_x_",
+                "cafe\u{301}",
+                "naïve",
+                "you"
+            ]
+        );
     }
 
     // -- tokenize_words --

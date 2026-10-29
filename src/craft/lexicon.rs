@@ -13,14 +13,33 @@
 
 use aho_corasick::AhoCorasick;
 
+/// The regex `\w` class from std: ASCII alphanumerics and `_`; otherwise
+/// Unicode alphanumerics, the combining-diacritic blocks (so a decomposed
+/// "café" is one word), the join controls and connector punctuation. The only
+/// known difference from `\w` is that other-number characters such as "²" and
+/// "½" count as word characters here.
 pub(crate) fn is_word_char(c: char) -> bool {
     if c.is_ascii() {
         return c.is_ascii_alphanumeric() || c == '_';
     }
-    static WORD: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-    let mut bytes = [0; 4];
-    WORD.get_or_init(|| regex::Regex::new(r"^\w$").expect("Unicode word character"))
-        .is_match(c.encode_utf8(&mut bytes))
+    c.is_alphanumeric()
+        || matches!(
+            c,
+            '\u{300}'..='\u{36f}'
+                | '\u{1ab0}'..='\u{1aff}'
+                | '\u{1dc0}'..='\u{1dff}'
+                | '\u{20d0}'..='\u{20ff}'
+                | '\u{fe20}'..='\u{fe2f}'
+                | '\u{200c}'
+                | '\u{200d}'
+                | '\u{203f}'
+                | '\u{2040}'
+                | '\u{2054}'
+                | '\u{fe33}'
+                | '\u{fe34}'
+                | '\u{fe4d}'..='\u{fe4f}'
+                | '\u{ff3f}'
+        )
 }
 
 fn is_word_start(text: &str, start: usize) -> bool {

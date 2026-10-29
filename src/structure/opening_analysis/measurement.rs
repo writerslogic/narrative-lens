@@ -119,15 +119,14 @@ pub(super) fn measure(text: &str) -> crate::Result<MeasuredOpening> {
             }
         }
     }
-    static CAPITALIZED: OnceLock<regex::Regex> = OnceLock::new();
-    for m in CAPITALIZED
-        .get_or_init(|| {
-            regex::Regex::new(r"\b\p{Lu}[\p{L}\p{M}]*\b")
-                .expect("static capitalized-token expression")
-        })
-        .find_iter(text)
-    {
-        found.push((m.start(), m.end(), OpeningCueKind::CapitalizedToken));
+    // A whole word that starts with an uppercase letter and holds nothing but
+    // letters: "Mary" in "Mary's", neither "USA1" nor "snake_Case".
+    let capitalized = crate::substrate::text::word_char_runs(text).filter(|(_, word)| {
+        let mut chars = word.chars();
+        chars.next().is_some_and(char::is_uppercase) && chars.all(char::is_alphabetic)
+    });
+    for (start, word) in capitalized {
+        found.push((start, start + word.len(), OpeningCueKind::CapitalizedToken));
         if found.len() > 20_000 {
             return Err(measurements::invalid("opening exceeds 20000 source cues"));
         }

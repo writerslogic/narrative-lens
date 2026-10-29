@@ -269,15 +269,64 @@ fn dialogue_attr_reverse_regex() -> &'static Regex {
     })
 }
 
-fn capitalized_word_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"[A-Z][a-z]+").expect("invalid capitalized word regex"))
+/// End of the `[A-Z][a-z]+` run starting at byte `at`, if there is one. ASCII
+/// only and unanchored on purpose: "McDonald" yields "Mc" then "Donald", and a
+/// run may start inside a longer token, exactly as the original pattern did.
+fn capitalized_run_end(bytes: &[u8], at: usize) -> Option<usize> {
+    if !bytes[at].is_ascii_uppercase() {
+        return None;
+    }
+    let end = at
+        + 1
+        + bytes[at + 1..]
+            .iter()
+            .take_while(|b| b.is_ascii_lowercase())
+            .count();
+    (end > at + 1).then_some(end)
 }
 
-fn capitalized_pair_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| {
-        Regex::new(r"[A-Z][a-z]+\s+[A-Z][a-z]+").expect("invalid capitalized pair regex")
+/// Non-overlapping matches of `[A-Z][a-z]+` with byte offsets.
+fn capitalized_words(text: &str) -> impl Iterator<Item = (usize, &str)> {
+    let bytes = text.as_bytes();
+    let mut at = 0;
+    std::iter::from_fn(move || {
+        while at < bytes.len() {
+            if let Some(end) = capitalized_run_end(bytes, at) {
+                let start = at;
+                at = end;
+                return Some((start, &text[start..end]));
+            }
+            at += 1;
+        }
+        None
+    })
+}
+
+/// Non-overlapping matches of `[A-Z][a-z]+\s+[A-Z][a-z]+` with byte offsets.
+fn capitalized_pairs(text: &str) -> impl Iterator<Item = (usize, &str)> {
+    let bytes = text.as_bytes();
+    let mut at = 0;
+    std::iter::from_fn(move || {
+        while at < bytes.len() {
+            let start = at;
+            at += 1;
+            let Some(first_end) = capitalized_run_end(bytes, start) else {
+                continue;
+            };
+            let gap: usize = text[first_end..]
+                .chars()
+                .take_while(|c| c.is_whitespace())
+                .map(char::len_utf8)
+                .sum();
+            if gap == 0 || first_end + gap >= bytes.len() {
+                continue;
+            }
+            if let Some(end) = capitalized_run_end(bytes, first_end + gap) {
+                at = end;
+                return Some((start, &text[start..end]));
+            }
+        }
+        None
     })
 }
 
@@ -397,7 +446,6 @@ pub(crate) fn regex_name_evidence<S: AsRef<str>>(
     let fp = false_positives();
     let attr_re = dialogue_attr_regex();
     let attr_rev_re = dialogue_attr_reverse_regex();
-    let cap_re = capitalized_word_regex();
 
     let mut counts: HashMap<String, usize> = HashMap::new();
     // Names with at least one dialogue attribution ("X said" / "said X"): a
@@ -411,22 +459,22 @@ pub(crate) fn regex_name_evidence<S: AsRef<str>>(
         count_attributions(attr_rev_re, scene, fp, &mut counts, &mut strong);
 
         // Single capitalized words not at sentence starts.
-        for m in cap_re.find_iter(scene) {
-            if sentence_starts.contains(&m.start()) {
+        for (start, name) in capitalized_words(scene) {
+            if sentence_starts.contains(&start) {
                 continue;
             }
-            let name = m.as_str().to_string();
+            let name = name.to_string();
             if !fp.contains(&name.to_lowercase()) {
                 *counts.entry(name).or_insert(0) += 1;
             }
         }
 
         // Two-word capitalized names (e.g. "Mary Smith").
-        for m in capitalized_pair_regex().find_iter(scene) {
-            if sentence_starts.contains(&m.start()) {
+        for (start, name) in capitalized_pairs(scene) {
+            if sentence_starts.contains(&start) {
                 continue;
             }
-            let name = m.as_str().to_string();
+            let name = name.to_string();
             let all_fp = name
                 .split_whitespace()
                 .all(|w| fp.contains(&w.to_lowercase()));
@@ -505,8 +553,6 @@ pub fn extract_character_mentions<S: AsRef<str>>(
     let fp = false_positives();
     let attr_re = dialogue_attr_regex();
     let attr_rev_re = dialogue_attr_reverse_regex();
-    let cap_re = capitalized_word_regex();
-    let pair_re = capitalized_pair_regex();
 
     let mut mentions: Vec<NameMention> = Vec::new();
     for (scene_index, scene) in scenes.iter().enumerate() {
@@ -536,26 +582,24 @@ pub fn extract_character_mentions<S: AsRef<str>>(
         }
 
         // Single capitalized words, not at sentence starts.
-        for m in cap_re.find_iter(scene) {
-            if sentence_starts.contains(&m.start()) {
+        for (start, name) in capitalized_words(scene) {
+            if sentence_starts.contains(&start) {
                 continue;
             }
-            let name = m.as_str();
             if !fp.contains(&name.to_lowercase()) {
-                keep(name, m.start(), &mut mentions);
+                keep(name, start, &mut mentions);
             }
         }
 
         // Two-word capitalized names, not at sentence starts.
-        for m in pair_re.find_iter(scene) {
-            if sentence_starts.contains(&m.start()) {
+        for (start, name) in capitalized_pairs(scene) {
+            if sentence_starts.contains(&start) {
                 continue;
             }
-            let name = m.as_str();
             let words: Vec<&str> = name.split_whitespace().collect();
             let all_fp = words.iter().all(|w| fp.contains(&w.to_lowercase()));
             if !all_fp {
-                keep(name, m.start(), &mut mentions);
+                keep(name, start, &mut mentions);
             }
         }
     }
