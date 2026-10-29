@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) +
 
 ### Changed
 - `count_syllables` no longer allocates per call; results are unchanged.
+- Heuristic person extraction segments each scene into sentences once and reuses the
+  dialogue-attribution scan instead of repeating both; results are unchanged.
 - The crate release workflow skips the upload when the version is already on crates.io.
 - `docs/EVALUATION.md` names the manual WASI launcher used for the recorded tract parity run.
 
