@@ -102,8 +102,9 @@ uv run --no-project scripts/literary_benchmark.py score --folder target/external
 
 `prepare` and `score` never modify the pinned labels or train anything. The example
 runs the heuristic `continuity::ner` and `CoreferenceResolver` paths, or the verified
-local NER model when `--ner-cache` points at a pinned export. Score JSON and logs for
-each run live under [audit-2026-10-27](audit-2026-10-27/) as `literary-development-*`.
+local NER model when `--ner-cache` points at a pinned export. The scored v6 runs are
+kept as [benchmarks/evidence/literary-development-{heuristic,ner}-v6.json](benchmarks/evidence/);
+new runs write to `target/evaluation/` by default.
 
 | Metric (development split, v6, 2026-10-28) | Heuristic | With local NER model |
 | --- | ---: | ---: |
@@ -191,8 +192,8 @@ predict latency, the Node debug addon and Rust release build use different profi
 and JS conversion still runs on the event loop. A release-blocker rerun of the varied
 workload in the Rust release profile measured 58.27 ms full, 12.59 ms edit, and 0.45 ms
 reorder; the release Node addon measured 59.97 ms full and 14.13 ms edit
-([Rust samples](audit-2026-10-27/remediation-performance-rust.json),
-[Node samples](audit-2026-10-27/remediation-performance-node.json)).
+([Rust samples](benchmarks/evidence/remediation-performance-rust.json),
+[Node samples](benchmarks/evidence/remediation-performance-node.json)).
 
 ### Spelling and corpus-embedding components
 
@@ -216,7 +217,7 @@ nonsymmetric. Words and passages with zero learned vectors abstain from semantic
 rankings; hybrid document search still retrieves exact terms lexically. Run
 `cargo run --locked --release --example component_performance -- spelling 7` or
 `-- embedding 2500 100 5` (`embedding-mixed` selects the denser corpus).
-[Full comparisons](audit-2026-10-27/component-performance-remediation.json) retain all
+[Full comparisons](benchmarks/evidence/component-performance-remediation.json) retain all
 eight workloads and raw samples.
 
 ### Pinned pretrained-model parity
@@ -233,8 +234,8 @@ are pinned in PEP 723 metadata run with `uv run --python 3.11`.
 
 These checks verify preprocessing and runtime fidelity for these exports only, not the
 full SentenceTransformer pipeline, other exports, editorial accuracy, or runtime speed.
-[Commands, hashes, and limits](audit-2026-10-27/component-real-model-manifest.json) and the
-[independent comparison](audit-2026-10-27/component-real-model-parent-comparison.json)
+[Commands, hashes, and limits](benchmarks/evidence/component-real-model-manifest.json) and the
+[independent comparison](benchmarks/evidence/component-real-model-parent-comparison.json)
 retain the evidence.
 
 ### World-state retention
@@ -254,6 +255,6 @@ fingerprints in all three modes; compact output omits cumulative snapshots and, 
 default, event histories. This is an output-retention choice, not a same-output
 speedup. Run `cargo run --locked --release --example component_world_state -- 1024 5 current`
 or select `full`, `deltas`, `minimal`, and the optional `activity` workload.
-[Raw measurements](audit-2026-10-27/component-world-state-after.json) and the
-[manifest](audit-2026-10-27/component-world-state-manifest.json) record the
+[Raw measurements](benchmarks/evidence/component-world-state-after.json) and the
+[manifest](benchmarks/evidence/component-world-state-manifest.json) record the
 oversized-name regression, static errors, and delta replay checks.

@@ -112,12 +112,13 @@ impl Parser {
     pub(crate) fn extract_bounded(
         &self,
         text: &str,
+        sentences: &[(usize, usize)],
         limit: usize,
         selection: EventSelection,
     ) -> Vec<Event> {
         let mut events = Vec::new();
         if let Some(re) = &self.re {
-            for (start, end) in crate::substrate::utils::sentence_spans(text) {
+            for &(start, end) in sentences {
                 if events.len() > limit {
                     break;
                 }
@@ -190,7 +191,7 @@ impl Parser {
         if selection.object
             && let Some(re) = &self.transfer
         {
-            for (start, end) in crate::substrate::utils::sentence_spans(text) {
+            for &(start, end) in sentences {
                 if events.len() > limit {
                     break;
                 }
@@ -205,22 +206,22 @@ impl Parser {
                 }
             }
         }
-        let object = object_regex();
-        for (start, end) in crate::substrate::utils::sentence_spans(text) {
-            if events.len() > limit {
-                break;
-            }
-            if selection.object
-                && let Some(c) = object.captures(&text[start..end])
-            {
-                let m = c.get(0).expect("capture has whole match");
-                events.push(Event {
-                    start: start + m.start(),
-                    end: start + m.end(),
-                    character: String::new(),
-                    range: None,
-                    kind: EventKind::Object(normalize(&c[1]), normalize(&c[2])),
-                });
+        if selection.object {
+            let object = object_regex();
+            for &(start, end) in sentences {
+                if events.len() > limit {
+                    break;
+                }
+                if let Some(c) = object.captures(&text[start..end]) {
+                    let m = c.get(0).expect("capture has whole match");
+                    events.push(Event {
+                        start: start + m.start(),
+                        end: start + m.end(),
+                        character: String::new(),
+                        range: None,
+                        kind: EventKind::Object(normalize(&c[1]), normalize(&c[2])),
+                    });
+                }
             }
         }
         if !events.is_empty() {

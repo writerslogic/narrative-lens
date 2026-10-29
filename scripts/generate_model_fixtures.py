@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
 """Generate tiny untrained ONNX graphs using the official protobuf wire schema.
 
 Schema: https://github.com/onnx/onnx/blob/main/onnx/onnx.proto3

@@ -20,4 +20,5 @@ pub mod error;
 pub mod types;
 
 pub use error::{Error, Result};
+#[allow(deprecated)]
 pub use types::{AnalysisResult, Options};

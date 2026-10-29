@@ -7,6 +7,10 @@ use narrative_lens::{
     },
 };
 
+#[cfg(feature = "onnx")]
+#[path = "support/digest.rs"]
+mod digest;
+
 static MODEL_TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 struct Names;
@@ -159,7 +163,6 @@ fn checked_ner_bounds_inputs_and_observed_entities() {
 fn native_verified_ner_reports_actual_token_budget_failure() {
     let _guard = MODEL_TEST_LOCK.lock().unwrap();
     use onnx::model::{ModelManifest, ModelProfile};
-    use sha2::{Digest, Sha256};
     let bytes = include_bytes!("fixtures/models/valid-ner.onnx");
     let vocabulary = tokenizers::models::wordlevel::WordLevel::builder()
         .vocab(
@@ -179,8 +182,8 @@ fn native_verified_ner_reports_actual_token_budget_failure() {
         schema_version: 1,
         kind: ModelKind::Ner,
         profile: ModelProfile::HuggingFaceBio9V1,
-        model_sha256: format!("{:x}", Sha256::digest(bytes)),
-        tokenizer_sha256: format!("{:x}", Sha256::digest(&tokenizer)),
+        model_sha256: digest::sha256_hex(bytes),
+        tokenizer_sha256: digest::sha256_hex(&tokenizer),
         max_tokens: 1,
         padding_token_id: 0,
         labels: [

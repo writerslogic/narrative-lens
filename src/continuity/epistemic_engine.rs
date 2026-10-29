@@ -16,7 +16,10 @@ use crate::{
         Manuscript, TextRange,
         config::{validate_id, validate_name},
     },
-    substrate::utils::{AnalysisAvailability, sentence_spans},
+    substrate::{
+        offsets::OffsetIndex,
+        utils::{AnalysisAvailability, sentence_spans},
+    },
 };
 
 pub const MAX_EPISTEMIC_SCENES: usize = 10_000;
@@ -93,15 +96,28 @@ pub struct EpistemicState {
     pub uncertain_about: HashSet<usize>,
 }
 
-/// Legacy reader state shape; prose alone cannot establish knowledge.
-#[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ReaderEpistemicState {
-    #[serde(serialize_with = "serialize_sorted_ids")]
-    pub knows: HashSet<usize>,
-    pub scene: usize,
+// The ts-rs and schemars derives name the deprecated type in generated impls,
+// which an item-level allow does not cover; the module-level allow does.
+#[allow(deprecated)]
+mod legacy {
+    use super::*;
+
+    /// Legacy reader state shape; prose alone cannot establish knowledge.
+    #[deprecated(
+        since = "0.2.0",
+        note = "prose cannot establish reader knowledge; use `EpistemicCandidate` for lexical candidates or author-supplied `AuthorEpistemicQuery` answers"
+    )]
+    #[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct ReaderEpistemicState {
+        #[serde(serialize_with = "serialize_sorted_ids")]
+        pub knows: HashSet<usize>,
+        pub scene: usize,
+    }
 }
+#[allow(deprecated)]
+pub use legacy::ReaderEpistemicState;
 
 /// Epistemic asymmetry measurement.
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
@@ -289,16 +305,10 @@ fn named_characters(
     identities: &regex::RegexSet,
     cast: &[&str],
 ) -> Vec<String> {
-    static WORD: OnceLock<regex::Regex> = OnceLock::new();
-    let word =
-        WORD.get_or_init(|| regex::Regex::new(r"^\w$").expect("constant word-character regex"));
     let mut found = BTreeSet::new();
     let mut cursor = 0;
     while let Some(hit) = matcher.find_at(sentence, cursor) {
-        let is_word = |ch: char| {
-            let mut bytes = [0; 4];
-            word.is_match(ch.encode_utf8(&mut bytes))
-        };
+        let is_word = |ch: char| ch.is_alphanumeric() || ch == '_';
         let before = sentence[..hit.start()].chars().next_back();
         let after = sentence[hit.end()..].chars().next();
         if before.is_none_or(|ch| !is_word(ch)) && after.is_none_or(|ch| !is_word(ch)) {
@@ -434,8 +444,7 @@ pub fn track_epistemics_checked(
                 "epistemic sentence count exceeds limit".into(),
             ));
         }
-        let mut byte_cursor = 0;
-        let mut utf16_cursor = 0u32;
+        let offsets = OffsetIndex::new(text)?;
         let before = result.candidates.len();
         for (start, end) in spans {
             let sentence = &text[start..end];
@@ -496,18 +505,14 @@ pub fn track_epistemics_checked(
                 });
                 id
             });
-            let utf16_start = utf16_cursor + text[byte_cursor..start].encode_utf16().count() as u32;
-            let utf16_end = utf16_start + sentence.encode_utf16().count() as u32;
-            byte_cursor = end;
-            utf16_cursor = utf16_end;
             result.candidates.push(EpistemicCandidate {
                 fact_id: id,
                 scene,
                 range: TextRange {
                     byte_start: start,
                     byte_end: end,
-                    utf16_start,
-                    utf16_end,
+                    utf16_start: offsets.utf16(start).expect("sentence start boundary"),
+                    utf16_end: offsets.utf16(end).expect("sentence end boundary"),
                 },
                 signals,
                 mentioned_characters,

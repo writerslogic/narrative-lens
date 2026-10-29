@@ -1,14 +1,13 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::sync::OnceLock;
 
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use super::{DialogueLine, speech_verbs};
 use crate::{
-    Error, Result,
+    Result,
+    craft::lexicon::is_word_char as word_char,
     manuscript::TextRange,
-    substrate::{offsets::OffsetIndex, utils::AnalysisAvailability},
+    substrate::{common_types::invalid, offsets::OffsetIndex, utils::AnalysisAvailability},
 };
 
 const MAX_TEXT_BYTES: usize = 16 * 1024 * 1024;
@@ -65,22 +64,6 @@ pub struct DialogueExtractionResult {
     pub lines: Vec<LocatedDialogueLine>,
 }
 
-fn invalid(message: &str) -> Error {
-    Error::InvalidInput(message.into())
-}
-
-fn word_char(ch: char) -> bool {
-    if ch.is_alphanumeric() || ch == '_' {
-        return true;
-    }
-    if ch.is_ascii() {
-        return false;
-    }
-    static WORD: OnceLock<Regex> = OnceLock::new();
-    let mut bytes = [0; 4];
-    WORD.get_or_init(|| Regex::new(r"^\w$").expect("static word class"))
-        .is_match(ch.encode_utf8(&mut bytes))
-}
 fn name_char(ch: char) -> bool {
     word_char(ch) || matches!(ch, '\'' | '’' | '-')
 }

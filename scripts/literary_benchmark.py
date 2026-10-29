@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
 """Prepare and score pinned LitBank labels without changing them or training a model."""
 
 import argparse
@@ -356,7 +360,7 @@ def main():
     parser.add_argument("--predictions", type=Path)
     parser.add_argument("--split", choices=["development", "final_holdout"], default="development")
     parser.add_argument("--finalize", action="store_true")
-    parser.add_argument("--output", type=Path, default=ROOT / "docs/audit-2026-10-27/literary-development.json")
+    parser.add_argument("--output", type=Path, default=ROOT / "target/evaluation/literary-development.json")
     args = parser.parse_args()
     if args.mode == "prepare":
         spec = json.loads((ROOT / "docs/benchmarks/litbank-source.json").read_text())

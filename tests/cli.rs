@@ -1,4 +1,7 @@
 #![cfg(feature = "cli")]
+#[cfg(feature = "onnx")]
+#[path = "support/digest.rs"]
+mod digest;
 use serde_json::Value;
 use std::{
     fs,
@@ -32,6 +35,29 @@ impl Drop for Fixture {
     fn drop(&mut self) {
         fs::remove_dir_all(&self.0).unwrap();
     }
+}
+fn validate_sarif(paths: &[&str]) {
+    let required = std::env::var("NARRATIVE_LENS_REQUIRE_SARIF_VALIDATION").is_ok_and(|v| v == "1");
+    let validation = match Command::new("uv")
+        .args(["run", "--locked", "scripts/validate_sarif.py"])
+        .args(paths)
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .output()
+    {
+        Ok(validation) => validation,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound && !required => {
+            eprintln!(
+                "skipping official SARIF schema validation: uv is not installed; set NARRATIVE_LENS_REQUIRE_SARIF_VALIDATION=1 to require it"
+            );
+            return;
+        }
+        Err(error) => panic!("uv is required for official SARIF schema validation: {error}"),
+    };
+    assert!(
+        validation.status.success(),
+        "{}",
+        String::from_utf8_lossy(&validation.stderr)
+    );
 }
 
 #[test]
@@ -293,22 +319,7 @@ fn cli_reports_filters_baselines_errors_and_official_sarif_schema() {
         run(&["--config", &strict, &first, &second]).status.code(),
         Some(2)
     );
-    let validation = Command::new("uv")
-        .args([
-            "run",
-            "--locked",
-            "scripts/validate_sarif.py",
-            &sarif_file,
-            &conflict_file,
-        ])
-        .current_dir(env!("CARGO_MANIFEST_DIR"))
-        .output()
-        .expect("uv is required for official SARIF schema validation");
-    assert!(
-        validation.status.success(),
-        "{}",
-        String::from_utf8_lossy(&validation.stderr)
-    );
+    validate_sarif(&[&sarif_file, &conflict_file]);
     let terminal = run(&["--rules", rule, &file]);
     assert!(
         String::from_utf8(terminal.stdout)
@@ -385,16 +396,7 @@ fn manifests_preserve_ids_overlay_controls_and_export_resolved_sarif() {
         "resolved.sarif",
         std::str::from_utf8(&output.stdout).unwrap(),
     );
-    let validation = Command::new("uv")
-        .args(["run", "--locked", "scripts/validate_sarif.py", &path])
-        .current_dir(env!("CARGO_MANIFEST_DIR"))
-        .output()
-        .unwrap();
-    assert!(
-        validation.status.success(),
-        "{}",
-        String::from_utf8_lossy(&validation.stderr)
-    );
+    validate_sarif(&[&path]);
 }
 #[test]
 fn thresholds_include_omitted_results_and_unassessed_baselines_are_not_clean() {
@@ -526,22 +528,7 @@ fn suppressed_and_unassessed_sarif_preserve_status_and_validate() {
         "unassessed.sarif",
         std::str::from_utf8(&uncertain.stdout).unwrap(),
     );
-    let validation = Command::new("uv")
-        .args([
-            "run",
-            "--locked",
-            "scripts/validate_sarif.py",
-            &suppressed_file,
-            &uncertain_file,
-        ])
-        .current_dir(env!("CARGO_MANIFEST_DIR"))
-        .output()
-        .unwrap();
-    assert!(
-        validation.status.success(),
-        "{}",
-        String::from_utf8_lossy(&validation.stderr)
-    );
+    validate_sarif(&[&suppressed_file, &uncertain_file]);
 }
 
 #[test]
@@ -666,7 +653,6 @@ fn cli_loads_pinned_nli_and_reports_identity_then_rejects_tampering() {
         checked::ModelKind,
         model::{ModelManifest, ModelProfile},
     };
-    use sha2::{Digest, Sha256};
     let f = Fixture::new();
     let first = f.file("first.txt", "Alice stayed in the cellar.");
     let second = f.file("second.txt", "Alice left the cellar.");
@@ -690,8 +676,8 @@ fn cli_loads_pinned_nli_and_reports_identity_then_rejects_tampering() {
         schema_version: 1,
         kind: ModelKind::Nli,
         profile: ModelProfile::HuggingFaceNli3V1,
-        model_sha256: format!("{:x}", Sha256::digest(model)),
-        tokenizer_sha256: format!("{:x}", Sha256::digest(tokenizer.as_bytes())),
+        model_sha256: digest::sha256_hex(model),
+        tokenizer_sha256: digest::sha256_hex(tokenizer.as_bytes()),
         max_tokens: 512,
         padding_token_id: 0,
         labels: ["contradiction", "neutral", "entailment"]

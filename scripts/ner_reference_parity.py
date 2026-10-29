@@ -126,7 +126,8 @@ def main():
               'inputsSha256': digest(inputs), 'versions': {name: importlib.metadata.version(name) for name in ['onnxruntime', 'tokenizers', 'numpy']},
               'provider': session.get_providers(), 'comparisons': comparisons,
               'pass': all(row['exactMatch'] for row in comparisons)}
-    path = ROOT / 'docs/audit-2026-10-27/program-ner-parity.json'
+    path = ROOT / 'target/evaluation/program-ner-parity.json'
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n')
     print(json.dumps({'cases': len(comparisons), 'pass': report['pass'], 'report': str(path)}))
     if not report['pass']:

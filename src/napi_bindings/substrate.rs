@@ -31,7 +31,7 @@ pub fn explain_readability(
         ));
     }
     let result = explain::explain_readability(fkgl, target_min, target_max, &genre);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Explain a pacing issue (long sentences, or a talking-head scene) for one scene.
@@ -53,7 +53,7 @@ pub fn explain_pacing(
         is_talking_head,
         dialogue_ratio,
     );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Explain a tension issue: a flat run, a sharp drop, or a manuscript with no
@@ -99,7 +99,7 @@ pub fn explain_tension(
         total_scenes,
         max_tension,
     );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Explain a tonal shift between two scenes, if `from_tone` and `to_tone` differ.
@@ -119,7 +119,7 @@ pub fn explain_tone_shift(
         super::unsigned_index(scene_id)?,
         &genre,
     );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Explain a "white room" issue: a scene with too little sensory grounding
@@ -138,7 +138,7 @@ pub fn explain_white_room(
         super::unsigned_index(sensory_count)?,
         super::unsigned_index(word_count)?,
     );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Explain a show-don't-tell issue (`narrative_distance`, `filter_word`,
@@ -152,7 +152,7 @@ pub fn explain_show_dont_tell(
     snippet: String,
 ) -> napi::Result<serde_json::Value> {
     let result = explain::explain_show_dont_tell(&issue_type, &snippet);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Compute confidence for analysis of a scene based on its text content.
@@ -167,7 +167,7 @@ pub fn compute_scene_confidence(
     super::bounded_texts([scene_text.as_str()], 1)?;
     let result =
         confidence::compute_scene_confidence(&scene_text, super::unsigned_index(scene_id)?);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Compute confidence for a specific finding based on signal agreement and
@@ -183,7 +183,7 @@ pub fn compute_finding_confidence(
         super::unsigned_index(total_signals)?,
         scene_confidence,
     )
-    .map_err(|error| napi::Error::from_reason(error.to_string()))
+    .map_err(super::reason)
 }
 
 #[napi(
@@ -200,7 +200,7 @@ pub fn measure_finding_confidence(
         super::unsigned_index(total_signals)?,
         scene_confidence,
     )
-    .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+    .map_err(super::reason)?;
     super::encode_result(result)
 }
 
@@ -217,7 +217,7 @@ pub fn compute_readability_confidence(
         super::unsigned_index(word_count)?,
         super::unsigned_index(sentence_count)?,
     );
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Rank the most-frequent content words in `text`, most-frequent first,
@@ -231,7 +231,7 @@ pub fn word_frequencies(text: String, limit: f64) -> napi::Result<serde_json::Va
     let stop = crate::substrate::text::stopwords();
     let result =
         word_stats::word_frequencies(&text, super::unsigned_index(limit)?, |w| stop.contains(w));
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Count and rank already-tokenized `words`, applying the same content-word
@@ -251,7 +251,7 @@ pub fn word_frequencies_from_words(
         word_stats::word_frequencies_from_words(words, super::unsigned_index(limit)?, |w| {
             stop.contains(w)
         });
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Train a corpus embedding from `texts` (default build options) and return
@@ -274,9 +274,9 @@ pub fn train_and_find_nearest(
     let refs: Vec<&str> = texts.iter().map(String::as_str).collect();
     let corpus =
         embedding::CorpusEmbedding::train_checked(&refs, &embedding::EmbeddingOptions::default())
-            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+            .map_err(super::reason)?;
     let result = corpus.nearest_words(&word, k);
-    serde_json::to_value(result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    super::encode_result(result)
 }
 
 /// Train a corpus embedding from `texts` (default build options) and return
@@ -293,6 +293,6 @@ pub fn train_and_similarity(
     let refs: Vec<&str> = texts.iter().map(String::as_str).collect();
     let corpus =
         embedding::CorpusEmbedding::train_checked(&refs, &embedding::EmbeddingOptions::default())
-            .map_err(|error| napi::Error::from_reason(error.to_string()))?;
+            .map_err(super::reason)?;
     Ok(corpus.similarity(&word_a, &word_b))
 }

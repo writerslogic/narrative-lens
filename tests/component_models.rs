@@ -3,6 +3,10 @@ use narrative_lens::onnx::{
     model::{ModelIdentity, ModelManifest, ModelProfile, ModelVerification},
 };
 
+#[cfg(feature = "onnx")]
+#[path = "support/digest.rs"]
+mod digest;
+
 fn manifest(kind: ModelKind) -> ModelManifest {
     let (profile, labels): (_, &[&str]) = match kind {
         ModelKind::Embedding => (ModelProfile::HuggingFaceMaskedMeanV1, &[]),
@@ -166,7 +170,6 @@ fn json_manifests_are_bounded_and_reject_unknown_fields() {
 mod runtime {
     use super::*;
     use narrative_lens::onnx::{self, NerCache, checked};
-    use sha2::{Digest, Sha256};
 
     static MODEL_TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
@@ -198,8 +201,8 @@ mod runtime {
 
     fn pinned(kind: ModelKind, model: &[u8], tokenizer: &[u8]) -> ModelManifest {
         let mut profile = manifest(kind);
-        profile.model_sha256 = format!("{:x}", Sha256::digest(model));
-        profile.tokenizer_sha256 = format!("{:x}", Sha256::digest(tokenizer));
+        profile.model_sha256 = digest::sha256_hex(model);
+        profile.tokenizer_sha256 = digest::sha256_hex(tokenizer);
         profile
     }
 

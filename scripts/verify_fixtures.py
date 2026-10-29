@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
 """Verify annotation provenance, frozen corpus content, and split identity."""
 import hashlib
 import json

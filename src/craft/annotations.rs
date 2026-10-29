@@ -1,8 +1,10 @@
 use crate::{
-    Error, Result,
+    Result,
     manuscript::{Evidence, Manuscript, author_source::validate_sources},
     structure::author_events::{AuthorSource, MAX_AUTHOR_EVENT_BYTES, MAX_AUTHOR_EVENTS},
 };
+
+pub(crate) use crate::substrate::common_types::invalid;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -39,9 +41,6 @@ impl AnnotationBudget {
         self.add(&source.scene_id)?;
         self.add(&source.quote)
     }
-}
-pub(crate) fn invalid(message: &str) -> Error {
-    Error::InvalidInput(message.into())
 }
 pub(crate) fn validate_text(value: &str) -> Result<()> {
     if value.trim().is_empty() || value.len() > 4096 {

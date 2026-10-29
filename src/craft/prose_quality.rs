@@ -3,6 +3,7 @@ use regex::Regex;
 use std::sync::OnceLock;
 
 use crate::craft::lexicon::WordMatcher;
+use crate::substrate::text::truncate_snippet;
 
 use log::debug;
 use serde::Serialize;
@@ -28,17 +29,6 @@ fn adverb_re() -> &'static Regex {
 const NON_ADVERBS: &[&str] = &[
     "only", "early", "likely", "family", "holy", "ugly", "lonely",
 ];
-
-fn truncate(s: &str, max: usize) -> String {
-    if s.len() <= max {
-        s.to_string()
-    } else {
-        format!(
-            "{}...",
-            &s[..crate::substrate::text::floor_char_boundary(s, max)]
-        )
-    }
-}
 
 // ---------------------------------------------------------------------------
 // Cliche detection
@@ -244,7 +234,7 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
                 examples.push(ProseExample {
                     scene_id: i,
                     issue_type: "overlong_sentence".into(),
-                    snippet: truncate(sent, 120),
+                    snippet: truncate_snippet(sent, 120),
                     suggestion: format!(
                         "This {}-word sentence may lose readers. Consider splitting it.",
                         wc
@@ -257,7 +247,7 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
                 examples.push(ProseExample {
                     scene_id: i,
                     issue_type: "passive_voice".into(),
-                    snippet: truncate(sent, 120),
+                    snippet: truncate_snippet(sent, 120),
                     suggestion: "Consider rewriting in active voice for stronger impact.".into(),
                 });
             }
@@ -273,7 +263,7 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
                 examples.push(ProseExample {
                     scene_id: i,
                     issue_type: "adverb_cluster".into(),
-                    snippet: truncate(sent, 120),
+                    snippet: truncate_snippet(sent, 120),
                     suggestion: format!(
                         "Found {} adverbs ({}). Consider removing some.",
                         adverbs.len(),
@@ -290,7 +280,7 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
                     examples.push(ProseExample {
                         scene_id: i,
                         issue_type: "repetitive_opener".into(),
-                        snippet: truncate(sent, 120),
+                        snippet: truncate_snippet(sent, 120),
                         suggestion: format!(
                             "Multiple consecutive sentences starting with '{}'. Vary your sentence openings.",
                             words[0]
@@ -311,7 +301,7 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
                 examples.push(ProseExample {
                     scene_id: i,
                     issue_type: "filter_word".into(),
-                    snippet: truncate(sent, 120),
+                    snippet: truncate_snippet(sent, 120),
                     suggestion: format!(
                         "Filter word '{}' creates narrative distance. Describe directly instead.",
                         m.text.to_lowercase()
@@ -334,7 +324,7 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
                             examples.push(ProseExample {
                                 scene_id: i,
                                 issue_type: "purple_prose".into(),
-                                snippet: truncate(sent, 120),
+                                snippet: truncate_snippet(sent, 120),
                                 suggestion: format!(
                                     "Found {} consecutive adjectives. Trim to 1-2 for stronger prose.",
                                     consecutive_adj
@@ -350,13 +340,13 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
                     && !examples.iter().any(|e| {
                         e.scene_id == i
                             && e.issue_type == "purple_prose"
-                            && e.snippet == truncate(sent, 120)
+                            && e.snippet == truncate_snippet(sent, 120)
                     })
                 {
                     examples.push(ProseExample {
                         scene_id: i,
                         issue_type: "purple_prose".into(),
-                        snippet: truncate(sent, 120),
+                        snippet: truncate_snippet(sent, 120),
                         suggestion: format!(
                             "Found {} consecutive adjectives. Trim to 1-2 for stronger prose.",
                             consecutive_adj
@@ -384,7 +374,7 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
             examples.push(ProseExample {
                 scene_id: i,
                 issue_type: "cliche".into(),
-                snippet: truncate(context, 120),
+                snippet: truncate_snippet(context, 120),
                 suggestion: format!(
                     "Cliche '{}' weakens the prose. Find a fresh, specific image.",
                     matched
@@ -415,7 +405,7 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
                         examples.push(ProseExample {
                             scene_id: i,
                             issue_type: "monotonous_rhythm".into(),
-                            snippet: truncate(sents[run_start], 120),
+                            snippet: truncate_snippet(sents[run_start], 120),
                             suggestion: format!(
                                 "{} consecutive sentences average ~{} words each. Vary sentence length for better rhythm.",
                                 run_len, avg_len
@@ -432,7 +422,7 @@ pub fn collect_prose_examples(scenes: &[String]) -> Vec<ProseExample> {
                 examples.push(ProseExample {
                     scene_id: i,
                     issue_type: "monotonous_rhythm".into(),
-                    snippet: truncate(sents[run_start], 120),
+                    snippet: truncate_snippet(sents[run_start], 120),
                     suggestion: format!(
                         "{} consecutive sentences average ~{} words each. Vary sentence length for better rhythm.",
                         run_len, avg_len
@@ -491,7 +481,7 @@ fn detect_floating_head(scene_text: &str, scene_id: usize, examples: &mut Vec<Pr
                 examples.push(ProseExample {
                     scene_id,
                     issue_type: "floating_head_dialogue".into(),
-                    snippet: truncate(lines[run_start], 120),
+                    snippet: truncate_snippet(lines[run_start], 120),
                     suggestion: format!(
                         "{} consecutive dialogue lines without action beats. Add gestures, movement, or sensory detail between lines.",
                         consecutive_dialogue
@@ -506,7 +496,7 @@ fn detect_floating_head(scene_text: &str, scene_id: usize, examples: &mut Vec<Pr
         examples.push(ProseExample {
             scene_id,
             issue_type: "floating_head_dialogue".into(),
-            snippet: truncate(lines[run_start], 120),
+            snippet: truncate_snippet(lines[run_start], 120),
             suggestion: format!(
                 "{} consecutive dialogue lines without action beats. Add gestures, movement, or sensory detail between lines.",
                 consecutive_dialogue

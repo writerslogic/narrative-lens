@@ -34,15 +34,19 @@ mod structure_bindings;
 #[allow(dead_code)]
 mod substrate;
 
-fn decode_input<T: serde::de::DeserializeOwned>(
-    value: serde_json::Value,
-    reason: &'static str,
-) -> napi::Result<T> {
-    serde_json::from_value(value).map_err(|_| napi::Error::from_reason(reason))
+pub(crate) fn reason(error: impl std::fmt::Display) -> napi::Error {
+    napi::Error::from_reason(error.to_string())
 }
 
-fn encode_result<T: serde::Serialize>(value: T) -> napi::Result<serde_json::Value> {
-    serde_json::to_value(value).map_err(|error| napi::Error::from_reason(error.to_string()))
+pub(crate) fn decode_input<T: serde::de::DeserializeOwned>(
+    value: serde_json::Value,
+    message: &'static str,
+) -> napi::Result<T> {
+    serde_json::from_value(value).map_err(|_| napi::Error::from_reason(message))
+}
+
+pub(crate) fn encode_result<T: serde::Serialize>(value: T) -> napi::Result<serde_json::Value> {
+    serde_json::to_value(value).map_err(reason)
 }
 
 fn unsigned_index(value: f64) -> napi::Result<usize> {

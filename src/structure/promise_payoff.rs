@@ -208,42 +208,48 @@ fn genre_conventions(genre: &str) -> Vec<(String, f64)> {
 // Detection helpers
 // ---------------------------------------------------------------------------
 
+// Pattern: a noun phrase followed by an extended description clause.
+// We look for "the [adj]* [noun]" followed by a relative clause or long appositive.
+fn chekhov_description_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(
+            r"(?i)\b(the\s+(?:\w+\s+){0,3}\w+)\s*(?:,\s*(?:which|that|whose)[^.]{20,}[.]|—[^—]{20,}—)",
+        )
+        .expect("chekhov description regex")
+    })
+}
+
+// Objects with conspicuous emphasis verbs nearby.
+fn chekhov_emphasis_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(
+            r"(?i)(?:noticed|studied|examined|fixated on|couldn't (?:stop|help) (?:looking at|staring at))\s+(the\s+\w+(?:\s+\w+){0,2})",
+        )
+        .expect("chekhov emphasis regex")
+    })
+}
+
 /// Detect objects described at unusual length (potential Chekhov's guns).
-/// Returns (description_snippet, approximate_word_position_in_scene).
-fn detect_chekhov_guns(text: &str) -> Vec<(String, usize)> {
+/// Returns the description snippet of each candidate object.
+fn detect_chekhov_guns(text: &str) -> Vec<String> {
     let mut results = Vec::new();
 
-    // Pattern: a noun phrase followed by an extended description clause.
-    // We look for "the [adj]* [noun]" followed by a relative clause or long appositive.
-    let re = Regex::new(
-        r"(?i)\b(the\s+(?:\w+\s+){0,3}\w+)\s*(?:,\s*(?:which|that|whose)[^.]{20,}[.]|—[^—]{20,}—)",
-    )
-    .unwrap();
-
-    for caps in re.captures_iter(text) {
+    for caps in chekhov_description_re().captures_iter(text) {
         let Some(full) = caps.get(0) else {
             continue;
         };
         let noun_phrase = caps.get(1).map(|m| m.as_str()).unwrap_or("");
-        let word_pos = text[..full.start()].split_whitespace().count();
         // Only count if the full match is lengthy (indicating unusual detail)
         if full.as_str().split_whitespace().count() >= 15 {
-            results.push((noun_phrase.to_string(), word_pos));
+            results.push(noun_phrase.to_string());
         }
     }
 
-    // Also detect objects with conspicuous emphasis verbs nearby
-    let emphasis_re = Regex::new(
-        r"(?i)(?:noticed|studied|examined|fixated on|couldn't (?:stop|help) (?:looking at|staring at))\s+(the\s+\w+(?:\s+\w+){0,2})"
-    ).unwrap();
-
-    for caps in emphasis_re.captures_iter(text) {
+    for caps in chekhov_emphasis_re().captures_iter(text) {
         let obj = caps.get(1).map(|m| m.as_str()).unwrap_or("");
-        let Some(full) = caps.get(0) else {
-            continue;
-        };
-        let word_pos = text[..full.start()].split_whitespace().count();
-        results.push((obj.to_string(), word_pos));
+        results.push(obj.to_string());
     }
 
     results
@@ -370,7 +376,7 @@ fn genre_delay_norm(genre: &str) -> (f64, f64) {
 }
 
 /// Detect climactic / high-tension sentences that might represent unearned payoffs.
-fn detect_climactic_moments(text: &str) -> Vec<(usize, String)> {
+fn detect_climactic_moments(text: &str) -> Vec<String> {
     let mut results = Vec::new();
 
     let climax_markers = [
@@ -391,24 +397,15 @@ fn detect_climactic_moments(text: &str) -> Vec<(usize, String)> {
         "epiphany",
     ];
 
-    let text_lower = text.to_lowercase();
-    for (i, sentence) in text.split('.').enumerate() {
+    for (start, end) in crate::substrate::utils::sentence_spans(text) {
+        let sentence = &text[start..end];
         let sent_lower = sentence.to_lowercase();
         let marker_count = climax_markers
             .iter()
             .filter(|m| sent_lower.contains(*m))
             .count();
-        if marker_count >= 2 {
-            let snippet = sentence.trim();
-            if snippet.len() > 10 {
-                let word_pos = text_lower[..text_lower
-                    .find(snippet.to_lowercase().as_str())
-                    .unwrap_or(0)]
-                    .split_whitespace()
-                    .count();
-                let _ = word_pos;
-                results.push((i, snippet.chars().take(80).collect()));
-            }
+        if marker_count >= 2 && sentence.len() > 10 {
+            results.push(sentence.chars().take(80).collect());
         }
     }
 
@@ -513,7 +510,7 @@ pub fn build_promise_payoff_ledger(
     // --- 4. Scan for Chekhov's guns ---
     for (scene_idx, scene_text) in scenes.iter().enumerate() {
         let guns = detect_chekhov_guns(scene_text);
-        for (obj_desc, _word_pos) in guns {
+        for obj_desc in guns {
             promises.push(NarrativePromise {
                 id: next_id,
                 description: format!(
@@ -654,7 +651,7 @@ pub fn build_promise_payoff_ledger(
                 .iter()
                 .any(|p| p.payoff_scene == Some(scene_idx) && p.scene < scene_idx);
             if !has_setup {
-                for (_sent_idx, snippet) in &climactic {
+                for snippet in &climactic {
                     unearned_payoffs.push(UnearnedPayoff {
                         description: snippet.clone(),
                         scene: scene_idx,

@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
 """Prepare one pinned local NER export; no paid inference or implicit production download."""
 
 import argparse
@@ -27,7 +31,9 @@ def main():
     manifest = {"schemaVersion": 1, "kind": "ner", "profile": "hugging_face_bio9_v1", "modelSha256": spec["modelSha256"], "tokenizerSha256": resources.digest(adapted), "maxTokens": spec["maxTokens"], "paddingTokenId": spec["paddingTokenId"], "labels": spec["labels"]}
     resources.write_json(cache / "manifest.json", manifest)
     report = {"spec": spec, "modelFetch": model, "cache": str(cache), "originalTokenizerSettings": {key: original[key] for key in ["padding", "truncation"]}, "adaptation": "Explicit cache-only padding/truncation-null copy; declared token limit preserved,original source unchanged.", "manifest": manifest}
-    resources.write_json(root / "docs/audit-2026-10-27/program-ner-reference-preparation.json", report)
+    report_path = root / "target/evaluation/program-ner-reference-preparation.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    resources.write_json(report_path, report)
     print(json.dumps({"cache": str(cache), "bytes": spec["modelBytes"], "modelSha256": spec["modelSha256"], "adaptedTokenizerSha256": manifest["tokenizerSha256"]}))
 
 

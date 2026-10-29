@@ -1,8 +1,0 @@
-{
-  "excluded_root_owned_sync": [
-    {
-      "path": "src/substrate/utils.rs",
-      "sha256": "a14269d77eccc292d513a87fffa21eb8380cdce14b2ce874e97ed3f5b1c57b1b"
-    }
-  ]
-}

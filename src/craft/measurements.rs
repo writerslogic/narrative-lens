@@ -1,13 +1,12 @@
-use crate::{Error, Result};
+use crate::Result;
 use std::collections::{BTreeMap, BTreeSet};
+
+pub(crate) use crate::substrate::common_types::invalid;
+pub(crate) use crate::substrate::text::tokenize_words as tokens;
 
 pub(crate) const MAX_TEXT_BYTES: usize = 16 * 1024 * 1024;
 pub(crate) const MAX_TOTAL_BYTES: usize = 64 * 1024 * 1024;
 pub(crate) const MAX_TURNS: usize = 10_000;
-
-pub(crate) fn invalid(message: &str) -> Error {
-    Error::InvalidInput(message.into())
-}
 
 pub(crate) fn validate_texts<'a>(texts: impl IntoIterator<Item = &'a str>) -> Result<()> {
     let mut count = 0usize;
@@ -38,17 +37,6 @@ pub(crate) fn validate_names<'a>(names: impl IntoIterator<Item = &'a str>) -> Re
         }
     }
     Ok(())
-}
-
-pub(crate) fn tokens(text: &str) -> Vec<String> {
-    if text.trim().is_empty() {
-        return Vec::new();
-    }
-    if text.contains(['’', '‘']) {
-        crate::substrate::text::tokenize_words(&text.replace(['’', '‘'], "'"))
-    } else {
-        crate::substrate::text::tokenize_words(text)
-    }
 }
 
 pub(crate) fn ranges(

@@ -1,6 +1,5 @@
 /// High-accuracy text analysis primitives that replace fragile Python regex
 /// implementations.
-use aho_corasick::AhoCorasick;
 use regex::Regex;
 use std::collections::HashMap;
 use std::sync::OnceLock;
@@ -324,380 +323,6 @@ pub fn passive_regex() -> &'static Regex {
     RE.get_or_init(|| {
         Regex::new(r"(?i)\b(?:was|were|been|being|is|are)\s+\w+(?:ed|en)\b")
             .expect("invalid passive regex")
-    })
-}
-
-struct SensoryMatcher {
-    automaton: AhoCorasick,
-    sense_map: Vec<&'static str>,
-}
-
-fn sensory_matcher() -> &'static SensoryMatcher {
-    static INST: OnceLock<SensoryMatcher> = OnceLock::new();
-    INST.get_or_init(|| {
-        let sight: &[&str] = &[
-            "see",
-            "saw",
-            "seen",
-            "seeing",
-            "look",
-            "looked",
-            "looking",
-            "looks",
-            "watch",
-            "watched",
-            "watching",
-            "watches",
-            "gaze",
-            "gazed",
-            "gazing",
-            "stare",
-            "stared",
-            "staring",
-            "glance",
-            "glanced",
-            "glancing",
-            "peer",
-            "peered",
-            "peering",
-            "glimpse",
-            "glimpsed",
-            "squint",
-            "squinted",
-            "squinting",
-            "bright",
-            "brighter",
-            "brightest",
-            "brightly",
-            "dark",
-            "darker",
-            "darkest",
-            "darkness",
-            "darkly",
-            "darken",
-            "darkened",
-            "shadow",
-            "shadows",
-            "shadowy",
-            "shadowed",
-            "shimmer",
-            "shimmered",
-            "shimmering",
-            "glow",
-            "glowed",
-            "glowing",
-            "glows",
-            "flash",
-            "flashed",
-            "flashing",
-            "dim",
-            "dimmed",
-            "dimming",
-            "dimly",
-            "gleam",
-            "gleamed",
-            "gleaming",
-            "sparkle",
-            "sparkled",
-            "sparkling",
-            "vivid",
-            "vividly",
-            "pale",
-            "paler",
-            "palest",
-            "colorful",
-            "colourful",
-            "faded",
-            "fading",
-            "fade",
-            "blinding",
-            "blinded",
-            "blind",
-            "translucent",
-            "opaque",
-        ];
-        let sound: &[&str] = &[
-            "hear",
-            "heard",
-            "hearing",
-            "hears",
-            "listen",
-            "listened",
-            "listening",
-            "listens",
-            "ring",
-            "rang",
-            "rung",
-            "ringing",
-            "rings",
-            "echo",
-            "echoed",
-            "echoing",
-            "echoes",
-            "whisper",
-            "whispered",
-            "whispering",
-            "whispers",
-            "shout",
-            "shouted",
-            "shouting",
-            "shouts",
-            "crash",
-            "crashed",
-            "crashing",
-            "crashes",
-            "bang",
-            "banged",
-            "banging",
-            "bangs",
-            "murmur",
-            "murmured",
-            "murmuring",
-            "murmurs",
-            "hum",
-            "hummed",
-            "humming",
-            "hums",
-            "buzz",
-            "buzzed",
-            "buzzing",
-            "roar",
-            "roared",
-            "roaring",
-            "roars",
-            "crack",
-            "cracked",
-            "cracking",
-            "cracks",
-            "rustle",
-            "rustled",
-            "rustling",
-            "thunder",
-            "thundered",
-            "thundering",
-            "silence",
-            "silenced",
-            "silencing",
-            "silent",
-            "silently",
-            "quiet",
-            "quieter",
-            "quietest",
-            "quietly",
-            "loud",
-            "louder",
-            "loudest",
-            "loudly",
-            "screech",
-            "screeched",
-            "screeching",
-            "clatter",
-            "clattered",
-            "clattering",
-            "chime",
-            "chimed",
-            "chiming",
-            "chimes",
-            "rumble",
-            "rumbled",
-            "rumbling",
-        ];
-        let smell: &[&str] = &[
-            "smell",
-            "smelled",
-            "smelling",
-            "smells",
-            "smelt",
-            "scent",
-            "scented",
-            "scents",
-            "odor",
-            "odors",
-            "odour",
-            "odours",
-            "aroma",
-            "aromas",
-            "aromatic",
-            "stench",
-            "stenches",
-            "fragrance",
-            "fragrances",
-            "fragrant",
-            "whiff",
-            "whiffed",
-            "reek",
-            "reeked",
-            "reeking",
-            "reeks",
-            "perfume",
-            "perfumed",
-            "perfumes",
-            "musty",
-            "acrid",
-            "pungent",
-        ];
-        let touch: &[&str] = &[
-            "touch",
-            "touched",
-            "touching",
-            "touches",
-            "feel",
-            "feeling",
-            "feels",
-            "felt",
-            "grip",
-            "gripped",
-            "gripping",
-            "grips",
-            "grab",
-            "grabbed",
-            "grabbing",
-            "grabs",
-            "stroke",
-            "stroked",
-            "stroking",
-            "strokes",
-            "smooth",
-            "smoother",
-            "smoothest",
-            "smoothly",
-            "rough",
-            "rougher",
-            "roughest",
-            "roughly",
-            "cold",
-            "colder",
-            "coldest",
-            "coldly",
-            "coldness",
-            "warm",
-            "warmer",
-            "warmest",
-            "warmly",
-            "warmth",
-            "hot",
-            "hotter",
-            "hottest",
-            "soft",
-            "softer",
-            "softest",
-            "softly",
-            "softness",
-            "hard",
-            "harder",
-            "hardest",
-            "sharp",
-            "sharper",
-            "sharpest",
-            "sharply",
-            "wet",
-            "wetter",
-            "wettest",
-            "dry",
-            "drier",
-            "driest",
-            "sticky",
-            "prickle",
-            "prickled",
-            "prickling",
-            "prickly",
-            "sting",
-            "stung",
-            "stinging",
-            "stings",
-            "caress",
-            "caressed",
-            "caressing",
-            "brush",
-            "brushed",
-            "brushing",
-            "texture",
-            "textured",
-            "textures",
-        ];
-        let taste: &[&str] = &[
-            "taste",
-            "tasted",
-            "tasting",
-            "tastes",
-            "tasteless",
-            "flavor",
-            "flavored",
-            "flavors",
-            "flavour",
-            "flavoured",
-            "flavours",
-            "sweet",
-            "sweeter",
-            "sweetest",
-            "sweetly",
-            "sweetness",
-            "bitter",
-            "bitterly",
-            "bitterness",
-            "sour",
-            "soured",
-            "sourly",
-            "salty",
-            "saltier",
-            "saltiest",
-            "savory",
-            "savoury",
-            "spicy",
-            "spicier",
-            "spiciest",
-            "bland",
-            "blander",
-            "blandest",
-            "delicious",
-            "deliciously",
-            "mouth",
-            "mouths",
-            "mouthful",
-            "tongue",
-            "tongues",
-            "chew",
-            "chewed",
-            "chewing",
-            "chews",
-            "swallow",
-            "swallowed",
-            "swallowing",
-            "swallows",
-            "gulp",
-            "gulped",
-            "gulping",
-            "gulps",
-            "sip",
-            "sipped",
-            "sipping",
-            "sips",
-        ];
-
-        let mut patterns: Vec<&str> = Vec::new();
-        let mut senses: Vec<&str> = Vec::new();
-
-        for (words, sense) in [
-            (sight as &[&str], "sight"),
-            (sound, "sound"),
-            (smell, "smell"),
-            (touch, "touch"),
-            (taste, "taste"),
-        ] {
-            for w in words {
-                patterns.push(w);
-                senses.push(sense);
-            }
-        }
-
-        let automaton = AhoCorasick::builder()
-            .match_kind(aho_corasick::MatchKind::LeftmostLongest)
-            .build(&patterns)
-            .expect("failed to build AhoCorasick");
-        SensoryMatcher {
-            automaton,
-            sense_map: senses,
-        }
     })
 }
 
@@ -1065,365 +690,6 @@ pub fn content_tokens(
 }
 
 // ---------------------------------------------------------------------------
-// detect_sensory_words
-// ---------------------------------------------------------------------------
-
-/// Scan pre-tokenized words and return counts per sensory category (sight,
-/// sound, smell, touch, taste). Uses AhoCorasick for O(n) matching with
-/// whole-word enforcement.
-pub fn detect_sensory_words(tokens: Vec<String>) -> HashMap<String, usize> {
-    let matcher = sensory_matcher();
-    let mut counts: HashMap<String, usize> = HashMap::new();
-    counts.insert("sight".to_string(), 0);
-    counts.insert("sound".to_string(), 0);
-    counts.insert("smell".to_string(), 0);
-    counts.insert("touch".to_string(), 0);
-    counts.insert("taste".to_string(), 0);
-
-    for token in &tokens {
-        for mat in matcher.automaton.find_iter(token.as_str()) {
-            let pattern_idx = mat.pattern().as_usize();
-            let pattern_len = mat.end() - mat.start();
-            if pattern_len == token.len() {
-                let sense = matcher.sense_map[pattern_idx];
-                if let Some(count) = counts.get_mut(sense) {
-                    *count += 1;
-                }
-                break;
-            }
-        }
-    }
-
-    counts
-}
-
-// ---------------------------------------------------------------------------
-// analyze_atmosphere
-// ---------------------------------------------------------------------------
-
-use std::collections::HashSet;
-
-fn grounding_words() -> &'static HashSet<&'static str> {
-    static INST: OnceLock<HashSet<&str>> = OnceLock::new();
-    INST.get_or_init(|| {
-        HashSet::from([
-            "room",
-            "house",
-            "door",
-            "window",
-            "wall",
-            "floor",
-            "ceiling",
-            "table",
-            "chair",
-            "bed",
-            "street",
-            "road",
-            "path",
-            "garden",
-            "forest",
-            "river",
-            "lake",
-            "mountain",
-            "hill",
-            "valley",
-            "field",
-            "ocean",
-            "sea",
-            "beach",
-            "cliff",
-            "cave",
-            "bridge",
-            "castle",
-            "tower",
-            "church",
-            "city",
-            "town",
-            "village",
-            "rain",
-            "snow",
-            "wind",
-            "sun",
-            "moon",
-            "star",
-            "sky",
-            "cloud",
-            "fog",
-            "mist",
-            "storm",
-            "lightning",
-            "dusk",
-            "dawn",
-            "sunset",
-            "sunrise",
-            "tree",
-            "grass",
-            "stone",
-            "rock",
-            "sand",
-            "mud",
-            "dust",
-            "lamp",
-            "candle",
-            "fire",
-            "smoke",
-            "curtain",
-            "carpet",
-            "stair",
-            // Body parts
-            "hand",
-            "hands",
-            "face",
-            "faces",
-            "eye",
-            "eyes",
-            "body",
-            "arm",
-            "arms",
-            "finger",
-            "fingers",
-            "head",
-            "heart",
-            "skin",
-            "hair",
-            "shoulder",
-            "lip",
-            "lips",
-            // Clothing
-            "clothes",
-            "dress",
-            "shirt",
-            "coat",
-            "cloak",
-            "hat",
-            "boots",
-            "shoes",
-            "robe",
-            "gown",
-            // Objects
-            "glass",
-            "cup",
-            "plate",
-            "food",
-            "drink",
-            "sword",
-            "knife",
-            "gun",
-            "weapon",
-            "book",
-            "letter",
-            "key",
-            "ring",
-            "torch",
-            "lantern",
-            "mirror",
-            "clock",
-            // Visual/atmospheric
-            "light",
-            "shadow",
-            "darkness",
-            "color",
-            "air",
-            "breath",
-            "scent",
-            "voice",
-            "sound",
-        ])
-    })
-}
-
-#[derive(Clone, Debug)]
-pub struct TemporalGrounding {
-    pub time_of_day: HashMap<String, usize>,
-    pub weather: HashMap<String, usize>,
-}
-
-#[derive(Clone, Debug)]
-pub struct EmotionalAtmosphere {
-    pub positive: usize,
-    pub negative: usize,
-    pub neutral: usize,
-    pub dominant_tone: String,
-}
-
-#[derive(Clone, Debug)]
-pub struct AtmosphereResult {
-    pub score: f64,
-    pub is_white_room: bool,
-    pub sensory_counts: HashMap<String, usize>,
-    pub grounding_density: f64,
-    pub dominant_sense: String,
-    pub grounding_word_count: usize,
-    pub total_tokens: usize,
-    pub temporal_grounding: TemporalGrounding,
-    pub emotional_atmosphere: EmotionalAtmosphere,
-    pub sensory_balance_score: f64,
-}
-
-const WHITE_ROOM_THRESHOLD: f64 = 0.02;
-
-const TIME_WORDS: &[(&str, &str)] = &[
-    ("morning", "morning"),
-    ("noon", "noon"),
-    ("afternoon", "afternoon"),
-    ("evening", "evening"),
-    ("night", "night"),
-    ("midnight", "midnight"),
-    ("dawn", "dawn"),
-    ("dusk", "dusk"),
-];
-
-const WEATHER_WORDS: &[(&str, &str)] = &[
-    ("rain", "rain"),
-    ("storm", "storm"),
-    ("snow", "snow"),
-    ("wind", "wind"),
-    ("fog", "fog"),
-    ("sun", "sun"),
-    ("cloud", "cloud"),
-    ("mist", "mist"),
-    ("lightning", "lightning"),
-    ("hail", "hail"),
-    ("thunder", "thunder"),
-];
-
-const POSITIVE_ATMOSPHERE: &[&str] = &[
-    "welcoming",
-    "peaceful",
-    "vibrant",
-    "serene",
-    "warm",
-    "cheerful",
-    "bright",
-    "cozy",
-    "inviting",
-    "gentle",
-    "lush",
-    "radiant",
-];
-
-const NEGATIVE_ATMOSPHERE: &[&str] = &[
-    "oppressive",
-    "eerie",
-    "desolate",
-    "suffocating",
-    "menacing",
-    "bleak",
-    "grim",
-    "foreboding",
-    "dreary",
-    "barren",
-    "haunting",
-    "ominous",
-];
-
-const NEUTRAL_ATMOSPHERE: &[&str] = &[
-    "chaotic", "still", "vast", "quiet", "sparse", "dense", "hushed", "remote",
-];
-
-fn compute_sensory_balance(sensory_counts: &HashMap<String, usize>) -> f64 {
-    let total: usize = sensory_counts.values().sum();
-    if total == 0 {
-        return 0.0;
-    }
-    let n_senses = sensory_counts.len() as f64;
-    let even_fraction = 1.0 / n_senses;
-    let max_fraction = *sensory_counts.values().max().unwrap_or(&0) as f64 / total as f64;
-    (1.0 - (max_fraction - even_fraction)).clamp(0.0, 1.0)
-}
-
-pub fn analyze_atmosphere(scene_text: &str) -> AtmosphereResult {
-    let tokens = tokenize_words(scene_text);
-    let total_tokens = tokens.len();
-    let sensory_counts = detect_sensory_words(tokens.clone());
-
-    let grounding_set = grounding_words();
-    let grounding_word_count = tokens
-        .iter()
-        .filter(|t| grounding_set.contains(t.as_str()))
-        .count();
-
-    let sensory_total: usize = sensory_counts.values().sum();
-
-    let grounding_density = if total_tokens > 0 {
-        (sensory_total + grounding_word_count) as f64 / total_tokens as f64
-    } else {
-        0.0
-    };
-
-    let score = (grounding_density / WHITE_ROOM_THRESHOLD).min(1.0);
-    let is_white_room = grounding_density < WHITE_ROOM_THRESHOLD;
-
-    let dominant_sense = sensory_counts
-        .iter()
-        .max_by_key(|(_, v)| **v)
-        .map(|(k, _)| k.clone())
-        .unwrap_or_else(|| "sight".to_string());
-
-    // Temporal grounding
-    let mut time_of_day: HashMap<String, usize> = HashMap::new();
-    let mut weather: HashMap<String, usize> = HashMap::new();
-    for t in &tokens {
-        for &(word, key) in TIME_WORDS {
-            if t == word {
-                *time_of_day.entry(key.to_string()).or_insert(0) += 1;
-            }
-        }
-        for &(word, key) in WEATHER_WORDS {
-            if t == word {
-                *weather.entry(key.to_string()).or_insert(0) += 1;
-            }
-        }
-    }
-
-    // Emotional atmosphere
-    let mut positive = 0usize;
-    let mut negative = 0usize;
-    let mut neutral = 0usize;
-    for t in &tokens {
-        let s = t.as_str();
-        if POSITIVE_ATMOSPHERE.contains(&s) {
-            positive += 1;
-        } else if NEGATIVE_ATMOSPHERE.contains(&s) {
-            negative += 1;
-        } else if NEUTRAL_ATMOSPHERE.contains(&s) {
-            neutral += 1;
-        }
-    }
-    let dominant_tone = if positive >= negative && positive >= neutral {
-        "positive"
-    } else if negative >= positive && negative >= neutral {
-        "negative"
-    } else {
-        "neutral"
-    }
-    .to_string();
-
-    let sensory_balance_score = compute_sensory_balance(&sensory_counts);
-
-    AtmosphereResult {
-        score,
-        is_white_room,
-        sensory_counts,
-        grounding_density,
-        dominant_sense,
-        grounding_word_count,
-        total_tokens,
-        temporal_grounding: TemporalGrounding {
-            time_of_day,
-            weather,
-        },
-        emotional_atmosphere: EmotionalAtmosphere {
-            positive,
-            negative,
-            neutral,
-            dominant_tone,
-        },
-        sensory_balance_score,
-    }
-}
-
-// ---------------------------------------------------------------------------
 // Prose quality: show-don't-tell & word-echo detection
 // ---------------------------------------------------------------------------
 
@@ -1571,7 +837,6 @@ fn advanced_patterns() -> &'static [AdvancedPattern] {
     })
 }
 
-/// Split `text` into paragraphs, the canonical (§6.1) definition shared across
 /// The largest char boundary `<= i` (clamped to `s.len()`). Use before slicing with
 /// a byte offset derived from arithmetic (windowing, `saturating_sub`), which can land
 /// inside a multibyte char on real text and panic.
@@ -1593,6 +858,17 @@ pub(crate) fn ceil_char_boundary(s: &str, i: usize) -> usize {
     i
 }
 
+/// `s` unchanged when it fits in `max_bytes`, otherwise cut at the last char
+/// boundary within `max_bytes` with `...` appended.
+pub(crate) fn truncate_snippet(s: &str, max_bytes: usize) -> String {
+    if s.len() <= max_bytes {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..floor_char_boundary(s, max_bytes)])
+    }
+}
+
+/// Split `text` into paragraphs, the canonical (§6.1) definition shared across
 /// the core. A paragraph break is one or more blank lines, where "blank" means a
 /// line that is empty or whitespace-only — so `"\n\n"`, `"\r\n\r\n"`, and
 /// `"\n   \n"` all separate. Empty paragraphs (runs of blank lines) are dropped;
@@ -1614,11 +890,6 @@ pub fn split_paragraphs(text: &str) -> Vec<&str> {
         paragraphs.push(text[s..].trim());
     }
     paragraphs
-}
-
-/// Count the paragraphs in `text` per the canonical [`split_paragraphs`] rule.
-pub fn count_paragraphs(text: &str) -> usize {
-    split_paragraphs(text).len()
 }
 
 pub fn split_sentences(text: &str) -> Vec<&str> {
@@ -1704,11 +975,7 @@ pub fn detect_show_dont_tell(scene_text: &str, scene_id: usize) -> Vec<ProseIssu
                 break;
             }
             if entry.re.is_match(&lower) {
-                let snippet = if sent.len() > 120 {
-                    format!("{}...", &sent[..floor_char_boundary(sent, 120)])
-                } else {
-                    sent.to_string()
-                };
+                let snippet = truncate_snippet(sent, 120);
                 let suggestion = match entry.category {
                     "emotion" => format!(
                         "Instead of saying the character '{}', show the physical manifestation (clenched fists, flushed face)",
@@ -1738,15 +1005,10 @@ pub fn detect_show_dont_tell(scene_text: &str, scene_id: usize) -> Vec<ProseIssu
         }
         for pat in patterns {
             if pat.regex.is_match(sent) {
-                let snippet = if sent.len() > 120 {
-                    format!("{}...", &sent[..floor_char_boundary(sent, 120)])
-                } else {
-                    sent.to_string()
-                };
                 results.push(ProseIssue {
                     scene_id,
                     issue_type: format!("show_dont_tell_{}", pat.ptype),
-                    snippet,
+                    snippet: truncate_snippet(sent, 120),
                     suggestion: pat.suggestion.to_string(),
                 });
                 break; // one flag per sentence
@@ -1760,6 +1022,9 @@ pub fn detect_show_dont_tell(scene_text: &str, scene_id: usize) -> Vec<ProseIssu
 
 // -- Word echo detection --
 
+/// Common narrative words whose repetition is not an echo worth flagging; a
+/// narrower, curated list than `stopwords`, which would suppress real echoes
+/// such as "thing" or "really".
 fn echo_stopwords() -> &'static std::collections::HashSet<&'static str> {
     static INST: OnceLock<std::collections::HashSet<&str>> = OnceLock::new();
     INST.get_or_init(|| {
@@ -1822,29 +1087,32 @@ pub fn detect_word_echoes(scene_text: &str, scene_id: usize) -> Vec<ProseIssue> 
                 *freq.entry(w).or_insert(0) += 1;
             }
         }
-        for (&w, &count) in &freq {
+        let mut echoes: Vec<(&str, usize)> = freq
+            .into_iter()
+            .filter(|&(w, count)| count >= MIN_REPEATS && !seen_words.contains(w))
+            .collect();
+        echoes.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(b.0)));
+        for (w, count) in echoes {
             if results.len() >= MAX_ISSUES {
                 break;
             }
-            if count >= MIN_REPEATS && !seen_words.contains(w) {
-                seen_words.insert(w.to_string());
-                let snippet_text = window
-                    .iter()
-                    .take(30)
-                    .copied()
-                    .collect::<Vec<_>>()
-                    .join(" ")
-                    + "...";
-                results.push(ProseIssue {
-                    scene_id,
-                    issue_type: "word_echo".to_string(),
-                    snippet: snippet_text,
-                    suggestion: format!(
-                        "The word '{}' appears {} times in a short span. Consider using synonyms or restructuring.",
-                        w, count
-                    ),
-                });
-            }
+            seen_words.insert(w.to_string());
+            let snippet_text = window
+                .iter()
+                .take(30)
+                .copied()
+                .collect::<Vec<_>>()
+                .join(" ")
+                + "...";
+            results.push(ProseIssue {
+                scene_id,
+                issue_type: "word_echo".to_string(),
+                snippet: snippet_text,
+                suggestion: format!(
+                    "The word '{}' appears {} times in a short span. Consider using synonyms or restructuring.",
+                    w, count
+                ),
+            });
         }
     }
 
@@ -1934,7 +1202,6 @@ mod tests {
         // Empty / whitespace-only input yields no paragraphs.
         assert!(split_paragraphs("").is_empty());
         assert!(split_paragraphs("  \n \n").is_empty());
-        assert_eq!(count_paragraphs("one\r\n\r\ntwo\n \nthree"), 3);
     }
 
     #[test]
@@ -2166,225 +1433,6 @@ mod tests {
         assert_eq!(tokens, vec!["end", "start", "mid", "dash"]);
     }
 
-    // -- detect_sensory_words --
-
-    #[test]
-    fn test_sensory_sight() {
-        let tokens: Vec<String> = vec![
-            "she".into(),
-            "saw".into(),
-            "a".into(),
-            "bright".into(),
-            "glow".into(),
-        ];
-        let result = detect_sensory_words(tokens);
-        assert_eq!(result["sight"], 3);
-        assert_eq!(result["sound"], 0);
-    }
-
-    #[test]
-    fn test_sensory_sound() {
-        let tokens: Vec<String> = vec![
-            "the".into(),
-            "thunder".into(),
-            "crashed".into(),
-            "loudly".into(),
-        ];
-        let result = detect_sensory_words(tokens);
-        assert_eq!(result["sound"], 3);
-    }
-
-    #[test]
-    fn test_sensory_mixed() {
-        let tokens: Vec<String> = vec![
-            "she".into(),
-            "heard".into(),
-            "the".into(),
-            "sweet".into(),
-            "smell".into(),
-        ];
-        let result = detect_sensory_words(tokens);
-        assert_eq!(result["sound"], 1);
-        assert_eq!(result["taste"], 1);
-        assert_eq!(result["smell"], 1);
-    }
-
-    #[test]
-    fn test_sensory_empty() {
-        let result = detect_sensory_words(vec![]);
-        assert_eq!(result["sight"], 0);
-        assert_eq!(result["sound"], 0);
-        assert_eq!(result["smell"], 0);
-        assert_eq!(result["touch"], 0);
-        assert_eq!(result["taste"], 0);
-    }
-
-    #[test]
-    fn test_sensory_no_partial_match() {
-        let tokens = vec!["hardly".to_string()];
-        let result = detect_sensory_words(tokens);
-        assert_eq!(result["touch"], 0);
-    }
-
-    #[test]
-    fn test_sensory_all_senses() {
-        let tokens: Vec<String> = vec![
-            "bright".into(),
-            "whisper".into(),
-            "fragrant".into(),
-            "smooth".into(),
-            "sweet".into(),
-        ];
-        let result = detect_sensory_words(tokens);
-        assert_eq!(result["sight"], 1);
-        assert_eq!(result["sound"], 1);
-        assert_eq!(result["smell"], 1);
-        assert_eq!(result["touch"], 1);
-        assert_eq!(result["taste"], 1);
-    }
-
-    // -- analyze_atmosphere --
-
-    #[test]
-    fn test_atmosphere_rich_scene() {
-        let text = "The bright sun cast shadows across the stone wall. \
-                    Wind rustled through the tall grass, carrying the sweet fragrance \
-                    of wildflowers. She felt the warm rough texture of the rock beneath \
-                    her fingers as thunder rumbled in the distance.";
-        let result = analyze_atmosphere(text);
-        assert!(
-            result.score > 0.5,
-            "rich scene should score above 0.5, got {}",
-            result.score
-        );
-        assert!(!result.is_white_room);
-        assert!(result.grounding_word_count > 0);
-        assert!(result.total_tokens > 0);
-        assert!(result.grounding_density > 0.0);
-    }
-
-    #[test]
-    fn test_atmosphere_white_room() {
-        let text = "He thought about the situation. She considered the implications. \
-                    They discussed the problem and came to a conclusion. \
-                    The idea was interesting but the logic was flawed.";
-        let result = analyze_atmosphere(text);
-        assert!(result.is_white_room, "abstract text should be white room");
-        assert!(result.score < 1.0);
-    }
-
-    #[test]
-    fn test_atmosphere_empty() {
-        let result = analyze_atmosphere("");
-        assert_eq!(result.total_tokens, 0);
-        assert_eq!(result.score, 0.0);
-        assert!(result.is_white_room);
-        assert_eq!(result.grounding_density, 0.0);
-    }
-
-    #[test]
-    fn test_atmosphere_dominant_sense() {
-        let text = "She saw the bright glow shimmering in the dark room.";
-        let result = analyze_atmosphere(text);
-        assert_eq!(result.dominant_sense, "sight");
-    }
-
-    #[test]
-    fn test_atmosphere_grounding_words_counted() {
-        let text = "The castle door opened to reveal a stone stair leading to the tower.";
-        let result = analyze_atmosphere(text);
-        assert!(
-            result.grounding_word_count >= 4,
-            "expected at least 4 grounding words, got {}",
-            result.grounding_word_count
-        );
-    }
-
-    #[test]
-    fn test_temporal_grounding_time() {
-        let text = "The morning sun rose. By evening the sky had darkened.";
-        let result = analyze_atmosphere(text);
-        assert_eq!(
-            result.temporal_grounding.time_of_day.get("morning"),
-            Some(&1)
-        );
-        assert_eq!(
-            result.temporal_grounding.time_of_day.get("evening"),
-            Some(&1)
-        );
-    }
-
-    #[test]
-    fn test_temporal_grounding_weather() {
-        let text = "Rain pounded the roof. The storm grew stronger with wind and lightning.";
-        let result = analyze_atmosphere(text);
-        assert_eq!(result.temporal_grounding.weather.get("rain"), Some(&1));
-        assert_eq!(result.temporal_grounding.weather.get("storm"), Some(&1));
-        assert_eq!(result.temporal_grounding.weather.get("wind"), Some(&1));
-        assert_eq!(result.temporal_grounding.weather.get("lightning"), Some(&1));
-    }
-
-    #[test]
-    fn test_emotional_atmosphere_negative() {
-        let text = "The oppressive darkness felt eerie and menacing in the desolate hallway.";
-        let result = analyze_atmosphere(text);
-        assert!(result.emotional_atmosphere.negative > 0);
-        assert_eq!(result.emotional_atmosphere.dominant_tone, "negative");
-    }
-
-    #[test]
-    fn test_emotional_atmosphere_positive() {
-        let text = "The peaceful garden was serene and welcoming with vibrant flowers.";
-        let result = analyze_atmosphere(text);
-        assert!(result.emotional_atmosphere.positive > 0);
-        assert_eq!(result.emotional_atmosphere.dominant_tone, "positive");
-    }
-
-    #[test]
-    fn test_sensory_balance_all_sight() {
-        let tokens: Vec<String> = vec![
-            "bright".into(),
-            "glow".into(),
-            "shimmer".into(),
-            "dark".into(),
-            "shadow".into(),
-        ];
-        let counts = detect_sensory_words(tokens);
-        let balance = compute_sensory_balance(&counts);
-        // All sight = unbalanced, should be low
-        assert!(
-            balance < 0.5,
-            "all-sight balance should be low, got {}",
-            balance
-        );
-    }
-
-    #[test]
-    fn test_sensory_balance_even() {
-        let tokens: Vec<String> = vec![
-            "bright".into(),
-            "whisper".into(),
-            "fragrant".into(),
-            "smooth".into(),
-            "sweet".into(),
-        ];
-        let counts = detect_sensory_words(tokens);
-        let balance = compute_sensory_balance(&counts);
-        // One per sense = very balanced
-        assert!(
-            balance > 0.7,
-            "even distribution should score high, got {}",
-            balance
-        );
-    }
-
-    #[test]
-    fn test_sensory_balance_empty() {
-        let counts = detect_sensory_words(vec![]);
-        let balance = compute_sensory_balance(&counts);
-        assert_eq!(balance, 0.0);
-    }
-
     // -- detect_show_dont_tell --
 
     #[test]
@@ -2525,5 +1573,43 @@ mod tests {
         }
         let issues = detect_word_echoes(&text, 0);
         assert!(issues.len() <= 10);
+    }
+
+    #[test]
+    fn test_word_echoes_ordered_by_count_then_word() {
+        // Twelve candidates in one window: "zebra" repeats most, the rest tie
+        // at three, so the cap keeps "zebra" first and then the first nine
+        // alphabetically, dropping "jewel" and "kayak".
+        const TIED: [&str; 11] = [
+            "apple", "brick", "cedar", "dusty", "ember", "fjord", "glade", "hazel", "ivory",
+            "jewel", "kayak",
+        ];
+        let mut text = String::new();
+        for _ in 0..5 {
+            text.push_str("zebra ");
+        }
+        for word in TIED {
+            for _ in 0..3 {
+                text.push_str(word);
+                text.push(' ');
+            }
+        }
+        let flagged: Vec<String> = detect_word_echoes(&text, 0)
+            .into_iter()
+            .map(|issue| issue.suggestion)
+            .collect();
+        let mut expected = vec!["'zebra' appears 5 times".to_string()];
+        expected.extend(TIED[..9].iter().map(|w| format!("'{w}' appears 3 times")));
+        assert_eq!(flagged.len(), expected.len());
+        for (got, want) in flagged.iter().zip(&expected) {
+            assert!(got.contains(want), "got {got:?}, want {want:?}");
+        }
+        for _ in 0..20 {
+            let again: Vec<String> = detect_word_echoes(&text, 0)
+                .into_iter()
+                .map(|issue| issue.suggestion)
+                .collect();
+            assert_eq!(again, flagged);
+        }
     }
 }

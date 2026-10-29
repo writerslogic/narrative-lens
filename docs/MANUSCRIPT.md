@@ -35,8 +35,8 @@ let report = analyze_manuscript(&manuscript)?;
 ```
 
 `Scene` also accepts `purpose`, `intentions`, an optional `Chronology { key, lane }`,
-and a `chronologyLane` hint when the key is unknown; `Scene::from_timeline` adapts
-existing `TimelineEntry` metadata. Scene IDs belong to the caller and must stay stable
+and a `chronologyLane` hint when the key is unknown; set them from an existing
+`TimelineEntry` directly (`Scene::from_timeline` is deprecated). Scene IDs belong to the caller and must stay stable
 across revisions. Presentation order is the vector order; counts, sentence boundaries,
 readability, pacing, and tension inputs are computed by the library.
 
@@ -65,7 +65,7 @@ invalid boundaries such as a split surrogate pair. Quotes equal both slices exac
 - Passage findings identify primary and conflicting evidence with roles. Physical continuity findings quote both passages; a locked-location finding separates the earlier location from its constraint.
 - Scene and manuscript aggregate findings (a missing beat, an aggregate grade) have explicit scope and may carry no pinpoint quote. Readability and pacing may add an illustrative sentence with the `context` role without turning the aggregate into a pinpoint claim.
 - Evidence keeps up to 64 original characters on either side within sentence boundaries for revision matching.
-- `finding::adapt_grammar` and `finding::adapt_explanation` adapt legacy results; call `assign_fingerprints(document_id, &mut findings)` after assembling a batch so duplicate occurrences get distinct ordinals.
+- `finding::adapt_grammar` adapts legacy grammar results (`adapt_explanation` is deprecated: unlocated explanations are never emitted); call `assign_fingerprints(document_id, &mut findings)` after assembling a batch so duplicate occurrences get distinct ordinals.
 
 | Rule | Interpretation |
 | --- | --- |

@@ -230,7 +230,7 @@ pub fn detect_themes_smart(
         return sbert_results;
     }
     // Fallback to keyword detection
-    crate::substrate::nlp::detect_themes_keywords(scenes_tokens.to_vec()).unwrap_or_default()
+    crate::substrate::nlp::detect_themes_keywords(scenes_tokens).unwrap_or_default()
 }
 
 /// Analyze how themes evolve across the manuscript.

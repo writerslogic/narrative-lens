@@ -30,23 +30,8 @@ pub enum NoteSeverity {
     Critical,
 }
 
-/// UTF-8-safe substring extraction. Returns a slice from approximately `start` bytes
-/// to approximately `end` bytes, adjusted to char boundaries.
-pub fn safe_substr(s: &str, start: usize, end: usize) -> &str {
-    let start = s
-        .char_indices()
-        .map(|(i, _)| i)
-        .take_while(|&i| i <= start)
-        .last()
-        .unwrap_or(0);
-    let end = s
-        .char_indices()
-        .map(|(i, c)| i + c.len_utf8())
-        .take_while(|&i| i <= end)
-        .last()
-        .unwrap_or(s.len())
-        .min(s.len());
-    &s[start..end]
+pub(crate) fn invalid(message: &str) -> crate::Error {
+    crate::Error::InvalidInput(message.into())
 }
 
 /// Where a field's value came from. Re-extraction may overwrite [`AiDerived`]

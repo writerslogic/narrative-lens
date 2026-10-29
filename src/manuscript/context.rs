@@ -256,32 +256,6 @@ impl AnalysisContext {
                     limited,
                 })
             };
-            let world_data = if world_hit {
-                Arc::clone(&old.as_ref().expect("cached world").world)
-            } else {
-                let mut events = Vec::new();
-                if world.selection.enabled() {
-                    if parser.is_none() {
-                        parser = Some(continuity::Parser::new(
-                            &world.characters,
-                            &world.corrections,
-                        )?);
-                    }
-                    events = parser.as_ref().expect("world parser").extract_bounded(
-                        &scene.text,
-                        world.limit,
-                        world.selection,
-                    );
-                }
-                let limited = events.len() > world.limit;
-                events.truncate(world.limit);
-                self.stats.recomputed_world_scenes += 1;
-                Arc::new(WorldData {
-                    dependencies: Arc::clone(&world),
-                    events,
-                    limited,
-                })
-            };
             let (metrics, sentences) = if let Some(d) = &old {
                 (d.metrics.clone(), Arc::clone(&d.sentences))
             } else {
@@ -300,6 +274,33 @@ impl AnalysisContext {
                     },
                     Arc::new(crate::substrate::utils::sentence_spans(&scene.text)),
                 )
+            };
+            let world_data = if world_hit {
+                Arc::clone(&old.as_ref().expect("cached world").world)
+            } else {
+                let mut events = Vec::new();
+                if world.selection.enabled() {
+                    if parser.is_none() {
+                        parser = Some(continuity::Parser::new(
+                            &world.characters,
+                            &world.corrections,
+                        )?);
+                    }
+                    events = parser.as_ref().expect("world parser").extract_bounded(
+                        &scene.text,
+                        &sentences,
+                        world.limit,
+                        world.selection,
+                    );
+                }
+                let limited = events.len() > world.limit;
+                events.truncate(world.limit);
+                self.stats.recomputed_world_scenes += 1;
+                Arc::new(WorldData {
+                    dependencies: Arc::clone(&world),
+                    events,
+                    limited,
+                })
             };
             if old.is_some() && grammar_hit && world_hit {
                 self.stats.reused_scenes += 1;
@@ -556,19 +557,6 @@ fn build_report(
         ),
     ] {
         coverage.push(Coverage {
-            analyzer: analyzer.into(),
-            status: if !selected {
-                Status::Unavailable
-            } else if analyzed == 0 {
-                Status::InsufficientInput
-            } else if analyzed < nonempty {
-                Status::HeuristicFallback
-            } else {
-                Status::Complete
-            },
-            total_units: m.scenes.len(),
-            analyzed_units: if selected { analyzed } else { 0 },
-            unit: "scenes".into(),
             diagnostics: if !selected {
                 vec!["rule_not_selected_or_lexicon_empty".into()]
             } else if analyzed < nonempty {
@@ -576,6 +564,7 @@ fn build_report(
             } else {
                 Vec::new()
             },
+            ..Coverage::scenes(analyzer, selected, analyzed, nonempty, m.scenes.len())
         });
     }
     let structure_selected = config.selected("NL-STRUCTURE-MISSING-BEAT");
@@ -623,21 +612,6 @@ fn build_report(
         }
     }
     coverage.push(Coverage {
-        analyzer: "structure".into(),
-        status: if !structure_selected || nonlinear {
-            Status::Unavailable
-        } else if !structure_available {
-            Status::InsufficientInput
-        } else {
-            Status::Complete
-        },
-        total_units: m.scenes.len(),
-        analyzed_units: if structure_selected && structure_available && !nonlinear {
-            nonempty
-        } else {
-            0
-        },
-        unit: "scenes".into(),
         diagnostics: if !structure_selected {
             vec!["rule_not_selected".into()]
         } else if nonlinear {
@@ -649,6 +623,13 @@ fn build_report(
         } else {
             Vec::new()
         },
+        ..Coverage::scenes(
+            "structure",
+            structure_selected && !nonlinear,
+            if structure_available { nonempty } else { 0 },
+            nonempty,
+            m.scenes.len(),
+        )
     });
     let physical = [
         "NL-CONTINUITY-LOCKED",

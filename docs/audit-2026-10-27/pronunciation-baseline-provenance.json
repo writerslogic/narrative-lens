@@ -1,8 +1,0 @@
-{
-  "reference": "pronunciation-development-baseline.json",
-  "sourceArchive": "pronunciation-baseline-source.tar.gz",
-  "sourceArchiveSha256": "b604654cdbe3c830bd3ea9b65fcd097f6f2f2d54dbd1c6a0812bf0b0975b7e76",
-  "predictorSha256": "b2c9ef93a6439bbf9ca39978d8459d02aba15cdb2ef57e16d2ed87e30a5e974b",
-  "note": "Syllable algorithm unchanged from measured baseline;only word_split_regex visibility exported after build. Neither impacts syllable counting.",
-  "heldout": "not_scored"
-}
