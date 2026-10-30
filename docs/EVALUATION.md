@@ -202,12 +202,31 @@ its authors' novels held out as well
 ([benchmarks/evidence/narrative-multitask-cv-litbank-pdnc-fold0-v1.json](benchmarks/evidence/narrative-multitask-cv-litbank-pdnc-fold0-v1.json)):
 speaker accuracy over 2,100 held-out quotations from both corpora was 0.426, against
 0.225 on that fold's LitBank quotations alone, while the token heads lost about 0.04
-(entity 0.718, nominal 0.474) because PDNC windows carry no span labels. Loss weighting
-for the mix is the next tuning step. The entity head trails the single-task
-fine-tune above (0.864) at these settings; the shared encoder has not been tuned for the
-mix yet. The graph is not consumed by the crate: the next step is a model kind that
-builds windows with mention and quotation indices, runs it, and decodes both pair
-matrices, after which the heuristic coreference and attribution paths become fallbacks.
+(entity 0.718, nominal 0.474) because PDNC windows carry no span labels.
+
+The crate consumes the export as `ModelKind::NarrativeMultitask` (profile
+`narrative_multitask_v1`; the manifest lists the entity head under `labels` and the
+nominal head under `nominalLabels`). `continuity::narrative::analyze` tokenizes once,
+cuts 400-token windows, runs the graph twice per window (first for proper and nominal
+spans, then with those spans plus the resolver's third-person pronouns as mention
+candidates and the quotation ranges), decodes each mention's best earlier mention and
+each quotation's best speaker greedily inside the window, and merges clusters whose
+proper-name surfaces are identical across windows. `CoreferenceResolver::resolve_checked`
+and `dialogue::extract_dialogue_checked` call it first; without a configured model, or
+when it fails at runtime (`model_fallback:<code>` in diagnostics), the heuristic paths run
+unchanged. Explicit speech tags still win over the model's speaker. Confidences are
+softmax probabilities of the chosen link, not calibrated accuracies. The export keeps the
+batch axis at 1 and drops intermediate shape annotations because tract (the wasm runtime)
+cannot shape the encoder's Flatten over a symbolic batch × sequence; a native tract probe
+loads and runs such a graph, while the LitBank NER fine-tune export above still carries
+the symbolic batch axis and does not load in tract.
+
+```sh
+cargo run --locked --release --features onnx --example evaluate_literary -- target/external-validation/litbank-prepared-v4/inputs.json --ner-cache NER_DIR --narrative-model MODEL_DIR > predictions.jsonl
+NARRATIVE_LENS_NARRATIVE_MODEL=MODEL_DIR cargo test --features onnx --test component_narrative_model
+uv run scripts/narrative_model_reference.py MODEL_DIR   # onnxruntime decode of the test passage
+```
+
 GUM was considered for coreference but deferred: its annotations are CC BY 4.0 while the
 fiction, essay, letter, and podcast texts are CC BY-NC-SA and Reddit is non-commercial.
 

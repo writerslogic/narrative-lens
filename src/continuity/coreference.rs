@@ -29,6 +29,14 @@ fn pronoun_matcher() -> &'static WordMatcher {
     static M: OnceLock<WordMatcher> = OnceLock::new();
     M.get_or_init(|| WordMatcher::new(&[MALE_PRONOUNS, FEMALE_PRONOUNS, NEUTRAL_PRONOUNS].concat()))
 }
+
+/// Byte spans of the third-person pronouns the resolver tracks, in text order;
+/// the narrative model scores these as mention candidates.
+pub(crate) fn pronoun_spans(text: &str) -> impl Iterator<Item = (usize, usize)> + '_ {
+    pronoun_matcher()
+        .find_iter(text)
+        .map(|token| (token.start, token.end))
+}
 /// Byte offset of the first newline in every whitespace run that holds at
 /// least two newlines: where a blank line breaks paragraphs.
 fn paragraph_breaks(text: &str) -> impl Iterator<Item = usize> {
@@ -122,6 +130,8 @@ pub enum CoreferenceBasis {
     BoundedCataphora,
     QuoteLocalNamedCandidate,
     PronounChain,
+    /// Antecedent chosen by the narrative multi-task model.
+    NarrativeModel,
 }
 
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
@@ -169,6 +179,9 @@ pub struct CorefResult {
     pub resolved_pronoun_count: usize,
     #[serde(default)]
     pub resolution_coverage: Option<f64>,
+    /// The verified narrative model that produced the mentions, when one did.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model_identity: Option<crate::onnx::model::ModelIdentity>,
 }
 
 fn validate_inputs(
@@ -617,8 +630,12 @@ impl CoreferenceResolver {
                 pronoun_count: 0,
                 resolved_pronoun_count: 0,
                 resolution_coverage: None,
+                model_identity: None,
             })
     }
+    /// With a verified narrative model configured, mentions and antecedents come
+    /// from the model ([`super::narrative`]); otherwise, or when the model fails
+    /// at runtime, the literal-name and bounded pronoun-chain heuristics run.
     pub fn resolve_checked(
         &self,
         text: &str,
@@ -626,11 +643,20 @@ impl CoreferenceResolver {
         gender_map: Option<&HashMap<String, String>>,
     ) -> Result<CorefResult> {
         validate_inputs(&[text], characters, gender_map)?;
+        let mut model_diagnostics = Vec::new();
+        match super::narrative::analyze(text, &[]) {
+            Ok(analysis) => return model_coreference(text, characters, analysis),
+            Err(failure) if failure.kind != crate::onnx::checked::FailureKind::Unavailable => {
+                model_diagnostics.push(format!("model_fallback:{}", failure.code));
+            }
+            Err(_) => {}
+        }
         let name_mentions = names_in(text, &patterns(characters)?)?;
         let scopes = quotation_scopes(text)?;
         let quote_ranges = scopes.spans;
         let quote_boundaries = scopes.boundaries;
         let mut diagnostics = scopes.diagnostics;
+        diagnostics.append(&mut model_diagnostics);
         let groups = alias_groups(characters);
         let group = |name: &Mention| name.resolved_to.as_deref().map(|name| groups[name]);
         let owned;
@@ -867,8 +893,96 @@ impl CoreferenceResolver {
             pronoun_count,
             resolved_pronoun_count,
             resolution_coverage,
+            model_identity: None,
         })
     }
+}
+
+/// Mentions and clusters from the narrative model, in the resolver's output
+/// shape. A cluster resolves to the cast name equal to one of its proper
+/// surfaces when there is one, otherwise to its most frequent proper surface;
+/// nominal mentions ("her mother") only join clusters and are not reported.
+fn model_coreference(
+    text: &str,
+    characters: &[&str],
+    analysis: super::narrative::NarrativeAnalysis,
+) -> Result<CorefResult> {
+    use super::narrative::MentionKind;
+    let normalize = |name: &str| {
+        name.split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ")
+            .to_lowercase()
+    };
+    let cast: HashMap<String, &str> = characters
+        .iter()
+        .map(|&name| (normalize(name), name))
+        .collect();
+    let mut cluster_cast: Vec<Option<&str>> = vec![None; analysis.cluster_names.len()];
+    for mention in &analysis.mentions {
+        if mention.kind == MentionKind::Proper
+            && let Some(&name) = cast.get(&normalize(&text[mention.start..mention.end]))
+        {
+            cluster_cast[mention.cluster].get_or_insert(name);
+        }
+    }
+    let mut mentions = Vec::new();
+    for mention in &analysis.mentions {
+        if mention.kind == MentionKind::Nominal {
+            continue;
+        }
+        let is_pronoun = mention.kind == MentionKind::Pronoun;
+        let resolved_to = cluster_cast[mention.cluster]
+            .map(str::to_string)
+            .or_else(|| analysis.cluster_names[mention.cluster].clone());
+        let resolution_basis = resolved_to.as_ref().map(|_| {
+            if !is_pronoun && cluster_cast[mention.cluster].is_some() {
+                CoreferenceBasis::LiteralName
+            } else {
+                CoreferenceBasis::NarrativeModel
+            }
+        });
+        mentions.push(Mention {
+            text: text[mention.start..mention.end].into(),
+            resolved_to,
+            start: mention.start,
+            is_pronoun,
+            confidence: if is_pronoun { mention.confidence } else { 1.0 },
+            range: None,
+            resolution_basis,
+            antecedent_start: mention
+                .antecedent
+                .map(|antecedent| analysis.mentions[antecedent].start),
+        });
+    }
+    stamp_ranges(text, &mut mentions)?;
+    let pronoun_count = mentions.iter().filter(|mention| mention.is_pronoun).count();
+    let resolved_pronoun_count = mentions
+        .iter()
+        .filter(|mention| mention.is_pronoun && mention.resolved_to.is_some())
+        .count();
+    let resolution_coverage =
+        (pronoun_count > 0).then(|| resolved_pronoun_count as f64 / pronoun_count as f64);
+    let mut character_mentions: HashMap<String, usize> =
+        characters.iter().map(|&name| (name.into(), 0)).collect();
+    for mention in &mentions {
+        if let Some(character) = &mention.resolved_to {
+            *character_mentions.entry(character.clone()).or_insert(0) += 1;
+        }
+    }
+    Ok(CorefResult {
+        mentions,
+        character_mentions,
+        pronoun_resolution_rate: resolution_coverage.unwrap_or(1.0),
+        availability: AnalysisAvailability::Partial,
+        diagnostics: vec![
+            "Narrative-model antecedents are decoded greedily inside 400-token windows and clusters sharing an identical proper-name surface are merged across windows; confidences are softmax probabilities of the chosen link, not calibrated accuracies. Nominal mentions join clusters but are not reported.".into(),
+        ],
+        pronoun_count,
+        resolved_pronoun_count,
+        resolution_coverage,
+        model_identity: Some(analysis.identity),
+    })
 }
 
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]

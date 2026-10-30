@@ -230,7 +230,8 @@ def losses(model, window, device):
     return out
 
 
-def train(model, train_windows, device, epochs, lr, accumulate):
+def train(model, train_windows, device, epochs, lr, accumulate, weights=None):
+    weights = weights or {}
     model.train()
     heads = [p for n, p in model.named_parameters() if not n.startswith("encoder.")]
     enc = [p for n, p in model.named_parameters() if n.startswith("encoder.")]
@@ -242,7 +243,7 @@ def train(model, train_windows, device, epochs, lr, accumulate):
         order = list(range(len(train_windows)))
         random.shuffle(order)
         for i, j in enumerate(order):
-            loss = sum(losses(model, train_windows[j], device).values()) / accumulate
+            loss = sum(weights.get(name, 1.0) * value for name, value in losses(model, train_windows[j], device).items()) / accumulate
             loss.backward()
             if (i + 1) % accumulate == 0 or i + 1 == len(order):
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -339,7 +340,7 @@ def cv(args):
     docs = load_documents(args.sources)
     encoded = {d["id"] + "/" + d["source"]: select_windows(d, windows(tok, d), args.novel_windows) for d in docs}
     key = lambda d: d["id"] + "/" + d["source"]
-    report = {"sources": args.sources, "documents": len(docs), "folds": args.folds, "epochs": args.epochs, "lr": args.lr, "window": WINDOW, "perFold": []}
+    report = {"sources": args.sources, "documents": len(docs), "folds": args.folds, "epochs": args.epochs, "lr": args.lr, "lossWeights": loss_weights(args), "novelWindows": args.novel_windows, "window": WINDOW, "perFold": []}
     for i, held in enumerate(folds(docs, args.folds)):
         if args.only_fold is not None and i != args.only_fold:
             continue
@@ -347,7 +348,7 @@ def cv(args):
         train_windows = [w for k, ws in encoded.items() if k not in held_keys for w in ws]
         eval_windows = [w for k in sorted(held_keys) for w in encoded[k]]
         model = MultiTask().to(device)
-        train(model, train_windows, device, args.epochs, args.lr, args.accumulate)
+        train(model, train_windows, device, args.epochs, args.lr, args.accumulate, loss_weights(args))
         result = evaluate(model, eval_windows, device)
         sources_held = sorted({k.rsplit("/", 1)[1] for k in held_keys})
         if len(sources_held) > 1:
@@ -375,18 +376,21 @@ def export(args):
     docs = load_documents(args.sources)
     train_windows = [w for d in docs for w in select_windows(d, windows(tok, d), args.novel_windows)]
     model = MultiTask().to(device)
-    train(model, train_windows, device, args.epochs, args.lr, args.accumulate)
+    train(model, train_windows, device, args.epochs, args.lr, args.accumulate, loss_weights(args))
     model = model.cpu().eval()
     staging = args.output / "staging"
     staging.mkdir(parents=True, exist_ok=True)
     ids = torch.tensor([[tok.cls_token_id] + tok("\"Come in,\" said Alice to her sister.", add_special_tokens=False)["input_ids"] + [tok.sep_token_id]])
     example = (ids, torch.ones_like(ids), torch.tensor([5, 7]), torch.tensor([5, 8]), torch.tensor([1]), torch.tensor([4]))
+    # The span heads index one window's hidden states, so the batch axis stays 1; a
+    # symbolic batch also breaks tract (wasm), which cannot shape a Flatten over
+    # batch x sequence. Intermediate shape annotations are dropped for the same reason.
     torch.onnx.export(
         model, example, str(staging / "model-fp32.onnx"),
         input_names=["input_ids", "attention_mask", "mention_starts", "mention_ends", "quote_starts", "quote_ends"],
         output_names=["entity_logits", "nominal_logits", "coref_scores", "attribution_scores"],
-        dynamic_axes={"input_ids": {0: "batch", 1: "sequence"}, "attention_mask": {0: "batch", 1: "sequence"}, "mention_starts": {0: "mentions"}, "mention_ends": {0: "mentions"},
-                      "quote_starts": {0: "quotes"}, "quote_ends": {0: "quotes"}, "entity_logits": {0: "batch", 1: "sequence"}, "nominal_logits": {0: "batch", 1: "sequence"},
+        dynamic_axes={"input_ids": {1: "sequence"}, "attention_mask": {1: "sequence"}, "mention_starts": {0: "mentions"}, "mention_ends": {0: "mentions"},
+                      "quote_starts": {0: "quotes"}, "quote_ends": {0: "quotes"}, "entity_logits": {1: "sequence"}, "nominal_logits": {1: "sequence"},
                       "coref_scores": {0: "mentions", 1: "mentions"}, "attribution_scores": {0: "quotes", 1: "mentions_plus_dummy"}},
         opset_version=14, dynamo=False,
     )
@@ -394,6 +398,7 @@ def export(args):
 
     quantize_dynamic(str(staging / "model-fp32.onnx"), str(staging / "model.onnx"), weight_type=QuantType.QInt8)
     (staging / "model-fp32.onnx").unlink()
+    strip_shape_annotations(staging / "model.onnx")
     sha = hashlib.sha256((staging / "model.onnx").read_bytes()).hexdigest()
     final = args.output / sha
     if final.exists():
@@ -401,17 +406,35 @@ def export(args):
     staging.rename(final)
     for name in ("tokenizer.json", "tokenizer.adapted.json"):
         shutil.copy(PINNED / name, final / name)
+    # manifest.json is the crate's strict ModelManifest (profile narrative_multitask_v1); provenance goes beside it.
     manifest = {
         "schemaVersion": 1, "kind": "narrative_multitask", "profile": "narrative_multitask_v1", "modelSha256": sha,
         "tokenizerSha256": hashlib.sha256((final / "tokenizer.adapted.json").read_bytes()).hexdigest(), "maxTokens": 512, "paddingTokenId": 0,
-        "entityLabels": ENTITY_LABELS, "nominalLabels": NOMINAL_LABELS,
+        "labels": ENTITY_LABELS, "nominalLabels": NOMINAL_LABELS,
+    }
+    provenance = {
+        "window": WINDOW,
         "inputs": ["input_ids", "attention_mask", "mention_starts", "mention_ends", "quote_starts", "quote_ends"],
         "outputs": ["entity_logits", "nominal_logits", "coref_scores", "attribution_scores"],
         "notes": "coref_scores[i][j] scores mention j as antecedent of mention i (j < i); 0 is the no-antecedent score. attribution_scores[q][0] is 'speaker not in window', column m+1 is mention m.",
-        "training": {"sources": args.sources, "documents": len(docs), "epochs": args.epochs, "lr": args.lr, "seed": args.seed, "base": BASE_MODEL},
+        "training": {"sources": args.sources, "documents": len(docs), "epochs": args.epochs, "lr": args.lr, "lossWeights": loss_weights(args), "novelWindows": args.novel_windows, "seed": args.seed, "base": BASE_MODEL},
     }
     (final / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    (final / "training.json").write_text(json.dumps(provenance, indent=2) + "\n")
     print(final, (final / "model.onnx").stat().st_size)
+
+
+def loss_weights(args):
+    return {"entity": args.entity_weight, "nominal": args.nominal_weight}
+
+
+def strip_shape_annotations(path):
+    """Drop value_info so tract infers intermediate shapes from the inputs instead of unifying stale symbols."""
+    import onnx
+
+    graph = onnx.load(str(path))
+    del graph.graph.value_info[:]
+    onnx.save(graph, str(path))
 
 
 def main():
@@ -424,6 +447,8 @@ def main():
     parser.add_argument("--lr", type=float, default=3e-5)
     parser.add_argument("--accumulate", type=int, default=4)
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--entity-weight", type=float, default=1.0, help="multiplier on the entity head's loss")
+    parser.add_argument("--nominal-weight", type=float, default=1.0, help="multiplier on the nominal head's loss")
     parser.add_argument("--novel-windows", type=int, default=40, help="windows kept per full novel (PDNC); 0 keeps all")
     parser.add_argument("--only-fold", type=int, help="run a single fold (for comparing data mixes on one held-out set)")
     args = parser.parse_args()

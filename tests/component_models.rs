@@ -7,15 +7,21 @@ use narrative_lens::onnx::{
 #[path = "support/digest.rs"]
 mod digest;
 
+const BIO9: [&str; 9] = [
+    "O", "B-MISC", "I-MISC", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC",
+];
+const ALL_KINDS: [ModelKind; 5] = [
+    ModelKind::Embedding,
+    ModelKind::Ner,
+    ModelKind::Emotion,
+    ModelKind::Nli,
+    ModelKind::NarrativeMultitask,
+];
+
 fn manifest(kind: ModelKind) -> ModelManifest {
     let (profile, labels): (_, &[&str]) = match kind {
         ModelKind::Embedding => (ModelProfile::HuggingFaceMaskedMeanV1, &[]),
-        ModelKind::Ner => (
-            ModelProfile::HuggingFaceBio9V1,
-            &[
-                "O", "B-MISC", "I-MISC", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC",
-            ],
-        ),
+        ModelKind::Ner => (ModelProfile::HuggingFaceBio9V1, &BIO9),
         ModelKind::Emotion => (
             ModelProfile::HuggingFaceEkman7V1,
             narrative_lens::craft::emotion::EKMAN_LABELS,
@@ -24,6 +30,12 @@ fn manifest(kind: ModelKind) -> ModelManifest {
             ModelProfile::HuggingFaceNli3V1,
             narrative_lens::substrate::nli::NLI_LABELS,
         ),
+        ModelKind::NarrativeMultitask => (ModelProfile::NarrativeMultitaskV1, &BIO9),
+    };
+    let nominal_labels: &[&str] = if kind == ModelKind::NarrativeMultitask {
+        &["O", "B-NOM", "I-NOM"]
+    } else {
+        &[]
     };
     ModelManifest {
         schema_version: 1,
@@ -34,17 +46,52 @@ fn manifest(kind: ModelKind) -> ModelManifest {
         max_tokens: 4096,
         padding_token_id: 0,
         labels: labels.iter().map(|label| (*label).into()).collect(),
+        nominal_labels: nominal_labels.iter().map(|label| (*label).into()).collect(),
     }
 }
 
 #[test]
-fn profiles_require_supported_kinds_versions_digests_and_unique_labels() {
-    for kind in [
-        ModelKind::Embedding,
-        ModelKind::Ner,
-        ModelKind::Emotion,
-        ModelKind::Nli,
+fn narrative_profile_requires_its_nominal_labels_and_other_profiles_forbid_them() {
+    let valid = manifest(ModelKind::NarrativeMultitask);
+    valid.validate(ModelKind::NarrativeMultitask).unwrap();
+    let mut reordered = valid.clone();
+    reordered.nominal_labels.reverse();
+    reordered.validate(ModelKind::NarrativeMultitask).unwrap();
+    for broken in [
+        vec![],
+        vec!["O".into(), "B-NOM".into()],
+        vec!["O".into(), "B-NOM".into(), "B-NOM".into()],
     ] {
+        let mut invalid = valid.clone();
+        invalid.nominal_labels = broken;
+        assert_eq!(
+            invalid
+                .validate(ModelKind::NarrativeMultitask)
+                .unwrap_err()
+                .code,
+            "model_profile_labels"
+        );
+    }
+    let mut ner = manifest(ModelKind::Ner);
+    ner.nominal_labels = valid.nominal_labels.clone();
+    assert_eq!(
+        ner.validate(ModelKind::Ner).unwrap_err().code,
+        "model_profile_labels"
+    );
+    let mut wrong_profile = valid;
+    wrong_profile.profile = ModelProfile::HuggingFaceBio9V1;
+    assert_eq!(
+        wrong_profile
+            .validate(ModelKind::NarrativeMultitask)
+            .unwrap_err()
+            .code,
+        "model_profile_kind"
+    );
+}
+
+#[test]
+fn profiles_require_supported_kinds_versions_digests_and_unique_labels() {
+    for kind in ALL_KINDS {
         let valid = manifest(kind);
         valid.validate(kind).unwrap();
         let mut reordered = valid.clone();
@@ -357,6 +404,7 @@ mod runtime {
                 ModelKind::Ner => {
                     assert!(checked::entities(onnx::backend(), &["Alice"]).unwrap()[0].is_empty())
                 }
+                ModelKind::NarrativeMultitask => unreachable!("no small narrative fixture"),
             }
         }
 

@@ -43,15 +43,42 @@ fn load_ner_cache(_: &Path) -> Result<serde_json::Value, Box<dyn std::error::Err
     Err("--ner-cache requires the onnx feature".into())
 }
 
+/// Load an exported narrative multi-task model directory (`manifest.json`,
+/// `model.onnx`, `tokenizer.adapted.json`); coreference and dialogue then use it.
+#[cfg(feature = "onnx")]
+fn load_narrative_model(path: &Path) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    use narrative_lens::onnx::{self, checked::ModelKind, model::ModelManifest};
+    let manifest =
+        ModelManifest::from_json(&bounded_file(&path.join("manifest.json"), 16 * 1024)?)?;
+    let model = bounded_file(&path.join("model.onnx"), 128 * 1024 * 1024)?;
+    let tokenizer = bounded_file(&path.join("tokenizer.adapted.json"), 2 * 1024 * 1024)?;
+    let identity = onnx::set_model_bytes_verified(
+        ModelKind::NarrativeMultitask,
+        &model,
+        &tokenizer,
+        &manifest,
+    )?;
+    Ok(serde_json::to_value(identity)?)
+}
+
+#[cfg(not(feature = "onnx"))]
+fn load_narrative_model(_: &Path) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    Err("--narrative-model requires the onnx feature".into())
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = std::env::args().skip(1);
-    let path = args.next().ok_or("usage: evaluate_literary <prepared-input.json> [--ner-cache PATH] [--split development|final_holdout] [--finalize]")?;
+    let path = args.next().ok_or("usage: evaluate_literary <prepared-input.json> [--ner-cache PATH] [--narrative-model PATH] [--split development|final_holdout] [--finalize]")?;
     let mut cache = None;
+    let mut narrative = None;
     let mut split = "development".to_string();
     let mut finalize = false;
     while let Some(flag) = args.next() {
         match flag.as_str() {
             "--ner-cache" => cache = Some(args.next().ok_or("missing NER cache path")?),
+            "--narrative-model" => {
+                narrative = Some(args.next().ok_or("missing narrative model path")?)
+            }
             "--split" => split = args.next().ok_or("missing split")?,
             "--finalize" => finalize = true,
             _ => return Err("unknown benchmark argument".into()),
@@ -71,6 +98,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .as_deref()
         .map(Path::new)
         .map(load_ner_cache)
+        .transpose()?;
+    let narrative_identity = narrative
+        .as_deref()
+        .map(Path::new)
+        .map(load_narrative_model)
         .transpose()?;
     for case in cases.into_iter().filter(|case| case.split == split) {
         if case.entity_text.len() > 512 * 1024
@@ -151,12 +183,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         output["id"] = json!(case.id);
         output["split"] = json!(case.split);
         output["runtimeMs"] = json!(started.elapsed().as_secs_f64() * 1000.0);
-        output["modelMode"] = json!(if identity.is_some() {
-            "verified local NER model plus heuristic person inventory"
-        } else {
-            "no supplied trained models; heuristic person inventory"
+        output["modelMode"] = json!(match (identity.is_some(), narrative_identity.is_some()) {
+            (true, true) =>
+                "verified local NER and narrative models plus heuristic person inventory",
+            (true, false) => "verified local NER model plus heuristic person inventory",
+            (false, true) => "verified local narrative model plus heuristic person inventory",
+            (false, false) => "no supplied trained models; heuristic person inventory",
         });
         output["modelIdentity"] = json!(identity);
+        output["narrativeModelIdentity"] = json!(narrative_identity);
         println!("{}", serde_json::to_string(&output)?);
     }
     Ok(())

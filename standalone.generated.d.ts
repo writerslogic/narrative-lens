@@ -110,8 +110,12 @@ export type CorefResult = { mentions: Array<Mention>, characterMentions: { [key 
 /**
  * Compatibility coverage convention; use resolution_coverage for empty input.
  */
-pronounResolutionRate: number, availability: AnalysisAvailability, diagnostics: Array<string>, pronounCount: number, resolvedPronounCount: number, resolutionCoverage: number | null, };
-export type CoreferenceBasis = "literal_name" | "unique_preceding_candidate" | "adjacent_reflexive" | "bounded_cataphora" | "quote_local_named_candidate" | "pronoun_chain";
+pronounResolutionRate: number, availability: AnalysisAvailability, diagnostics: Array<string>, pronounCount: number, resolvedPronounCount: number, resolutionCoverage: number | null, 
+/**
+ * The verified narrative model that produced the mentions, when one did.
+ */
+modelIdentity?: ModelIdentity | null, };
+export type CoreferenceBasis = "literal_name" | "unique_preceding_candidate" | "adjacent_reflexive" | "bounded_cataphora" | "quote_local_named_candidate" | "pronoun_chain" | "narrative_model";
 export type Counterfactual = { removedEvent: number, question: string, consequences: Array<string>, plotNecessity: number, };
 export type DialogueAnalysis = { totalLines: number, attributedLines: number, attributionRate: number, perCharacter: { [key in string]: DialogueCharacterStats }, dialogueDistribution: { [key in string]: number }, mostTalkative: string, mostVerbose: string, voiceProfiles: { [key in string]: VoiceProfile }, sameSoundingPairs: Array<SameSoundingPair>, conversationFlow: ConversationFlow, };
 export type DialogueAttributionMode = "explicit_only" | "conservative_heuristic";
@@ -123,7 +127,11 @@ export type DialogueCue = { turnIndex: number, scene: number, character: string,
 range: TextRange, quote: string, };
 export type DialogueCueKind = "exposition_marker" | "formal_marker" | "long_turn";
 export type DialogueExtractionOptions = { attribution: DialogueAttributionMode, includeIndirect: boolean, };
-export type DialogueExtractionResult = { availability: AnalysisAvailability, diagnostics: Array<string>, lines: Array<LocatedDialogueLine>, };
+export type DialogueExtractionResult = { availability: AnalysisAvailability, diagnostics: Array<string>, lines: Array<LocatedDialogueLine>, 
+/**
+ * The verified narrative model that attributed speakers, when one did.
+ */
+modelIdentity?: ModelIdentity | null, };
 export type DialogueIssue = { scene: number, issueType: string, description: string, severity: number, characters: Array<string>, };
 export type DialogueKind = "direct" | "indirect";
 export type DialogueLine = { sceneId: number, quote: string, speaker: string, confidence: number, method: string, 
@@ -232,13 +240,19 @@ export type MentalModelResult = { availability: AnalysisAvailability, diagnostic
 export type Mention = { text: string, resolvedTo: string | null, start: number, isPronoun: boolean, confidence: number, range: TextRange | null, resolutionBasis: CoreferenceBasis | null, antecedentStart: number | null, };
 export type ModelFailure = { kind: FailureKind, code: string, };
 export type ModelIdentity = { kind: ModelKind, verification: ModelVerification, manifest: ModelManifest | null, };
-export type ModelKind = "embedding" | "ner" | "emotion" | "nli";
+export type ModelKind = "embedding" | "ner" | "emotion" | "nli" | "narrative_multitask";
 export type ModelManifest = { schemaVersion: number, kind: ModelKind, profile: ModelProfile, modelSha256: string, tokenizerSha256: string, maxTokens: number, paddingTokenId: number, 
 /**
  * Exact supported label names in source-logit order; empty for embeddings.
+ * The narrative model lists its entity head here.
  */
-labels: Array<string>, };
-export type ModelProfile = "hugging_face_masked_mean_v1" | "hugging_face_bio9_v1" | "hugging_face_ekman7_v1" | "hugging_face_nli3_v1";
+labels: Array<string>, 
+/**
+ * The narrative model's nominal-mention labels in source-logit order
+ * (`O`, `B-NOM`, `I-NOM`); empty for every other kind.
+ */
+nominalLabels?: Array<string>, };
+export type ModelProfile = "hugging_face_masked_mean_v1" | "hugging_face_bio9_v1" | "hugging_face_ekman7_v1" | "hugging_face_nli3_v1" | "narrative_multitask_v1";
 export type ModelVerification = "unverified_legacy" | "verified_manifest_v1";
 export type Monologue = { speaker: string, lineCount: number, sceneId: number, };
 export type NarrativeEntropyResult = { availability: AnalysisAvailability, diagnostics: Array<string>, uncertaintyAssessed: boolean, semanticNovelty: SemanticNoveltyResult | null, questions: Array<NarrativeQuestion>, 

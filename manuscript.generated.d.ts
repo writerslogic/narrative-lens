@@ -6,13 +6,19 @@ export type RuleMethod = "exact_pattern" | "dictionary_membership" | "formula_wi
 export type Severity = "info" | "suggestion" | "warning" | "error";
 export type Intention = "repetition" | "dialect" | "complex_prose" | "long_sentences" | "nonlinear" | "open_ending" | "supernatural";
 export type ModelPolicy = "disabled" | "fallback" | "required";
-export type ModelKind = "embedding" | "ner" | "emotion" | "nli";
-export type ModelProfile = "hugging_face_masked_mean_v1" | "hugging_face_bio9_v1" | "hugging_face_ekman7_v1" | "hugging_face_nli3_v1";
+export type ModelKind = "embedding" | "ner" | "emotion" | "nli" | "narrative_multitask";
+export type ModelProfile = "hugging_face_masked_mean_v1" | "hugging_face_bio9_v1" | "hugging_face_ekman7_v1" | "hugging_face_nli3_v1" | "narrative_multitask_v1";
 export type ModelManifest = { schemaVersion: number, kind: ModelKind, profile: ModelProfile, modelSha256: string, tokenizerSha256: string, maxTokens: number, paddingTokenId: number, 
 /**
  * Exact supported label names in source-logit order; empty for embeddings.
+ * The narrative model lists its entity head here.
  */
-labels: Array<string>, };
+labels: Array<string>, 
+/**
+ * The narrative model's nominal-mention labels in source-logit order
+ * (`O`, `B-NOM`, `I-NOM`); empty for every other kind.
+ */
+nominalLabels?: Array<string>, };
 export type ModelVerification = "unverified_legacy" | "verified_manifest_v1";
 export type ModelIdentity = { kind: ModelKind, verification: ModelVerification, manifest: ModelManifest | null, };
 export type AnalysisLimits = { maxFindings: number, sceneCandidates: number, nliPairs: number, nliSentencesPerScene: number, nliWindowScenes: number, modelInputBytes: number, };

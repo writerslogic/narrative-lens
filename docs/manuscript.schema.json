@@ -1212,13 +1212,22 @@
         "type": "object"
       },
       "ModelKind": {
-        "enum": [
-          "embedding",
-          "ner",
-          "emotion",
-          "nli"
-        ],
-        "type": "string"
+        "oneOf": [
+          {
+            "enum": [
+              "embedding",
+              "ner",
+              "emotion",
+              "nli"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_multitask",
+            "description": "One encoder with entity, nominal-mention, antecedent, and speaker heads\n(`scripts/multitask_train.py`).",
+            "type": "string"
+          }
+        ]
       },
       "ModelManifest": {
         "additionalProperties": false,
@@ -1228,7 +1237,7 @@
             "$ref": "#/$defs/ModelKind"
           },
           "labels": {
-            "description": "Exact supported label names in source-logit order; empty for embeddings.",
+            "description": "Exact supported label names in source-logit order; empty for embeddings.\nThe narrative model lists its entity head here.",
             "items": {
               "type": "string"
             },
@@ -1241,6 +1250,13 @@
           },
           "modelSha256": {
             "type": "string"
+          },
+          "nominalLabels": {
+            "description": "The narrative model's nominal-mention labels in source-logit order\n(`O`, `B-NOM`, `I-NOM`); empty for every other kind.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "paddingTokenId": {
             "format": "uint32",
@@ -1280,13 +1296,22 @@
         "type": "string"
       },
       "ModelProfile": {
-        "enum": [
-          "hugging_face_masked_mean_v1",
-          "hugging_face_bio9_v1",
-          "hugging_face_ekman7_v1",
-          "hugging_face_nli3_v1"
-        ],
-        "type": "string"
+        "oneOf": [
+          {
+            "enum": [
+              "hugging_face_masked_mean_v1",
+              "hugging_face_bio9_v1",
+              "hugging_face_ekman7_v1",
+              "hugging_face_nli3_v1"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_multitask_v1",
+            "description": "Six int64 inputs (`input_ids`, `attention_mask`, `mention_starts`,\n`mention_ends`, `quote_starts`, `quote_ends`) and four float outputs\n(`entity_logits`, `nominal_logits`, `coref_scores`, `attribution_scores`)\nover one 400-token window wrapped in `[CLS]`/`[SEP]`.",
+            "type": "string"
+          }
+        ]
       },
       "ModelVerification": {
         "enum": [

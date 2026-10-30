@@ -9336,11 +9336,18 @@
   "DialogueExtractionOptionsContract": {
     "$defs": {
       "DialogueAttributionMode": {
-        "enum": [
-          "explicit_only",
-          "conservative_heuristic"
-        ],
-        "type": "string"
+        "oneOf": [
+          {
+            "const": "explicit_only",
+            "description": "Explicit speech tags only, plus the narrative model's speaker when a\nverified model is configured.",
+            "type": "string"
+          },
+          {
+            "const": "conservative_heuristic",
+            "description": "Also proximity and alternation guesses for quotes neither a tag nor the\nmodel attributes.",
+            "type": "string"
+          }
+        ]
       }
     },
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9882,6 +9889,132 @@
         ],
         "type": "object"
       },
+      "ModelIdentity": {
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/ModelKind"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ModelManifest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verification": {
+            "$ref": "#/$defs/ModelVerification"
+          }
+        },
+        "required": [
+          "kind",
+          "verification"
+        ],
+        "type": "object"
+      },
+      "ModelKind": {
+        "oneOf": [
+          {
+            "enum": [
+              "embedding",
+              "ner",
+              "emotion",
+              "nli"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_multitask",
+            "description": "One encoder with entity, nominal-mention, antecedent, and speaker heads\n(`scripts/multitask_train.py`).",
+            "type": "string"
+          }
+        ]
+      },
+      "ModelManifest": {
+        "additionalProperties": false,
+        "description": "V1 profiles encode with tokenizer special tokens, reject tokenizer-side\ntruncation/padding, and right-pad IDs with `padding_token_id` and masks/types\nwith zero. Embeddings use masked mean pooling without normalization; class\nlogits are softmaxed and remapped to the crate's canonical label order.",
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/ModelKind"
+          },
+          "labels": {
+            "description": "Exact supported label names in source-logit order; empty for embeddings.\nThe narrative model lists its entity head here.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "maxTokens": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "modelSha256": {
+            "type": "string"
+          },
+          "nominalLabels": {
+            "description": "The narrative model's nominal-mention labels in source-logit order\n(`O`, `B-NOM`, `I-NOM`); empty for every other kind.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "paddingTokenId": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "profile": {
+            "$ref": "#/$defs/ModelProfile"
+          },
+          "schemaVersion": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "tokenizerSha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "kind",
+          "profile",
+          "modelSha256",
+          "tokenizerSha256",
+          "maxTokens",
+          "paddingTokenId",
+          "labels"
+        ],
+        "type": "object"
+      },
+      "ModelProfile": {
+        "oneOf": [
+          {
+            "enum": [
+              "hugging_face_masked_mean_v1",
+              "hugging_face_bio9_v1",
+              "hugging_face_ekman7_v1",
+              "hugging_face_nli3_v1"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_multitask_v1",
+            "description": "Six int64 inputs (`input_ids`, `attention_mask`, `mention_starts`,\n`mention_ends`, `quote_starts`, `quote_ends`) and four float outputs\n(`entity_logits`, `nominal_logits`, `coref_scores`, `attribution_scores`)\nover one 400-token window wrapped in `[CLS]`/`[SEP]`.",
+            "type": "string"
+          }
+        ]
+      },
+      "ModelVerification": {
+        "enum": [
+          "unverified_legacy",
+          "verified_manifest_v1"
+        ],
+        "type": "string"
+      },
       "TextRange": {
         "properties": {
           "byteEnd": {
@@ -9930,6 +10063,17 @@
           "$ref": "#/$defs/LocatedDialogueLine"
         },
         "type": "array"
+      },
+      "modelIdentity": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ModelIdentity"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The verified narrative model that attributed speakers, when one did."
       }
     },
     "required": [
@@ -10015,13 +10159,22 @@
         "type": "object"
       },
       "ModelKind": {
-        "enum": [
-          "embedding",
-          "ner",
-          "emotion",
-          "nli"
-        ],
-        "type": "string"
+        "oneOf": [
+          {
+            "enum": [
+              "embedding",
+              "ner",
+              "emotion",
+              "nli"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_multitask",
+            "description": "One encoder with entity, nominal-mention, antecedent, and speaker heads\n(`scripts/multitask_train.py`).",
+            "type": "string"
+          }
+        ]
       },
       "ModelManifest": {
         "additionalProperties": false,
@@ -10031,7 +10184,7 @@
             "$ref": "#/$defs/ModelKind"
           },
           "labels": {
-            "description": "Exact supported label names in source-logit order; empty for embeddings.",
+            "description": "Exact supported label names in source-logit order; empty for embeddings.\nThe narrative model lists its entity head here.",
             "items": {
               "type": "string"
             },
@@ -10044,6 +10197,13 @@
           },
           "modelSha256": {
             "type": "string"
+          },
+          "nominalLabels": {
+            "description": "The narrative model's nominal-mention labels in source-logit order\n(`O`, `B-NOM`, `I-NOM`); empty for every other kind.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "paddingTokenId": {
             "format": "uint32",
@@ -10075,13 +10235,22 @@
         "type": "object"
       },
       "ModelProfile": {
-        "enum": [
-          "hugging_face_masked_mean_v1",
-          "hugging_face_bio9_v1",
-          "hugging_face_ekman7_v1",
-          "hugging_face_nli3_v1"
-        ],
-        "type": "string"
+        "oneOf": [
+          {
+            "enum": [
+              "hugging_face_masked_mean_v1",
+              "hugging_face_bio9_v1",
+              "hugging_face_ekman7_v1",
+              "hugging_face_nli3_v1"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_multitask_v1",
+            "description": "Six int64 inputs (`input_ids`, `attention_mask`, `mention_starts`,\n`mention_ends`, `quote_starts`, `quote_ends`) and four float outputs\n(`entity_logits`, `nominal_logits`, `coref_scores`, `attribution_scores`)\nover one 400-token window wrapped in `[CLS]`/`[SEP]`.",
+            "type": "string"
+          }
+        ]
       },
       "ModelVerification": {
         "enum": [
@@ -10210,13 +10379,22 @@
         "type": "object"
       },
       "ModelKind": {
-        "enum": [
-          "embedding",
-          "ner",
-          "emotion",
-          "nli"
-        ],
-        "type": "string"
+        "oneOf": [
+          {
+            "enum": [
+              "embedding",
+              "ner",
+              "emotion",
+              "nli"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_multitask",
+            "description": "One encoder with entity, nominal-mention, antecedent, and speaker heads\n(`scripts/multitask_train.py`).",
+            "type": "string"
+          }
+        ]
       },
       "ModelManifest": {
         "additionalProperties": false,
@@ -10226,7 +10404,7 @@
             "$ref": "#/$defs/ModelKind"
           },
           "labels": {
-            "description": "Exact supported label names in source-logit order; empty for embeddings.",
+            "description": "Exact supported label names in source-logit order; empty for embeddings.\nThe narrative model lists its entity head here.",
             "items": {
               "type": "string"
             },
@@ -10239,6 +10417,13 @@
           },
           "modelSha256": {
             "type": "string"
+          },
+          "nominalLabels": {
+            "description": "The narrative model's nominal-mention labels in source-logit order\n(`O`, `B-NOM`, `I-NOM`); empty for every other kind.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "paddingTokenId": {
             "format": "uint32",
@@ -10270,13 +10455,22 @@
         "type": "object"
       },
       "ModelProfile": {
-        "enum": [
-          "hugging_face_masked_mean_v1",
-          "hugging_face_bio9_v1",
-          "hugging_face_ekman7_v1",
-          "hugging_face_nli3_v1"
-        ],
-        "type": "string"
+        "oneOf": [
+          {
+            "enum": [
+              "hugging_face_masked_mean_v1",
+              "hugging_face_bio9_v1",
+              "hugging_face_ekman7_v1",
+              "hugging_face_nli3_v1"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_multitask_v1",
+            "description": "Six int64 inputs (`input_ids`, `attention_mask`, `mention_starts`,\n`mention_ends`, `quote_starts`, `quote_ends`) and four float outputs\n(`entity_logits`, `nominal_logits`, `coref_scores`, `attribution_scores`)\nover one 400-token window wrapped in `[CLS]`/`[SEP]`.",
+            "type": "string"
+          }
+        ]
       },
       "ModelVerification": {
         "enum": [
@@ -11623,15 +11817,24 @@
         "type": "string"
       },
       "CoreferenceBasis": {
-        "enum": [
-          "literal_name",
-          "unique_preceding_candidate",
-          "adjacent_reflexive",
-          "bounded_cataphora",
-          "quote_local_named_candidate",
-          "pronoun_chain"
-        ],
-        "type": "string"
+        "oneOf": [
+          {
+            "enum": [
+              "literal_name",
+              "unique_preceding_candidate",
+              "adjacent_reflexive",
+              "bounded_cataphora",
+              "quote_local_named_candidate",
+              "pronoun_chain"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_model",
+            "description": "Antecedent chosen by the narrative multi-task model.",
+            "type": "string"
+          }
+        ]
       },
       "Mention": {
         "properties": {
@@ -11696,6 +11899,132 @@
         ],
         "type": "object"
       },
+      "ModelIdentity": {
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/ModelKind"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ModelManifest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verification": {
+            "$ref": "#/$defs/ModelVerification"
+          }
+        },
+        "required": [
+          "kind",
+          "verification"
+        ],
+        "type": "object"
+      },
+      "ModelKind": {
+        "oneOf": [
+          {
+            "enum": [
+              "embedding",
+              "ner",
+              "emotion",
+              "nli"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_multitask",
+            "description": "One encoder with entity, nominal-mention, antecedent, and speaker heads\n(`scripts/multitask_train.py`).",
+            "type": "string"
+          }
+        ]
+      },
+      "ModelManifest": {
+        "additionalProperties": false,
+        "description": "V1 profiles encode with tokenizer special tokens, reject tokenizer-side\ntruncation/padding, and right-pad IDs with `padding_token_id` and masks/types\nwith zero. Embeddings use masked mean pooling without normalization; class\nlogits are softmaxed and remapped to the crate's canonical label order.",
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/ModelKind"
+          },
+          "labels": {
+            "description": "Exact supported label names in source-logit order; empty for embeddings.\nThe narrative model lists its entity head here.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "maxTokens": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "modelSha256": {
+            "type": "string"
+          },
+          "nominalLabels": {
+            "description": "The narrative model's nominal-mention labels in source-logit order\n(`O`, `B-NOM`, `I-NOM`); empty for every other kind.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "paddingTokenId": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "profile": {
+            "$ref": "#/$defs/ModelProfile"
+          },
+          "schemaVersion": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "tokenizerSha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "kind",
+          "profile",
+          "modelSha256",
+          "tokenizerSha256",
+          "maxTokens",
+          "paddingTokenId",
+          "labels"
+        ],
+        "type": "object"
+      },
+      "ModelProfile": {
+        "oneOf": [
+          {
+            "enum": [
+              "hugging_face_masked_mean_v1",
+              "hugging_face_bio9_v1",
+              "hugging_face_ekman7_v1",
+              "hugging_face_nli3_v1"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "narrative_multitask_v1",
+            "description": "Six int64 inputs (`input_ids`, `attention_mask`, `mention_starts`,\n`mention_ends`, `quote_starts`, `quote_ends`) and four float outputs\n(`entity_logits`, `nominal_logits`, `coref_scores`, `attribution_scores`)\nover one 400-token window wrapped in `[CLS]`/`[SEP]`.",
+            "type": "string"
+          }
+        ]
+      },
+      "ModelVerification": {
+        "enum": [
+          "unverified_legacy",
+          "verified_manifest_v1"
+        ],
+        "type": "string"
+      },
       "TextRange": {
         "properties": {
           "byteEnd": {
@@ -11754,6 +12083,17 @@
           "$ref": "#/$defs/Mention"
         },
         "type": "array"
+      },
+      "modelIdentity": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ModelIdentity"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The verified narrative model that produced the mentions, when one did."
       },
       "pronounCount": {
         "default": 0,

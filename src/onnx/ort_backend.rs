@@ -12,9 +12,10 @@ use std::sync::{Arc, Mutex, OnceLock};
 use tokenizers::Tokenizer;
 
 use super::InferenceBackend;
-use super::checked::{ModelFailure, ModelKind};
+use super::checked::{ModelFailure, ModelKind, NarrativeRequest, NarrativeWindow};
 use super::decode::{decode_entities, masked_mean_pool};
-use super::model::{ModelIdentity, ModelManifest, ModelMetadata};
+use super::model::{ModelIdentity, ModelManifest, ModelMetadata, NARRATIVE_OUTPUT_NAMES};
+use super::narrative;
 
 struct OnnxModel {
     session: Mutex<Session>,
@@ -35,6 +36,7 @@ static SBERT_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
 static NER_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
 static EMOTION_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
 static NLI_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
+static NARRATIVE_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
 static ENVIRONMENT: OnceLock<Result<ort::environment::Environment, ModelFailure>> = OnceLock::new();
 
 pub fn backend() -> &'static dyn InferenceBackend {
@@ -136,6 +138,7 @@ fn kind_for_subdir(subdir: &str) -> ModelKind {
         "ner-onnx" => ModelKind::Ner,
         "emotion-onnx" => ModelKind::Emotion,
         "nli-onnx" => ModelKind::Nli,
+        "narrative-multitask-onnx" => ModelKind::NarrativeMultitask,
         _ => unreachable!("model subdirectory is internal"),
     }
 }
@@ -146,6 +149,7 @@ fn slot_and_subdir(kind: ModelKind) -> (&'static OnceLock<Mutex<ModelSlot>>, &'s
         ModelKind::Ner => (&NER_MODEL, "ner-onnx"),
         ModelKind::Emotion => (&EMOTION_MODEL, "emotion-onnx"),
         ModelKind::Nli => (&NLI_MODEL, "nli-onnx"),
+        ModelKind::NarrativeMultitask => (&NARRATIVE_MODEL, "narrative-multitask-onnx"),
     }
 }
 
@@ -178,29 +182,39 @@ fn validate_session(session: &Session, metadata: &ModelMetadata) -> Result<(), M
     use ort::value::{TensorElementType, ValueType};
     metadata.validate_input_names(session.inputs().iter().map(|input| input.name()))?;
     for input in session.inputs() {
-        if !matches!(input.dtype(), ValueType::Tensor { ty: TensorElementType::Int64, shape, .. } if shape.len() == 2 && shape.iter().all(|d| *d == -1 || *d > 0))
+        let rank = metadata.input_rank(input.name());
+        if !matches!(input.dtype(), ValueType::Tensor { ty: TensorElementType::Int64, shape, .. } if shape.len() == rank && shape.iter().all(|d| *d == -1 || *d > 0))
         {
             return Err(ModelFailure::incompatible("model_profile_input_tensor"));
         }
     }
-    let [output] = session.outputs() else {
-        return Err(ModelFailure::incompatible("model_profile_outputs"));
-    };
-    let ValueType::Tensor {
-        ty: TensorElementType::Float32,
-        shape,
-        ..
-    } = output.dtype()
-    else {
-        return Err(ModelFailure::incompatible("model_profile_output_tensor"));
-    };
-    let expected = metadata.output_shape();
-    if shape.len() != expected.len()
-        || shape.iter().zip(expected).any(|(actual, expected)| {
-            (*actual != -1 && *actual <= 0) || expected.is_some_and(|n| *actual != n as i64)
-        })
+    let expected = metadata.output_shapes();
+    if session.outputs().len() != expected.len()
+        || (metadata.identity.kind == ModelKind::NarrativeMultitask
+            && session
+                .outputs()
+                .iter()
+                .map(|output| output.name())
+                .ne(NARRATIVE_OUTPUT_NAMES))
     {
-        return Err(ModelFailure::incompatible("model_profile_output_shape"));
+        return Err(ModelFailure::incompatible("model_profile_outputs"));
+    }
+    for (output, expected) in session.outputs().iter().zip(expected) {
+        let ValueType::Tensor {
+            ty: TensorElementType::Float32,
+            shape,
+            ..
+        } = output.dtype()
+        else {
+            return Err(ModelFailure::incompatible("model_profile_output_tensor"));
+        };
+        if shape.len() != expected.len()
+            || shape.iter().zip(expected).any(|(actual, expected)| {
+                (*actual != -1 && *actual <= 0) || expected.is_some_and(|n| *actual != n as i64)
+            })
+        {
+            return Err(ModelFailure::incompatible("model_profile_output_shape"));
+        }
     }
     Ok(())
 }
@@ -339,6 +353,82 @@ fn emotion_model() -> Result<Arc<OnnxModel>, ModelFailure> {
 }
 fn nli_model() -> Result<Arc<OnnxModel>, ModelFailure> {
     configured_model(&NLI_MODEL, "nli-onnx")
+}
+fn narrative_model() -> Result<Arc<OnnxModel>, ModelFailure> {
+    configured_model(&NARRATIVE_MODEL, "narrative-multitask-onnx")
+}
+
+/// One session run per 400-token window: the span-index inputs address the
+/// window's own hidden states, so windows cannot share a batch.
+fn narrative_inner_checked(
+    request: &NarrativeRequest<'_>,
+) -> Result<Vec<NarrativeWindow>, ModelFailure> {
+    let model = narrative_model()?;
+    let tokens = narrative::tokenize(&model.tokenizer, request.text)?;
+    let plans = narrative::plan_windows(&tokens, request)?;
+    let mut windows = Vec::with_capacity(plans.len());
+    for plan in &plans {
+        let inputs = narrative::window_inputs(&tokens, plan);
+        let length = inputs.ids.len();
+        model.metadata.validate_tokens(length)?;
+        let (m, q) = (inputs.mention_starts.len(), inputs.quote_starts.len());
+        let tensor = |shape: Vec<i64>, data: Vec<i64>| {
+            Tensor::from_array((shape, data))
+                .map_err(|_| ModelFailure::execution("onnx_execution_failed"))
+        };
+        let wide = vec![1, length as i64];
+        let input_ids = tensor(wide.clone(), inputs.ids)?;
+        let attention_mask = tensor(wide, vec![1; length])?;
+        let mention_starts = tensor(vec![m as i64], inputs.mention_starts)?;
+        let mention_ends = tensor(vec![m as i64], inputs.mention_ends)?;
+        let quote_starts = tensor(vec![q as i64], inputs.quote_starts)?;
+        let quote_ends = tensor(vec![q as i64], inputs.quote_ends)?;
+        let (entity, nominal, antecedent, speaker) = {
+            let mut session = model
+                .session
+                .lock()
+                .map_err(|_| ModelFailure::execution("onnx_execution_failed"))?;
+            let outputs = session
+                .run(ort::inputs![
+                    "input_ids" => input_ids,
+                    "attention_mask" => attention_mask,
+                    "mention_starts" => mention_starts,
+                    "mention_ends" => mention_ends,
+                    "quote_starts" => quote_starts,
+                    "quote_ends" => quote_ends,
+                ])
+                .map_err(|_| ModelFailure::execution("onnx_execution_failed"))?;
+            let extract =
+                |name: &str, expected: &[Option<usize>]| -> Result<Vec<f32>, ModelFailure> {
+                    let (shape, data) = outputs
+                        .get(name)
+                        .ok_or_else(|| ModelFailure::incompatible("model_profile_outputs"))?
+                        .try_extract_tensor::<f32>()
+                        .map_err(|_| ModelFailure::execution("onnx_execution_failed"))?;
+                    super::checked::tensor_shape(shape, expected, data)?;
+                    Ok(data.to_vec())
+                };
+            (
+                extract("entity_logits", &[Some(1), Some(length), Some(9)])?,
+                extract("nominal_logits", &[Some(1), Some(length), Some(3)])?,
+                extract("coref_scores", &[Some(m), Some(m)])?,
+                extract("attribution_scores", &[Some(q), Some(m + 1)])?,
+            )
+        };
+        windows.push(narrative::decode_window(
+            request.text,
+            &tokens,
+            plan,
+            &model.metadata,
+            narrative::WindowOutputs {
+                entity: &entity,
+                nominal: &nominal,
+                antecedent: &antecedent,
+                speaker: &speaker,
+            },
+        ));
+    }
+    Ok(windows)
 }
 
 /// Build the three standard BERT input tensors of shape `[batch, seq_len]`.
@@ -920,6 +1010,12 @@ impl InferenceBackend for OrtBackend {
         )?;
         classify_pairs_inner_checked(pairs)
     }
+    fn narrative_checked(
+        &self,
+        request: &NarrativeRequest<'_>,
+    ) -> Result<Vec<NarrativeWindow>, ModelFailure> {
+        narrative_inner_checked(request)
+    }
 
     fn check_model(&self, kind: ModelKind) -> Result<(), ModelFailure> {
         match kind {
@@ -927,6 +1023,7 @@ impl InferenceBackend for OrtBackend {
             ModelKind::Ner => ner_model(),
             ModelKind::Emotion => emotion_model(),
             ModelKind::Nli => nli_model(),
+            ModelKind::NarrativeMultitask => narrative_model(),
         }
         .map(|_| ())
     }

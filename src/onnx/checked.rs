@@ -10,6 +10,9 @@ pub enum ModelKind {
     Ner,
     Emotion,
     Nli,
+    /// One encoder with entity, nominal-mention, antecedent, and speaker heads
+    /// (`scripts/multitask_train.py`).
+    NarrativeMultitask,
 }
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -169,6 +172,152 @@ pub fn entities(
     }
     Ok(output)
 }
+/// Content tokens per narrative window; the training windows had this length, so
+/// longer windows would put the heads outside their fitted position range.
+pub const NARRATIVE_WINDOW_TOKENS: usize = 400;
+pub const NARRATIVE_TEXT_LIMIT: usize = 1024 * 1024;
+pub const NARRATIVE_SPAN_LIMIT: usize = 10_000;
+/// Mentions or quotations one window may carry; the pair matrices are quadratic in it.
+pub const NARRATIVE_WINDOW_SPAN_LIMIT: usize = 512;
+
+/// One narrative-model call: a text with the byte spans of the mention candidates
+/// the antecedent head scores and the quotations the speaker head scores. Both
+/// span lists must be sorted by `(start, end)`; the model scores antecedents in
+/// that order.
+#[derive(Debug, Clone, Copy)]
+pub struct NarrativeRequest<'a> {
+    pub text: &'a str,
+    pub mentions: &'a [(usize, usize)],
+    pub quotes: &'a [(usize, usize)],
+}
+
+/// One decoded window of a narrative-model call.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct NarrativeWindow {
+    /// Byte range the window's tokens cover.
+    pub start: usize,
+    pub end: usize,
+    pub entities: super::NerSpans,
+    /// Nominal person-mention byte spans ("her mother").
+    pub nominals: Vec<(usize, usize)>,
+    /// Indices into the request's mentions whose tokens lie inside this window, ascending.
+    pub mentions: Vec<usize>,
+    /// Indices into the request's quotes whose tokens lie inside this window, ascending.
+    pub quotes: Vec<usize>,
+    /// `antecedents[i][0]` scores "no antecedent" (always 0); `antecedents[i][j + 1]`
+    /// scores window mention `j` as the antecedent of window mention `i` (`j < i`).
+    pub antecedents: Vec<Vec<f32>>,
+    /// `speakers[q][0]` scores "speaker outside the window"; `speakers[q][j + 1]`
+    /// scores window mention `j` as the speaker of window quote `q`.
+    pub speakers: Vec<Vec<f32>>,
+}
+
+pub fn narrative(
+    backend: &dyn InferenceBackend,
+    request: &NarrativeRequest<'_>,
+) -> Result<Vec<NarrativeWindow>, ModelFailure> {
+    validate_narrative_request(request)?;
+    backend.check_model(ModelKind::NarrativeMultitask)?;
+    let windows = backend.narrative_checked(request)?;
+    validate_narrative_windows(request, &windows)?;
+    Ok(windows)
+}
+
+fn validate_spans(text: &str, spans: &[(usize, usize)], code: &str) -> Result<(), ModelFailure> {
+    if spans.len() > NARRATIVE_SPAN_LIMIT {
+        return Err(ModelFailure::execution("narrative_span_limit"));
+    }
+    let mut previous = (0usize, 0usize);
+    for &(start, end) in spans {
+        if start >= end
+            || end > text.len()
+            || !text.is_char_boundary(start)
+            || !text.is_char_boundary(end)
+            || (start, end) < previous
+        {
+            return Err(ModelFailure::execution(code));
+        }
+        previous = (start, end);
+    }
+    Ok(())
+}
+
+fn validate_narrative_request(request: &NarrativeRequest<'_>) -> Result<(), ModelFailure> {
+    if request.text.len() > NARRATIVE_TEXT_LIMIT {
+        return Err(ModelFailure::execution("model_text_limit"));
+    }
+    validate_spans(request.text, request.mentions, "narrative_mention_spans")?;
+    validate_spans(request.text, request.quotes, "narrative_quote_spans")
+}
+
+fn validate_window_indices(
+    indices: &[usize],
+    spans: &[(usize, usize)],
+    window: (usize, usize),
+) -> bool {
+    indices.len() <= NARRATIVE_WINDOW_SPAN_LIMIT
+        && indices.windows(2).all(|pair| pair[0] < pair[1])
+        && indices.iter().all(|&index| {
+            spans
+                .get(index)
+                .is_some_and(|&(start, end)| start < window.1 && end > window.0)
+        })
+}
+
+fn validate_narrative_windows(
+    request: &NarrativeRequest<'_>,
+    windows: &[NarrativeWindow],
+) -> Result<(), ModelFailure> {
+    let text = request.text;
+    let mut previous_end = 0usize;
+    for window in windows {
+        if window.start < previous_end
+            || window.start > window.end
+            || window.end > text.len()
+            || !text.is_char_boundary(window.start)
+            || !text.is_char_boundary(window.end)
+        {
+            return Err(ModelFailure::incompatible("narrative_window_range"));
+        }
+        previous_end = window.end;
+        for (quote, label, start, end) in &window.entities {
+            if start >= end
+                || text.get(*start..*end) != Some(quote.as_str())
+                || !matches!(label.as_str(), "MISC" | "PER" | "ORG" | "LOC")
+            {
+                return Err(ModelFailure::incompatible("ner_invalid_span_or_label"));
+            }
+        }
+        if window.nominals.iter().any(|&(start, end)| {
+            start >= end
+                || text
+                    .get(start..end)
+                    .is_none_or(|span| span.trim().is_empty())
+        }) {
+            return Err(ModelFailure::incompatible("narrative_invalid_nominal_span"));
+        }
+        let bounds = (window.start, window.end);
+        if !validate_window_indices(&window.mentions, request.mentions, bounds)
+            || !validate_window_indices(&window.quotes, request.quotes, bounds)
+        {
+            return Err(ModelFailure::incompatible("narrative_window_indices"));
+        }
+        let columns = window.mentions.len() + 1;
+        let valid_matrix = |matrix: &[Vec<f32>], rows: usize| {
+            matrix.len() == rows
+                && matrix
+                    .iter()
+                    .all(|row| row.len() == columns && row.iter().all(|v| v.is_finite()))
+        };
+        if !valid_matrix(&window.antecedents, window.mentions.len())
+            || !valid_matrix(&window.speakers, window.quotes.len())
+        {
+            return Err(ModelFailure::incompatible("narrative_matrix_shape"));
+        }
+    }
+    Ok(())
+}
+
 pub(super) fn validate_texts(texts: &[&str], max_batch: usize) -> Result<(), ModelFailure> {
     let mut bytes = 0usize;
     if texts.len() > max_batch {

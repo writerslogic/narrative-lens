@@ -20,8 +20,12 @@ const NAME_WINDOW: usize = 256;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DialogueAttributionMode {
+    /// Explicit speech tags only, plus the narrative model's speaker when a
+    /// verified model is configured.
     #[default]
     ExplicitOnly,
+    /// Also proximity and alternation guesses for quotes neither a tag nor the
+    /// model attributes.
     ConservativeHeuristic,
 }
 
@@ -62,6 +66,9 @@ pub struct DialogueExtractionResult {
     pub availability: AnalysisAvailability,
     pub diagnostics: Vec<String>,
     pub lines: Vec<LocatedDialogueLine>,
+    /// The verified narrative model that attributed speakers, when one did.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model_identity: Option<crate::onnx::model::ModelIdentity>,
 }
 
 fn name_char(ch: char) -> bool {
@@ -828,6 +835,36 @@ pub fn extract_dialogue_checked(
     } else {
         Some(OffsetIndex::new(text)?)
     };
+    // The narrative model scores a speaker for every quotation at once; explicit
+    // tags still win because they are exact, and the heuristics only fill quotes
+    // the model leaves unattributed.
+    let model = if quotes.is_empty() {
+        None
+    } else {
+        let spans: Vec<_> = quotes
+            .iter()
+            .map(|quote| (quote.start, quote.end))
+            .collect();
+        match crate::continuity::narrative::analyze(text, &spans) {
+            Ok(analysis) => Some(analysis),
+            Err(failure) => {
+                if failure.kind != crate::onnx::checked::FailureKind::Unavailable {
+                    diagnostics.push(format!("model_fallback:{}", failure.code));
+                }
+                None
+            }
+        }
+    };
+    let normalize = |name: &str| {
+        name.split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ")
+            .to_lowercase()
+    };
+    let cast_names: std::collections::HashMap<String, &str> = cast
+        .iter()
+        .map(|name| (normalize(name), name.as_str()))
+        .collect();
     let mut lines = Vec::new();
     let mut recent = Vec::<String>::new();
     let mut previous_speaker = None;
@@ -881,6 +918,16 @@ pub fn extract_dialogue_checked(
             method = "explicit_tag".into();
             tag_verb = Some(tag.verb.clone());
             attribution = Some(range(index, tag.start, tag.end));
+        } else if let Some((name, probability)) = model.as_ref().and_then(|analysis| {
+            analysis
+                .speaker_name(position)
+                .map(|name| (name, analysis.quotes[position].confidence))
+        }) {
+            speaker = cast_names
+                .get(&normalize(name))
+                .map_or_else(|| name.to_string(), |cast| (*cast).to_string());
+            confidence = probability;
+            method = "narrative_model".into();
         } else if options.attribution == DialogueAttributionMode::ConservativeHeuristic
             && !unresolved
             && !conflict
@@ -1057,6 +1104,7 @@ pub fn extract_dialogue_checked(
         },
         diagnostics,
         lines,
+        model_identity: model.map(|analysis| analysis.identity),
     })
 }
 

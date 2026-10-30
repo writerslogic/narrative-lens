@@ -16,8 +16,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) +
   split plus the pinned PDNC revision, `docs/benchmarks/pdnc-source.json`) and
   `scripts/multitask_train.py` (one DistilBERT encoder; entity, nominal-mention,
   coreference, and quotation-attribution heads; single int8 ONNX export). LitBank-only
-  cross-validation is recorded in `docs/benchmarks/evidence/narrative-multitask-cv-litbank-v1.json`;
-  the crate does not load the graph yet.
+  cross-validation is recorded in `docs/benchmarks/evidence/narrative-multitask-cv-litbank-v1.json`.
+- The crate loads that export as `ModelKind::NarrativeMultitask` (profile
+  `narrative_multitask_v1`, manifest field `nominalLabels`) on both the native and the
+  wasm runtime. `continuity::narrative::analyze` runs it over 400-token windows and
+  decodes mentions, antecedent clusters, and quotation speakers;
+  `CoreferenceResolver::resolve_checked` and `dialogue::extract_dialogue_checked` use the
+  model when one is configured and keep the literal-name, pronoun-chain, and proximity
+  heuristics as the fallback. Results carry `modelIdentity`; model speakers use method
+  `narrative_model` and pronoun links the basis `narrative_model`.
+  `evaluate_literary --narrative-model DIR` scores the pipeline with it, and
+  `tests/component_narrative_model.rs` exercises a local export when
+  `NARRATIVE_LENS_NARRATIVE_MODEL` names its directory.
+- `scripts/multitask_train.py` gained `--entity-weight` / `--nominal-weight` loss
+  multipliers and writes the strict crate manifest beside a `training.json` provenance file.
 
 ### Changed
 - `count_syllables` no longer allocates per call; results are unchanged.

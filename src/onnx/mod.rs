@@ -1,6 +1,7 @@
 //! Model-runtime abstraction for the ONNX models narrative-lens can optionally
-//! use: SBERT sentence embeddings, BERT NER, RoBERTa/DeBERTa NLI, and an Ekman-7
-//! emotion classifier.
+//! use: SBERT sentence embeddings, BERT NER, RoBERTa/DeBERTa NLI, an Ekman-7
+//! emotion classifier, and the narrative multi-task model (entity, nominal
+//! mention, antecedent, and speaker heads over one encoder).
 //!
 //! The concrete inference engine is selected at compile time:
 //! - native (`not(target_arch = "wasm32")`) uses [`ort`] (ONNX Runtime);
@@ -81,6 +82,16 @@ pub trait InferenceBackend: Sync {
             "backend_does_not_provide_checked_ner",
         ))
     }
+    /// Run the narrative multi-task model over every 400-token window of the
+    /// request text. Only backends with a verified narrative model override this.
+    fn narrative_checked(
+        &self,
+        _request: &checked::NarrativeRequest<'_>,
+    ) -> std::result::Result<Vec<checked::NarrativeWindow>, checked::ModelFailure> {
+        Err(checked::ModelFailure::execution(
+            "backend_does_not_provide_narrative_model",
+        ))
+    }
     /// Embed each text into a sentence vector. Entries for which embedding is
     /// unavailable come back as an empty `Vec`.
     fn embed(&self, texts: &[&str]) -> Vec<Vec<f64>>;
@@ -117,6 +128,10 @@ pub trait InferenceBackend: Sync {
 /// backends; inference kernels still require numerical parity checks.
 #[cfg(feature = "onnx")]
 mod decode;
+/// Window planning and output decoding for the narrative multi-task model,
+/// shared by both runtimes.
+#[cfg(feature = "onnx")]
+mod narrative;
 
 #[cfg(all(feature = "onnx", not(target_arch = "wasm32")))]
 mod ort_backend;

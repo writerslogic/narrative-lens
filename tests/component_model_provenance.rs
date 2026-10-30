@@ -202,6 +202,7 @@ fn actual_verified_model_identity_is_attached_to_nli_report() {
         labels: ["contradiction", "neutral", "entailment"]
             .map(String::from)
             .into(),
+        nominal_labels: Vec::new(),
     };
     let identity =
         onnx::set_model_bytes_verified(ModelKind::Nli, model, &tokenizer, &manifest).unwrap();
