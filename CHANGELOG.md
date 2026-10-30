@@ -37,8 +37,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) +
   and strip shape annotations so tract loads them; the crate reads `windowTokens` and accepts
   RoBERTa's `<s>`/`</s>` special tokens.
 - The distilled RoBERTa-base narrative model is published at
-  `Writerslogic/narrative-multitask` on Hugging Face (revision `v1`, hashes pinned in
+  `Writerslogic/narrative-multitask` on Hugging Face (revision `v2`: alias-list training and
+  Gutenberg self-training; `v1` without them; hashes pinned in
   `docs/benchmarks/narrative-model-source.json`); the crate does not download it.
+- `scripts/review_sheet.py` builds human-review sheets (evaluation excerpts, low-confidence
+  batches), scores runs against the reviewed answers, and imports them as training gold.
 - Narrative inference runs overlapping windows (half-window stride, best-context
   selection), names clusters by nominal surfaces when no proper name exists, and merges
   aliases with a final antecedent pass over the distinct proper surfaces. Window byte
