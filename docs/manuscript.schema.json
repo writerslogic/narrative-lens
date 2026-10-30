@@ -1273,6 +1273,15 @@
           },
           "tokenizerSha256": {
             "type": "string"
+          },
+          "windowTokens": {
+            "description": "Content tokens per narrative window (the training window); defaults to 400.",
+            "format": "uint",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
           }
         },
         "required": [

@@ -18,7 +18,11 @@ labels: Array<string>,
  * The narrative model's nominal-mention labels in source-logit order
  * (`O`, `B-NOM`, `I-NOM`); empty for every other kind.
  */
-nominalLabels?: Array<string>, };
+nominalLabels?: Array<string>, 
+/**
+ * Content tokens per narrative window (the training window); defaults to 400.
+ */
+windowTokens?: number | null, };
 export type ModelVerification = "unverified_legacy" | "verified_manifest_v1";
 export type ModelIdentity = { kind: ModelKind, verification: ModelVerification, manifest: ModelManifest | null, };
 export type AnalysisLimits = { maxFindings: number, sceneCandidates: number, nliPairs: number, nliSentencesPerScene: number, nliWindowScenes: number, modelInputBytes: number, };
