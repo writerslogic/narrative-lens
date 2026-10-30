@@ -172,8 +172,9 @@ pub fn entities(
     }
     Ok(output)
 }
-/// Content tokens per narrative window; the training windows had this length, so
-/// longer windows would put the heads outside their fitted position range.
+/// Content tokens per narrative window when the manifest carries no `windowTokens`;
+/// inference must use the training window so the heads stay inside their fitted
+/// position range.
 pub const NARRATIVE_WINDOW_TOKENS: usize = 400;
 pub const NARRATIVE_TEXT_LIMIT: usize = 1024 * 1024;
 pub const NARRATIVE_SPAN_LIMIT: usize = 10_000;

@@ -8,8 +8,7 @@
 //! implementation and the host gate unit-tests it.
 
 use super::checked::{
-    ModelFailure, NARRATIVE_WINDOW_SPAN_LIMIT, NARRATIVE_WINDOW_TOKENS, NarrativeRequest,
-    NarrativeWindow,
+    ModelFailure, NARRATIVE_WINDOW_SPAN_LIMIT, NarrativeRequest, NarrativeWindow,
 };
 use super::decode::{decode_bio, decode_entities};
 use super::model::{ModelMetadata, NOMINAL_LABEL_NAMES};
@@ -71,8 +70,8 @@ pub(super) fn tokenize(
         ids: encoding.get_ids().iter().map(|&id| i64::from(id)).collect(),
         offsets,
         words: encoding.get_word_ids().to_vec(),
-        cls: special("[CLS]")?,
-        sep: special("[SEP]")?,
+        cls: special("[CLS]").or_else(|_| special("<s>"))?,
+        sep: special("[SEP]").or_else(|_| special("</s>"))?,
     })
 }
 
@@ -92,6 +91,7 @@ pub(super) fn token_span(
 pub(super) fn plan_windows(
     tokens: &Tokens,
     request: &NarrativeRequest<'_>,
+    window: usize,
 ) -> Result<Vec<WindowPlan>, ModelFailure> {
     let spans = |byte_spans: &[(usize, usize)]| -> Vec<Option<(usize, usize)>> {
         byte_spans
@@ -115,10 +115,10 @@ pub(super) fn plan_windows(
             .ok_or_else(|| ModelFailure::execution("narrative_window_span_limit"))
     };
     let total = tokens.ids.len();
-    let mut plans = Vec::with_capacity(total.div_ceil(NARRATIVE_WINDOW_TOKENS));
+    let mut plans = Vec::with_capacity(total.div_ceil(window.max(1)));
     let mut a = 0usize;
     while a < total {
-        let b = (a + NARRATIVE_WINDOW_TOKENS).min(total);
+        let b = (a + window.max(1)).min(total);
         plans.push(WindowPlan {
             token_start: a,
             token_end: b,
@@ -219,7 +219,7 @@ pub(super) fn decode_window(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::onnx::checked::ModelKind;
+    use crate::onnx::checked::{ModelKind, NARRATIVE_WINDOW_TOKENS};
 
     fn tokens(text: &str) -> Tokens {
         // One token per whitespace-separated word, in order.
@@ -278,7 +278,7 @@ mod tests {
             mentions: &mentions,
             quotes: &quotes,
         };
-        let plans = plan_windows(&tokens, &request).unwrap();
+        let plans = plan_windows(&tokens, &request, NARRATIVE_WINDOW_TOKENS).unwrap();
         assert_eq!(plans.len(), 2);
         assert_eq!(
             (plans[0].token_start, plans[0].token_end),
@@ -305,7 +305,7 @@ mod tests {
             mentions: &mentions,
             quotes: &[(6, 21)],
         };
-        let plans = plan_windows(&tokens, &request).unwrap();
+        let plans = plan_windows(&tokens, &request, NARRATIVE_WINDOW_TOKENS).unwrap();
         let metadata = ModelMetadata::unverified(ModelKind::NarrativeMultitask);
         // Legacy source order is the canonical order: B-PER = 3, B-NOM = 1, I-NOM = 2.
         let one_hot = |labels: &[usize], width: usize| -> Vec<f32> {
@@ -348,7 +348,7 @@ mod tests {
             mentions: &[],
             quotes: &[(0, 12)],
         };
-        let plans = plan_windows(&tokens, &request).unwrap();
+        let plans = plan_windows(&tokens, &request, NARRATIVE_WINDOW_TOKENS).unwrap();
         let inputs = window_inputs(&tokens, &plans[0]);
         assert_eq!(inputs.mention_starts, vec![0]);
         let metadata = ModelMetadata::unverified(ModelKind::NarrativeMultitask);

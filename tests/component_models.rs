@@ -47,6 +47,7 @@ fn manifest(kind: ModelKind) -> ModelManifest {
         padding_token_id: 0,
         labels: labels.iter().map(|label| (*label).into()).collect(),
         nominal_labels: nominal_labels.iter().map(|label| (*label).into()).collect(),
+        window_tokens: None,
     }
 }
 

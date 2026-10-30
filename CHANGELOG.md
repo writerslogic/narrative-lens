@@ -29,7 +29,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) +
   `tests/component_narrative_model.rs` exercises a local export when
   `NARRATIVE_LENS_NARRATIVE_MODEL` names its directory.
 - `scripts/multitask_train.py` gained `--entity-weight` / `--nominal-weight` loss
-  multipliers and writes the strict crate manifest beside a `training.json` provenance file.
+  multipliers, any HuggingFace encoder as `--base`, learned token-distance features in both
+  pair heads, shifted window grids (`--offsets`), LitBank oversampling, and a teacher-student
+  mode (`--teacher-base`, `--teacher-cache`) that distils a larger encoder into the exported
+  student through character-aligned soft labels. Exports write the strict crate manifest
+  (now with `windowTokens`) beside a `training.json` provenance file, pin the batch axis to 1,
+  and strip shape annotations so tract loads them; the crate reads `windowTokens` and accepts
+  RoBERTa's `<s>`/`</s>` special tokens.
 
 ### Changed
 - `count_syllables` no longer allocates per call; results are unchanged.

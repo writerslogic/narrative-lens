@@ -252,7 +252,7 @@ fn narrative_inner_checked(
 ) -> std::result::Result<Vec<NarrativeWindow>, ModelFailure> {
     let model = narrative_model()?;
     let tokens = narrative::tokenize(&model.tokenizer, request.text)?;
-    let plans = narrative::plan_windows(&tokens, request)?;
+    let plans = narrative::plan_windows(&tokens, request, model.metadata.window_tokens())?;
     let mut windows = Vec::with_capacity(plans.len());
     for plan in &plans {
         let inputs = narrative::window_inputs(&tokens, plan);

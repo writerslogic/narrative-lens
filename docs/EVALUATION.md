@@ -227,6 +227,38 @@ NARRATIVE_LENS_NARRATIVE_MODEL=MODEL_DIR cargo test --features onnx --test compo
 uv run scripts/narrative_model_reference.py MODEL_DIR   # onnxruntime decode of the test passage
 ```
 
+`scripts/multitask_train.py` also runs a teacher-student program: `--teacher-base` trains a
+larger encoder (DeBERTa-v3-large) on the same training documents first, the teacher then
+labels every student window (PDNC carries no span labels of its own, so its 1.9M words get
+entity and nominal distributions this way), and the student trains on gold plus the
+teacher's distributions through its own tokenizer, aligned by character offsets. `--offsets`
+adds shifted window grids, `--litbank-repeat` oversamples the span-labelled works, and
+`--teacher-cache` keeps per-fold teachers so a second student reuses them. The export's
+`windowTokens` records the training window the crate must use. DeBERTa itself is not a
+deployable student: its ONNX export carries a data-dependent `If` that tract rejects and is
+244 MB at int8; RoBERTa-base (126 MB) and BERT-base (110 MB) both load in tract.
+
+Pipeline scores on the development split with the weight-3 export loaded beside the
+pinned NER model
+([benchmarks/evidence/literary-development-narrative-v7.json](benchmarks/evidence/literary-development-narrative-v7.json)
+against [literary-development-ner-v6.json](benchmarks/evidence/literary-development-ner-v6.json)).
+The model trained on these works, so the figures show the integration running end to end
+(76 works, no failures, no fallbacks), not generalization:
+
+| Development split, 76 works | pinned NER (v6) | + narrative model (v7) |
+| --- | ---: | ---: |
+| Supplied-cast pronoun resolution F1 (precision) | 0.458 (0.779) | 0.488 (0.730) |
+| Automatic-cast pronoun resolution F1 (precision) | 0.399 (0.671) | 0.482 (0.721) |
+| Explicit-mode speaker F1 (precision) | 0.226 (0.982) | 0.363 (0.519) |
+| Heuristic-mode speaker F1 (precision) | 0.335 (0.599) | 0.409 (0.561) |
+
+Person spans and the cast inventory are unchanged because the pinned NER model still
+produces them. The speaker head's probabilities are diffuse: keeping only model speakers
+scored at 0.3 or more retains 116 of 277 assessed decisions at precision 0.75, and 0.5
+retains 34 at 0.88, so no gate is applied and each line carries its probability for
+callers that prefer precision. Gating pronoun links moves precision only from 0.73 to
+0.76 at any recall.
+
 GUM was considered for coreference but deferred: its annotations are CC BY 4.0 while the
 fiction, essay, letter, and podcast texts are CC BY-NC-SA and Reddit is non-commercial.
 

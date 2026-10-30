@@ -73,6 +73,9 @@ pub struct ModelManifest {
     /// (`O`, `B-NOM`, `I-NOM`); empty for every other kind.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub nominal_labels: Vec<String>,
+    /// Content tokens per narrative window (the training window); defaults to 400.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub window_tokens: Option<usize>,
 }
 
 fn permutation_of(labels: &[String], canonical: &[&str]) -> bool {
@@ -108,6 +111,13 @@ impl ModelManifest {
             || !permutation_of(&self.nominal_labels, nominal_labels(expected))
         {
             return Err(ModelFailure::incompatible("model_profile_labels"));
+        }
+        if let Some(window) = self.window_tokens
+            && (expected != ModelKind::NarrativeMultitask
+                || window == 0
+                || window + 2 > self.max_tokens)
+        {
+            return Err(ModelFailure::incompatible("model_profile_window"));
         }
         Ok(())
     }
@@ -253,6 +263,16 @@ impl ModelMetadata {
             return Err(ModelFailure::execution("model_profile_token_limit"));
         }
         Ok(())
+    }
+
+    /// Content tokens per narrative window: the manifest's `windowTokens`, else the
+    /// default the first exports trained with.
+    pub fn window_tokens(&self) -> usize {
+        self.identity
+            .manifest
+            .as_ref()
+            .and_then(|manifest| manifest.window_tokens)
+            .unwrap_or(super::checked::NARRATIVE_WINDOW_TOKENS)
     }
 
     pub fn padding_id(&self) -> i64 {
