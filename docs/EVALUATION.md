@@ -253,10 +253,10 @@ marks give quotations, and the student learns from the teacher's distributions a
 those windows (`--unlabeled-windows` caps how many join a run).
 
 The distilled student is published as
-[Writerslogic/narrative-multitask](https://huggingface.co/Writerslogic/narrative-multitask) (revision `v1`;
+[Writerslogic/narrative-multitask](https://huggingface.co/Writerslogic/narrative-multitask) (revision `v2`; `v1` is the student without alias lists and self-training;
 [benchmarks/narrative-model-source.json](benchmarks/narrative-model-source.json) pins the file hashes).
 The crate still bundles and downloads nothing: fetch it with
-`hf download Writerslogic/narrative-multitask --revision v1 --local-dir DIR` and pass `DIR` to
+`hf download Writerslogic/narrative-multitask --revision v2 --local-dir DIR` and pass `DIR` to
 `evaluate_literary --narrative-model`, or load the files with `set_model_bytes_verified`.
 
 Pipeline scores on the development split, each run loading the model beside the pinned
@@ -265,15 +265,15 @@ NER model (evidence `literary-development-narrative-v{7,8,9}.json` against
 Every model trained on these works, so the figures show the integration end to end, not
 generalization; v7 is the DistilBERT candidate, v8 the distilled RoBERTa student with
 disjoint windows, v9 the same student with overlapping windows, nominal cluster names, and
-the alias pass:
+the alias pass, v10 the v2 student (alias-list training and Gutenberg self-training) with the same inference:
 
-| Development split, 76 works | pinned NER (v6) | v7 | v8 | v9 |
-| --- | ---: | ---: | ---: | ---: |
-| Supplied-cast pronoun resolution F1 (precision) | 0.458 (0.779) | 0.488 (0.730) | 0.625 (0.860) | 0.786 (0.797) |
-| Automatic-cast pronoun resolution F1 (precision) | 0.399 (0.671) | 0.482 (0.721) | 0.615 (0.846) | 0.781 (0.792) |
-| Explicit-mode speaker F1 (precision) | 0.226 (0.982) | 0.363 (0.519) | 0.534 (0.788) | 0.657 (0.716) |
-| Heuristic-mode speaker F1 (precision) | 0.335 (0.599) | 0.409 (0.561) | 0.559 (0.763) | 0.692 (0.774) |
-| Unresolved gold pronouns | | | 2,961 | 190 |
+| Development split, 76 works | pinned NER (v6) | v7 | v8 | v9 | v10 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Supplied-cast pronoun resolution F1 (precision) | 0.458 (0.779) | 0.488 (0.730) | 0.625 (0.860) | 0.786 (0.797) | 0.848 (0.861) |
+| Automatic-cast pronoun resolution F1 (precision) | 0.399 (0.671) | 0.482 (0.721) | 0.615 (0.846) | 0.781 (0.792) | 0.840 (0.853) |
+| Explicit-mode speaker F1 (precision) | 0.226 (0.982) | 0.363 (0.519) | 0.534 (0.788) | 0.657 (0.716) | 0.699 (0.787) |
+| Heuristic-mode speaker F1 (precision) | 0.335 (0.599) | 0.409 (0.561) | 0.559 (0.763) | 0.692 (0.774) | 0.734 (0.827) |
+| Unresolved gold pronouns | | | 2,961 | 190 | 205 |
 
 Person spans and the cast inventory are unchanged because the pinned NER model still
 produces them. Confidences are softmax probabilities of the chosen link and each line
@@ -291,6 +291,12 @@ offsets 0 and 255, all PDNC windows, LitBank repeated 4x, entity weight 3, nomin
 | Nominal person mentions, exact F1 | 0.536 | 0.704 | 0.641 |
 | Antecedent accuracy, pronouns | 0.834 | 0.908 | 0.923 |
 | Quotation speaker accuracy (LitBank / PDNC quotes) | 0.419 | 0.814 (0.561 / 0.819) | 0.863 |
+
+Human review: `scripts/review_sheet.py evalset` picks dialogue-dense 2,000-word excerpts (Gutenberg
+titles by name, or your own text files kept outside the repository), `sheet` turns the evaluator's
+predictions into a CSV with each quotation and pronoun in context and the model's answer prefilled,
+`score` grades a later run against the reviewed answers, and `import` writes them as a gold document
+source for training.
 
 GUM was considered for coreference but deferred: its annotations are CC BY 4.0 while the
 fiction, essay, letter, and podcast texts are CC BY-NC-SA and Reddit is non-commercial.
