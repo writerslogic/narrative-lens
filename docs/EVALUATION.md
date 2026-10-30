@@ -252,6 +252,13 @@ as unlabelled text: the teacher's token heads give them mention spans, paired qu
 marks give quotations, and the student learns from the teacher's distributions alone on
 those windows (`--unlabeled-windows` caps how many join a run).
 
+The distilled student is published as
+[Writerslogic/narrative-multitask](https://huggingface.co/Writerslogic/narrative-multitask) (revision `v1`;
+[benchmarks/narrative-model-source.json](benchmarks/narrative-model-source.json) pins the file hashes).
+The crate still bundles and downloads nothing: fetch it with
+`hf download Writerslogic/narrative-multitask --revision v1 --local-dir DIR` and pass `DIR` to
+`evaluate_literary --narrative-model`, or load the files with `set_model_bytes_verified`.
+
 Pipeline scores on the development split, each run loading the model beside the pinned
 NER model (evidence `literary-development-narrative-v{7,8,9}.json` against
 [literary-development-ner-v6.json](benchmarks/evidence/literary-development-ner-v6.json)).
