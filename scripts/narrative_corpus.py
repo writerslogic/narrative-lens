@@ -16,6 +16,7 @@ LitBank contributes only its development split; the holdout works are never read
 
 import argparse
 import json
+import random
 import re
 import sys
 from collections import defaultdict
@@ -203,6 +204,24 @@ def pdnc():
                      "proper": [[s, e] for s, e, _ in proper], "nominal": [], "pronoun": [[s, e] for s, e, _ in pronoun],
                      "clusters": [by_cluster[cid] for cid in sorted(by_cluster)], "quotes": quotes, "token_labels": False})
         stats["proper_alias_mentions"] += len(proper)
+        # Alias-list documents: every alias of the novel's characters in a shuffled list,
+        # clustered by character, so the coreference head learns that "Elizabeth" and
+        # "Miss Bennet" name one person even without narrative context.
+        groups = [sorted(aliases) for cid, aliases in sorted(characters.values(), key=lambda v: v[0]) if aliases]
+        for k in range(3):
+            items = [(alias, gi) for gi, group in enumerate(groups) for alias in group]
+            random.Random(f"{row['Novel Code']}-{k}").shuffle(items)
+            spans, position = [], 0
+            for alias, gi in items:
+                spans.append((position, position + len(alias), gi))
+                position += len(alias) + 3
+            by_group = defaultdict(list)
+            for s_, e_, gi in spans:
+                by_group[gi].append([s_, e_])
+            docs.append({"id": f"{row['Novel Code']}-aliases-{k}", "source": "pdnc_alias", "group": authors[row["Author Code"]], "text": " . ".join(alias for alias, _ in items),
+                         "proper": [[s_, e_] for s_, e_, _ in spans], "nominal": [], "pronoun": [], "clusters": [members for members in by_group.values() if len(members) > 1],
+                         "quotes": [], "token_labels": False})
+            stats["alias_list_documents"] += 1
     spec["excludedNovels"] = excluded
     (ROOT / "docs/benchmarks/pdnc-source.json").write_text(json.dumps(spec, indent=2) + "\n")
     stats["excluded_holdout_overlap"] = len(excluded)
@@ -210,12 +229,14 @@ def pdnc():
 
 
 def write(name, docs, stats):
+    """One file per document source (a builder may emit derived sources such as pdnc_alias)."""
     OUT.mkdir(parents=True, exist_ok=True)
-    path = OUT / f"{name}.jsonl"
-    with path.open("w", encoding="utf-8") as f:
-        for doc in docs:
-            f.write(json.dumps(doc, ensure_ascii=False) + "\n")
-    print(json.dumps({"source": name, "documents": len(docs), "groups": len({d["group"] for d in docs}), "clusters": sum(len(d["clusters"]) for d in docs), **stats}))
+    for source in sorted({d["source"] for d in docs} | {name}):
+        subset = [d for d in docs if d["source"] == source]
+        with (OUT / f"{source}.jsonl").open("w", encoding="utf-8") as f:
+            for doc in subset:
+                f.write(json.dumps(doc, ensure_ascii=False) + "\n")
+        print(json.dumps({"source": source, "documents": len(subset), "groups": len({d["group"] for d in subset}), "clusters": sum(len(d["clusters"]) for d in subset), **(stats if source == name else {})}))
 
 
 def main():

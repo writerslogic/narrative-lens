@@ -1,0 +1,708 @@
+{
+  "source": "Project Gutenberg",
+  "license": "Public domain in the United States (Project Gutenberg License applies to the files)",
+  "textUrl": "https://www.gutenberg.org/cache/epub/{id}/pg{id}.txt",
+  "selection": "English prose fiction from pg_catalog.csv, lowest ids first, LitBank source novels excluded by id, 40k-260k words after stripping the Gutenberg header and footer",
+  "novels": [
+    {
+      "id": 15,
+      "title": "Moby-Dick; or, The Whale",
+      "author": "Melville, Herman, 1819-1891",
+      "words": 212670,
+      "sha256": "cca79713fb2eb809daa7da6538018a0190a57d661b59f3a2b68ce4e137bbf8fc"
+    },
+    {
+      "id": 16,
+      "title": "Peter Pan",
+      "author": "Barrie, J. M. (James Matthew), 1860-1937",
+      "words": 47268,
+      "sha256": "6b08714281fe38266a756741e4c62915cda7536c2f78cca501f7fd53f3f445ae"
+    },
+    {
+      "id": 47,
+      "title": "Anne of Avonlea",
+      "author": "Montgomery, L. M. (Lucy Maud), 1874-1942",
+      "words": 91089,
+      "sha256": "e9a12333e4e6e047d5de8fca150ff66e45ab5e4f2bc85de3c9cdccd125512e81"
+    },
+    {
+      "id": 51,
+      "title": "Anne of the Island",
+      "author": "Montgomery, L. M. (Lucy Maud), 1874-1942",
+      "words": 76559,
+      "sha256": "f9c7d035c05a39d436c36fb9f99addbfe3206e662f694437d25ed7d266f5c572"
+    },
+    {
+      "id": 79,
+      "title": "Terminal Compromise",
+      "author": "Schwartau, Winn, 1952-",
+      "words": 216477,
+      "sha256": "5d940a6a5dd0cb172aefda7b1aa456a69163c65b3fe563ad658676aa11faed24"
+    },
+    {
+      "id": 81,
+      "title": "The Return of Tarzan",
+      "author": "Burroughs, Edgar Rice, 1875-1950",
+      "words": 89217,
+      "sha256": "dfabf6d2d2c787a055edfeea161698d6749847d9373c24ea937d203bb6c5e3ad"
+    },
+    {
+      "id": 82,
+      "title": "Ivanhoe: A Romance",
+      "author": "Scott, Walter, 1771-1832",
+      "words": 191641,
+      "sha256": "188187a4af0956b01ccb0a9f8fb50587ffa4fca0b2d12d8ff5a82fc6f05f15e0"
+    },
+    {
+      "id": 85,
+      "title": "The Beasts of Tarzan",
+      "author": "Burroughs, Edgar Rice, 1875-1950",
+      "words": 63537,
+      "sha256": "9306f48be863ef8ab5d4a1d566bb308944f6316f3b2427d7c33386ffec62ec46"
+    },
+    {
+      "id": 86,
+      "title": "A Connecticut Yankee in King Arthur's Court",
+      "author": "Twain, Mark, 1835-1910",
+      "words": 117810,
+      "sha256": "6ce0781165b70257a4530f46856057ec689b0ec0980946fede2cd25ec5dca917"
+    },
+    {
+      "id": 90,
+      "title": "The Son of Tarzan",
+      "author": "Burroughs, Edgar Rice, 1875-1950",
+      "words": 94523,
+      "sha256": "37155eedab7f0738f9f2c2c1133c6d2a1c8fbef4baf231cfc3f1066b7c5b4f60"
+    },
+    {
+      "id": 92,
+      "title": "Tarzan and the Jewels of Opar",
+      "author": "Burroughs, Edgar Rice, 1875-1950",
+      "words": 66026,
+      "sha256": "c2b74713c66d41894aaef80f3d8e1ca6a0b3ab2cc7b5b9d80c1ca026941fea16"
+    },
+    {
+      "id": 98,
+      "title": "A Tale of Two Cities",
+      "author": "Dickens, Charles, 1812-1870",
+      "words": 135886,
+      "sha256": "d54c2b80d40a40b982cd88852c6180bb944d95acdb028af3d0e01a1750681784"
+    },
+    {
+      "id": 102,
+      "title": "The Tragedy of Pudd'nhead Wilson",
+      "author": "Twain, Mark, 1835-1910",
+      "words": 53139,
+      "sha256": "449499a3e5c0947b0172aa4e445e7c98d9ff33d7892e98cd5157a4f012414c5f"
+    },
+    {
+      "id": 103,
+      "title": "Around the World in Eighty Days",
+      "author": "Verne, Jules, 1828-1905",
+      "words": 63334,
+      "sha256": "6f608ea2da50caf73245ad2996e4ee3c02ef1aa2152f7fcfe209df9aa39e7512"
+    },
+    {
+      "id": 106,
+      "title": "Jungle Tales of Tarzan",
+      "author": "Burroughs, Edgar Rice, 1875-1950",
+      "words": 74140,
+      "sha256": "27b66b434d9bd63e1a663bfcb8ca6528ba229e147bf50279bedddf98d3f5b54e"
+    },
+    {
+      "id": 107,
+      "title": "Far from the Madding Crowd",
+      "author": "Hardy, Thomas, 1840-1928",
+      "words": 137118,
+      "sha256": "67d4901981ceaef9ae2e5de32d1c59c8005101375a932d49861054f65bb60099"
+    },
+    {
+      "id": 108,
+      "title": "The Return of Sherlock Holmes",
+      "author": "Doyle, Arthur Conan, 1859-1930",
+      "words": 112116,
+      "sha256": "8c4de14b3a1952417eca4673fcb1b8aa8f946f8a4164f10ec761368af34d5e5a"
+    },
+    {
+      "id": 111,
+      "title": "Freckles",
+      "author": "Stratton-Porter, Gene, 1863-1924",
+      "words": 81940,
+      "sha256": "9bf9c17d7cfb900938dc69c07728451c74db7d242a0ba368d0ccae63232d333a"
+    },
+    {
+      "id": 121,
+      "title": "Northanger Abbey",
+      "author": "Austen, Jane, 1775-1817",
+      "words": 77223,
+      "sha256": "273d7d35f8cc0286812bdb26ccc17f362b4f2d0d69a2ec96ca403fac8505b709"
+    },
+    {
+      "id": 122,
+      "title": "The Return of the Native",
+      "author": "Hardy, Thomas, 1840-1928",
+      "words": 142015,
+      "sha256": "bdd2c262086b9c8ae4361ef1e7f29fcc9e462bbab108cbe94c3e972276444b14"
+    },
+    {
+      "id": 125,
+      "title": "A Girl of the Limberlost",
+      "author": "Stratton-Porter, Gene, 1863-1924",
+      "words": 119960,
+      "sha256": "be8fe1edc228b5f74d5795425b68d329e9cf1a3926d3279ceb3f70d154e34573"
+    },
+    {
+      "id": 131,
+      "title": "The Pilgrim's Progress from this world to that which is to come\r",
+      "author": "Bunyan, John, 1628-1688",
+      "words": 58050,
+      "sha256": "13188e0d8cdc003befb5f70a41234c7b619c142cbbe4871564fd06406bda94bb"
+    },
+    {
+      "id": 133,
+      "title": "The Damnation of Theron Ware",
+      "author": "Frederic, Harold, 1856-1898",
+      "words": 118275,
+      "sha256": "d839ca2a496a4130cef755442a37cae23be398a46ece6afbcc92eb1a4ae265df"
+    },
+    {
+      "id": 134,
+      "title": "Maria; Or, The Wrongs of Woman",
+      "author": "Wollstonecraft, Mary, 1759-1797",
+      "words": 45051,
+      "sha256": "41cb9aaa7a504c5c96bb7de94efb6c19c5f34150fdedbeb21ce0b1c186245f1e"
+    },
+    {
+      "id": 139,
+      "title": "The Lost World",
+      "author": "Doyle, Arthur Conan, 1859-1930",
+      "words": 75759,
+      "sha256": "9fa6ee046745c09b5077f68c232f210ac672196d27e25b1aca13dbc643805c65"
+    },
+    {
+      "id": 140,
+      "title": "The Jungle",
+      "author": "Sinclair, Upton, 1878-1968",
+      "words": 149189,
+      "sha256": "1a28274fdea8c1438ebad3d7d07946b3d8a0779754427ba4a4da3b64882b7514"
+    },
+    {
+      "id": 141,
+      "title": "Mansfield Park",
+      "author": "Austen, Jane, 1775-1817",
+      "words": 159713,
+      "sha256": "b34723544dbe8185e786d0fdd47e42e7e1ac4265b84141e31ca260c1e36b68d8"
+    },
+    {
+      "id": 143,
+      "title": "The Mayor of Casterbridge",
+      "author": "Hardy, Thomas, 1840-1928",
+      "words": 115251,
+      "sha256": "afc11a8bb54ae3d37551d4d6d3523e5df2371665781da769344597969c116a00"
+    },
+    {
+      "id": 144,
+      "title": "The Voyage Out",
+      "author": "Woolf, Virginia, 1882-1941",
+      "words": 136348,
+      "sha256": "c54be5a6ce683b41c070f3e5727bcbbb3be5938cc8be339711c110ba4ae63858"
+    },
+    {
+      "id": 152,
+      "title": "Wild Justice",
+      "author": "Sprague, Ruth M.",
+      "words": 59282,
+      "sha256": "bcddb77249cb1268d47c907920cb677fff3c3395a9d85d39ef50fca50607eceb"
+    },
+    {
+      "id": 153,
+      "title": "Jude the Obscure",
+      "author": "Hardy, Thomas, 1840-1928",
+      "words": 144508,
+      "sha256": "b787d4fd196efdea49dc469365593d8bb1e18494b31c39c18ded39d2c6177745"
+    },
+    {
+      "id": 154,
+      "title": "The Rise of Silas Lapham",
+      "author": "Howells, William Dean, 1837-1920",
+      "words": 128735,
+      "sha256": "0ddff78b3fab89b116975d2b808f685f22b652d2bc3b85bbe4188519f46552fd"
+    },
+    {
+      "id": 161,
+      "title": "Sense and Sensibility",
+      "author": "Austen, Jane, 1775-1817",
+      "words": 118860,
+      "sha256": "7bcd77c45cb32fb8d9f89402561270cc6a911c0a4e20667176d5be779fc3974a"
+    },
+    {
+      "id": 165,
+      "title": "McTeague: A Story of San Francisco",
+      "author": "Norris, Frank, 1870-1902",
+      "words": 112631,
+      "sha256": "8a6d157190da426705691d0c861c78fc3bdc1a1933f3c2aa9f4834ef12a6cae1"
+    },
+    {
+      "id": 166,
+      "title": "Summer",
+      "author": "Wharton, Edith, 1862-1937",
+      "words": 57306,
+      "sha256": "a860fddffbaec1212c678e0ce3dd2aefaa2062729a550147c74596f04d219879"
+    },
+    {
+      "id": 169,
+      "title": "The Well at the World's End: A Tale",
+      "author": "Morris, William, 1834-1896",
+      "words": 225427,
+      "sha256": "eebab2428c982c4b9c6261348d1ac71be71f10d6edc71b8bb2c513f8ad82fa19"
+    },
+    {
+      "id": 170,
+      "title": "The Haunted Hotel: A Mystery of Modern Venice",
+      "author": "Collins, Wilkie, 1824-1889",
+      "words": 62229,
+      "sha256": "179880ac243bb81fae56b588dd90342c85008f87c237c188a39f3bc49b03806f"
+    },
+    {
+      "id": 172,
+      "title": "The Haunted Bookshop",
+      "author": "Morley, Christopher, 1890-1957",
+      "words": 61624,
+      "sha256": "7959f50e5f1549aec9d2b3780dc2aedfa62d66d108b1096c0620187e6f80d66a"
+    },
+    {
+      "id": 173,
+      "title": "The Insidious Dr. Fu Manchu",
+      "author": "Rohmer, Sax, 1883-1959",
+      "words": 72778,
+      "sha256": "dcffc09223485dc810da0f063c1b091a5dfef4b869a2ea40c0c1888325273605"
+    },
+    {
+      "id": 175,
+      "title": "The Phantom of the Opera",
+      "author": "Leroux, Gaston, 1868-1927",
+      "words": 85563,
+      "sha256": "ee03c8f6775abdedb9d754205f9ff72201be99eac02a5d779dad665f6811f793"
+    },
+    {
+      "id": 176,
+      "title": "Roderick Hudson",
+      "author": "James, Henry, 1843-1916",
+      "words": 131730,
+      "sha256": "5c6214bec7cc9a26acb6f26380a924b9f5e96b8861b0b1e7260e5df6bd349421"
+    },
+    {
+      "id": 177,
+      "title": "The American",
+      "author": "James, Henry, 1843-1916",
+      "words": 133809,
+      "sha256": "bd38b7a6a7ecd9cb915cba5a625204549c67b6e65db389274816f674ca67360c"
+    },
+    {
+      "id": 178,
+      "title": "Confidence",
+      "author": "James, Henry, 1843-1916",
+      "words": 75728,
+      "sha256": "aca97679a02809f81e7337cf299f2c344c4de6e1d6e517f362c72a16dc976f45"
+    },
+    {
+      "id": 203,
+      "title": "Uncle Tom's Cabin",
+      "author": "Stowe, Harriet Beecher, 1811-1896",
+      "words": 180924,
+      "sha256": "95e4ce1153f8506d9903df84541cfa99c8ac6ad3ad69bcf5ea37d042d01a0a98"
+    },
+    {
+      "id": 204,
+      "title": "The innocence of Father Brown",
+      "author": "Chesterton, G. K. (Gilbert Keith), 1874-1936",
+      "words": 78917,
+      "sha256": "77ef9c0c42a6800c5436d8adf3c7d55fab99039bc4c902b3e4d2daae328c120f"
+    },
+    {
+      "id": 221,
+      "title": "The Return of Sherlock Holmes",
+      "author": "Doyle, Arthur Conan, 1859-1930",
+      "words": 112428,
+      "sha256": "3b0f640ee0d6a92dc44409be18e97f60cfb5bb53b6149fdd0c4227c0d2ce63da"
+    },
+    {
+      "id": 222,
+      "title": "The Moon and Sixpence",
+      "author": "Maugham, W. Somerset (William Somerset), 1874-1965",
+      "words": 74911,
+      "sha256": "238ba5e2413c4f33d0b4ab3440902754078a2dfa2537bed52463408dd01d7869"
+    },
+    {
+      "id": 223,
+      "title": "The wisdom of Father Brown",
+      "author": "Chesterton, G. K. (Gilbert Keith), 1874-1936",
+      "words": 71652,
+      "sha256": "86a5d9c201d8e4d4504d21676cc7b5dd94fca600dad21562a88bdebbe03500d6"
+    },
+    {
+      "id": 224,
+      "title": "A pair of blue eyes",
+      "author": "Hardy, Thomas, 1840-1928",
+      "words": 130332,
+      "sha256": "aa2401526c7af8c422e2261cf1413fead3b93eb90a8b093ed2f31e9ab183df30"
+    },
+    {
+      "id": 234,
+      "title": "Child Christopher and Goldilind the Fair",
+      "author": "Morris, William, 1834-1896",
+      "words": 48814,
+      "sha256": "57d83764cd5543d73ac28b6ed1c918fa413d5071753a754a67f98698e926c14f"
+    },
+    {
+      "id": 241,
+      "title": "Clotelle; Or, The Colored Heroine, a tale of the Southern States; Or, The President's Daughter",
+      "author": "Brown, William Wells, 1814?-1884",
+      "words": 45614,
+      "sha256": "a1f04431b2e07f9fee6842846dd6949db120bce52b84d76d69495a122888d379"
+    },
+    {
+      "id": 242,
+      "title": "My \u00c1ntonia",
+      "author": "Cather, Willa, 1873-1947",
+      "words": 81365,
+      "sha256": "d078445e530bad6c0b1f33bd23a71a2f6fa717e8b30a57b9343a01c8510533c5"
+    },
+    {
+      "id": 244,
+      "title": "A Study in Scarlet",
+      "author": "Doyle, Arthur Conan, 1859-1930",
+      "words": 43427,
+      "sha256": "8bbec71f9fa9c2acc9afe9be70560ca5f65c1bc95ef5af8252e9097f8d012497"
+    },
+    {
+      "id": 268,
+      "title": "The Octopus : A Story of California",
+      "author": "Norris, Frank, 1870-1902",
+      "words": 195717,
+      "sha256": "cb7bc07fcc690d8019dda93134e4a18cb74c1043985024dc430e5d5b52d77c45"
+    },
+    {
+      "id": 283,
+      "title": "The Reef",
+      "author": "Wharton, Edith, 1862-1937",
+      "words": 96358,
+      "sha256": "05e6ece3440068f119cda02b2c628670457661f49d31ffbe44a2443a85139de0"
+    },
+    {
+      "id": 284,
+      "title": "The House of Mirth",
+      "author": "Wharton, Edith, 1862-1937",
+      "words": 129318,
+      "sha256": "52728930e0b308772f8781b1e8b20a981b38cdebf161c20fb84ffc6764c1b6df"
+    },
+    {
+      "id": 286,
+      "title": "Laddie: A True Blue Story",
+      "author": "Stratton-Porter, Gene, 1863-1924",
+      "words": 156419,
+      "sha256": "edd0d959a16d94f12f3af8408cb576b559a69ea3291a67d12c1d7564f9cbe790"
+    },
+    {
+      "id": 287,
+      "title": "Remember the Alamo",
+      "author": "Barr, Amelia E., 1831-1919",
+      "words": 80741,
+      "sha256": "7c96f5f420009003073cf41314a7657d168067db666e71fe4bf056b037f80cae"
+    },
+    {
+      "id": 290,
+      "title": "The Stark Munro Letters\r",
+      "author": "Doyle, Arthur Conan, 1859-1930",
+      "words": 77470,
+      "sha256": "660a6019691c51ff06d416da7c7205a1151f75e5e3bf50957851fad5640f49ec"
+    },
+    {
+      "id": 293,
+      "title": "Paul Prescott's Charge",
+      "author": "Alger, Horatio, Jr., 1832-1899",
+      "words": 59161,
+      "sha256": "7c0ef393582978f0a364186fa2e3a8901d4bc366197867a5a9f98b5565ec54a4"
+    },
+    {
+      "id": 297,
+      "title": "The Flirt",
+      "author": "Tarkington, Booth, 1869-1946",
+      "words": 71586,
+      "sha256": "8a82ad97d684e382e0f8b70b01230e72d0baeead5326bddc39033c065370940b"
+    },
+    {
+      "id": 298,
+      "title": "The Market-Place",
+      "author": "Frederic, Harold, 1856-1898",
+      "words": 119009,
+      "sha256": "5129795e4777200f09ae48c818c0adf1b8062ef58d85e378c323dda43b797da0"
+    },
+    {
+      "id": 305,
+      "title": "The Count's Millions",
+      "author": "Gaboriau, Emile, 1832-1873",
+      "words": 113426,
+      "sha256": "8fcb007a7ca572db68e56d09ca24beff361a91ac70e92a28aed6c2434efcdda8"
+    },
+    {
+      "id": 321,
+      "title": "Moran of the Lady Letty",
+      "author": "Norris, Frank, 1870-1902",
+      "words": 43762,
+      "sha256": "d2e85949f59ce95592429ae4d52109fd04cf30ea85a455ed1d20bfc8c375b911"
+    },
+    {
+      "id": 322,
+      "title": "St. Ives: Being the Adventures of a French Prisoner in England",
+      "author": "Stevenson, Robert Louis, 1850-1894",
+      "words": 103297,
+      "sha256": "e50424812e9067b500989ec8ce69b94eff905e4e53f25063d16de715324947e4"
+    },
+    {
+      "id": 325,
+      "title": "Phantastes: A Faerie Romance for Men and Women",
+      "author": "MacDonald, George, 1824-1905",
+      "words": 69123,
+      "sha256": "0c2e1727d889006cae20f37284f6c9c71d64d808f36d92aeeb3dc83cfb4bd1ec"
+    },
+    {
+      "id": 331,
+      "title": "The Mucker",
+      "author": "Burroughs, Edgar Rice, 1875-1950",
+      "words": 122622,
+      "sha256": "e6cfa1de1d65a27bfcce5ce227df673529265d0c0aed140ceb9d2d46de9731be"
+    },
+    {
+      "id": 339,
+      "title": "Old Indian Days",
+      "author": "Eastman, Charles A., 1858-1939",
+      "words": 48467,
+      "sha256": "e5e47361cc29fb2a4fb2799c3e42a2dcd541c0fdfae1247d12adee9f0b2b20b2"
+    },
+    {
+      "id": 344,
+      "title": "The Merry Men, and Other Tales and Fables",
+      "author": "Stevenson, Robert Louis, 1850-1894",
+      "words": 79924,
+      "sha256": "4c397d6e1688b525c58c60ad565a63717feee1d0f7db36e69281919e6492aa16"
+    },
+    {
+      "id": 347,
+      "title": "The Saga of Grettir the Strong: Grettir's Saga",
+      "author": "Unknown",
+      "words": 70618,
+      "sha256": "1fe7d90f6525102222560392e23ab414788f816f40a08c75b2f5ce52d7b61f25"
+    },
+    {
+      "id": 349,
+      "title": "The Harvester",
+      "author": "Stratton-Porter, Gene, 1863-1924",
+      "words": 147535,
+      "sha256": "6c9bfea3a14b4627dbb2f42eca6bd311a4d2eeb47d8625ac6ffcbd61c6d1eda9"
+    },
+    {
+      "id": 350,
+      "title": "Fanny Herself",
+      "author": "Ferber, Edna, 1885-1968",
+      "words": 98805,
+      "sha256": "c0427a8755af73df948cb775ed3793a70c78413580368aec627b9bdc72484670"
+    },
+    {
+      "id": 361,
+      "title": "Miss Billy \u2014 Married",
+      "author": "Porter, Eleanor H. (Eleanor Hodgman), 1868-1920",
+      "words": 76133,
+      "sha256": "bbad07b60c6d24f306073fa5293850ed73b9781b2238c915a326d1dd3f75070f"
+    },
+    {
+      "id": 362,
+      "title": "Miss Billy's Decision",
+      "author": "Porter, Eleanor H. (Eleanor Hodgman), 1868-1920",
+      "words": 69487,
+      "sha256": "334ef503531a034b48819b877b40a169880afa9dd2f1a776aae712cc1c1479fc"
+    },
+    {
+      "id": 363,
+      "title": "The Oakdale Affair",
+      "author": "Burroughs, Edgar Rice, 1875-1950",
+      "words": 41814,
+      "sha256": "494730767b9697be4e75408a30a401b3004477fdbe900a6eb014e8f66041b311"
+    },
+    {
+      "id": 364,
+      "title": "The Mad King",
+      "author": "Burroughs, Edgar Rice, 1875-1950",
+      "words": 93073,
+      "sha256": "73d88d3b6c176a76923f9d865b689027afed9079c509281ec2f83f535673a2a1"
+    },
+    {
+      "id": 366,
+      "title": "Bab: A Sub-Deb",
+      "author": "Rinehart, Mary Roberts, 1876-1958",
+      "words": 49109,
+      "sha256": "57b97268323b90c827a4af2b03a0d2d893e3faf5888d066ddc7d153ef4dbeb57"
+    },
+    {
+      "id": 369,
+      "title": "The outlaw of Torn",
+      "author": "Burroughs, Edgar Rice, 1875-1950",
+      "words": 65387,
+      "sha256": "5686a283157b701dd22b3776fdc80ed03b8ff5a609b0117a9ec21621206f868c"
+    },
+    {
+      "id": 370,
+      "title": "The Fortunes and Misfortunes of the Famous Moll Flanders",
+      "author": "Defoe, Daniel, 1661?-1731",
+      "words": 138319,
+      "sha256": "24798589d70239a14baa9cb7b8c70c067395e0798f24482aa9a1bb06f41c182f"
+    },
+    {
+      "id": 372,
+      "title": "Prince Otto, a Romance",
+      "author": "Stevenson, Robert Louis, 1850-1894",
+      "words": 61964,
+      "sha256": "64d3ff39f4c3d076974c201ecc8a7b8c6ec1799d1d38f971c101c30e2d050a6b"
+    },
+    {
+      "id": 376,
+      "title": "A Journal of the Plague Year\r",
+      "author": "Defoe, Daniel, 1661?-1731",
+      "words": 94894,
+      "sha256": "7e891b79a891e65ca4c1e16a78ff7f30d0e1c6c0c6c7d9bcf26d53cd2920da0d"
+    },
+    {
+      "id": 378,
+      "title": "The White Knight: Tirant Lo Blanc",
+      "author": "Martorell, Joanot, -1468",
+      "words": 161482,
+      "sha256": "ebcf072a27861a77b592fbe6764f9a90cc9920d20c9ff5d7d230b9c620f97e54"
+    },
+    {
+      "id": 380,
+      "title": "Weir of Hermiston: An Unfinished Romance",
+      "author": "Stevenson, Robert Louis, 1850-1894",
+      "words": 47981,
+      "sha256": "7e7dc964e0947e38f1452da717d57a993dfe4d1c8299fee84b26b86eac717c51"
+    },
+    {
+      "id": 384,
+      "title": "The Lost Prince",
+      "author": "Burnett, Frances Hodgson, 1849-1924",
+      "words": 99432,
+      "sha256": "3789ffaec9ec2cdb0f4409a9f72717e3f4eae1fda5c086da21c61b2859d7f6a6"
+    },
+    {
+      "id": 388,
+      "title": "The Crossing",
+      "author": "Churchill, Winston, 1871-1947",
+      "words": 204812,
+      "sha256": "4609c7706043cbcdef9725c1d5800ea76804be366a5b0c290b89db06889825c0"
+    },
+    {
+      "id": 393,
+      "title": "The Blue Lagoon: A Romance",
+      "author": "Stacpoole, H. De Vere (Henry De Vere), 1863-1951",
+      "words": 64481,
+      "sha256": "845a998cab58fb388aa28b836b83ce49a1de49ba0701c591682122cfb1e5e64c"
+    },
+    {
+      "id": 394,
+      "title": "Cranford",
+      "author": "Gaskell, Elizabeth Cleghorn, 1810-1865",
+      "words": 70985,
+      "sha256": "3bb263075a97afd4058933534549f6176d881f7a9f74bb62eb52be26670e3cb0"
+    },
+    {
+      "id": 395,
+      "title": "The Holy War, Made by King Shaddai Upon Diabolus, for the Regaining of the Metropolis of the World; Or, The Losing and T",
+      "author": "Bunyan, John, 1628-1688",
+      "words": 99139,
+      "sha256": "ac8861493aa9e9de82dd2732b9b206d7f7d1023fa0e12b282f2b0117afb2942d"
+    },
+    {
+      "id": 401,
+      "title": "Blix",
+      "author": "Norris, Frank, 1870-1902",
+      "words": 51430,
+      "sha256": "92a8a7b43741afc057a55b534d7df97c991e457114e9bf3b89da5a74ad3180d0"
+    },
+    {
+      "id": 403,
+      "title": "Soldiers of Fortune",
+      "author": "Davis, Richard Harding, 1864-1916",
+      "words": 77888,
+      "sha256": "49603dc7d7d4a55dc3e1b491edc52ce9e2649dfa65636d8aab3f92c473273779"
+    },
+    {
+      "id": 416,
+      "title": "Winesburg, Ohio: A Group of Tales of Ohio Small Town Life",
+      "author": "Anderson, Sherwood, 1876-1941",
+      "words": 74120,
+      "sha256": "f73183936f6599750f0da9384a84fc20959491bddf259f9be0105881e60d67bc"
+    },
+    {
+      "id": 421,
+      "title": "Kidnapped",
+      "author": "Stevenson, Robert Louis, 1850-1894",
+      "words": 81903,
+      "sha256": "d57ef5be2a98ff2bbe3819abc84deeeea7f5f039a4b90fd358b2babb0f75588a"
+    },
+    {
+      "id": 422,
+      "title": "The Romany Rye",
+      "author": "Borrow, George, 1803-1881",
+      "words": 161148,
+      "sha256": "69462acdd0262408dbe522cf128a2be14740e0117ef241859b65d6a7be0a88cb"
+    },
+    {
+      "id": 423,
+      "title": "Round the Red Lamp: Being Facts and Fancies of Medical Life",
+      "author": "Doyle, Arthur Conan, 1859-1930",
+      "words": 68085,
+      "sha256": "9d8e4a0a550ba9b3c4b83a32850262d2e607a7bc1ee93f21cb5510724eead3da"
+    },
+    {
+      "id": 426,
+      "title": "Tales and Fantasies",
+      "author": "Stevenson, Robert Louis, 1850-1894",
+      "words": 50230,
+      "sha256": "e51f6b62367dc902295ed10563a6da8265347cf830c8378f27bd6c8778ab6e2c"
+    },
+    {
+      "id": 430,
+      "title": "The Grain of Dust: A Novel",
+      "author": "Phillips, David Graham, 1867-1911",
+      "words": 97486,
+      "sha256": "61dc4c92c2730cd5deef80a4369b4fcb93b31fe6d8aac00848efd4682d00027f"
+    },
+    {
+      "id": 433,
+      "title": "The Conflict",
+      "author": "Phillips, David Graham, 1867-1911",
+      "words": 93342,
+      "sha256": "bb371053f89d77e60ce80cd8b190e8b9eee629165002c5ef2d78898b4448d4eb"
+    },
+    {
+      "id": 437,
+      "title": "The Life of Lazarillo of Tormes: His Fortunes and Misfortunes as Told by Himself",
+      "author": "Anonymous",
+      "words": 55967,
+      "sha256": "515a21f481b18e5d97ab1a0a26f2db954e0ff26a99c9ac7b83e5ed916ae7fdb9"
+    },
+    {
+      "id": 452,
+      "title": "Lavengro: The Scholar, the Gypsy, the Priest",
+      "author": "Borrow, George, 1803-1881",
+      "words": 225714,
+      "sha256": "a4b3be98ea03945344ffdd1e5d2f9eca8a0d91e86a0ab1382ed43a755eb562a7"
+    },
+    {
+      "id": 457,
+      "title": "The Price She Paid",
+      "author": "Phillips, David Graham, 1867-1911",
+      "words": 96699,
+      "sha256": "fa34d83226e0a1d18f820146323027cdf40fab6786f0c281346ec2c4e1130770"
+    }
+  ]
+}

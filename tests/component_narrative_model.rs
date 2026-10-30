@@ -54,6 +54,12 @@ fn local_narrative_model_drives_mentions_coreference_and_speakers() {
         .filter(|mention| mention.kind == MentionKind::Proper)
         .map(|mention| &TEXT[mention.start..mention.end])
         .collect();
+    let named: Vec<_> = analysis
+        .mentions
+        .iter()
+        .filter(|mention| mention.kind != MentionKind::Pronoun)
+        .map(|mention| TEXT[mention.start..mention.end].trim())
+        .collect();
     assert!(proper.contains(&"Alice Bennet"), "{proper:?}");
     assert!(
         proper.iter().any(|name| name.starts_with("Jane")),
@@ -139,7 +145,7 @@ fn local_narrative_model_drives_mentions_coreference_and_speakers() {
                 Some(CoreferenceBasis::NarrativeModel)
             );
             assert!(
-                cast.contains(&resolved.as_str()) || proper.contains(&resolved.as_str()),
+                cast.contains(&resolved.as_str()) || named.contains(&resolved.as_str()),
                 "{resolved}"
             );
         }

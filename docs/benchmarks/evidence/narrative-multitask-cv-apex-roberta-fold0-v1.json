@@ -1,0 +1,170 @@
+{
+  "base": "roberta-base",
+  "teacherBase": "microsoft/deberta-v3-large",
+  "sources": [
+    "litbank",
+    "pdnc"
+  ],
+  "documents": 100,
+  "folds": 5,
+  "epochs": 3,
+  "lr": 3e-05,
+  "teacherEpochs": 2,
+  "teacherLr": 2e-05,
+  "distillWeight": 1.0,
+  "lossWeights": {
+    "entity": 3.0,
+    "nominal": 2.0
+  },
+  "novelWindows": 0,
+  "litbankRepeat": 4,
+  "window": 510,
+  "offsets": [
+    0,
+    255
+  ],
+  "teacherOffsets": [
+    0
+  ],
+  "seed": 1,
+  "perFold": [
+    {
+      "entity": {
+        "tp": 392,
+        "fp": 115,
+        "fn": 66,
+        "precision": 0.7731755424063116,
+        "recall": 0.8558951965065502,
+        "f1": 0.8124352331606217
+      },
+      "nominal": {
+        "tp": 877,
+        "fp": 443,
+        "fn": 295,
+        "precision": 0.6643939393939394,
+        "recall": 0.7482935153583617,
+        "f1": 0.703852327447833
+      },
+      "coref_proper_antecedent_accuracy": {
+        "n": 18509,
+        "accuracy": 0.9395969528337565
+      },
+      "coref_nominal_antecedent_accuracy": {
+        "n": 1175,
+        "accuracy": 0.8459574468085106
+      },
+      "coref_pronoun_antecedent_accuracy": {
+        "n": 4517,
+        "accuracy": 0.9076820898826655
+      },
+      "attribution_accuracy": {
+        "n": 12122,
+        "accuracy": 0.8143045702029368
+      },
+      "bySource": {
+        "litbank": {
+          "entity": {
+            "tp": 392,
+            "fp": 115,
+            "fn": 66,
+            "precision": 0.7731755424063116,
+            "recall": 0.8558951965065502,
+            "f1": 0.8124352331606217
+          },
+          "nominal": {
+            "tp": 877,
+            "fp": 443,
+            "fn": 295,
+            "precision": 0.6643939393939394,
+            "recall": 0.7482935153583617,
+            "f1": 0.703852327447833
+          },
+          "coref_proper_antecedent_accuracy": {
+            "n": 458,
+            "accuracy": 0.8318777292576419
+          },
+          "coref_nominal_antecedent_accuracy": {
+            "n": 1175,
+            "accuracy": 0.8459574468085106
+          },
+          "coref_pronoun_antecedent_accuracy": {
+            "n": 2618,
+            "accuracy": 0.920550038197097
+          },
+          "attribution_accuracy": {
+            "n": 212,
+            "accuracy": 0.5613207547169812
+          }
+        },
+        "pdnc": {
+          "entity": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "nominal": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "coref_proper_antecedent_accuracy": {
+            "n": 18051,
+            "accuracy": 0.9423300648163536
+          },
+          "coref_nominal_antecedent_accuracy": {
+            "n": 0,
+            "accuracy": null
+          },
+          "coref_pronoun_antecedent_accuracy": {
+            "n": 1899,
+            "accuracy": 0.889942074776198
+          },
+          "attribution_accuracy": {
+            "n": 11910,
+            "accuracy": 0.8188077246011755
+          }
+        }
+      },
+      "teacher": {
+        "entity": {
+          "tp": 388,
+          "fp": 90,
+          "fn": 70,
+          "precision": 0.8117154811715481,
+          "recall": 0.8471615720524017,
+          "f1": 0.8290598290598291
+        },
+        "nominal": {
+          "tp": 812,
+          "fp": 549,
+          "fn": 361,
+          "precision": 0.5966201322556943,
+          "recall": 0.6922421142369991,
+          "f1": 0.6408839779005525
+        },
+        "coref_proper_antecedent_accuracy": {
+          "n": 18526,
+          "accuracy": 0.9487746950232107
+        },
+        "coref_nominal_antecedent_accuracy": {
+          "n": 1176,
+          "accuracy": 0.8664965986394558
+        },
+        "coref_pronoun_antecedent_accuracy": {
+          "n": 4522,
+          "accuracy": 0.9230429013710747
+        },
+        "attribution_accuracy": {
+          "n": 12150,
+          "accuracy": 0.8633744855967078
+        }
+      }
+    }
+  ]
+}

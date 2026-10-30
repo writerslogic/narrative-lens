@@ -6,7 +6,9 @@
 //! mentions plus the crate's pronoun inventory and scores a speaker for every
 //! quotation. Antecedent links are decoded greedily inside each 400-token
 //! window, then clusters that share an identical proper-name surface are merged
-//! across windows. The heuristic resolvers in [`super::coreference`] and
+//! across windows, and a final pass runs the antecedent head over the list of
+//! distinct proper surfaces so aliases of one character ("Elizabeth", "Miss
+//! Bennet") merge too. The heuristic resolvers in [`super::coreference`] and
 //! [`crate::craft::dialogue`] call [`analyze`] first and keep their own logic as
 //! the fallback when no model is configured.
 
@@ -17,6 +19,10 @@ use crate::onnx::{
     checked::{self, ModelFailure, ModelKind, NarrativeRequest},
     model::ModelIdentity,
 };
+
+/// Probability the alias pass needs before two proper surfaces are merged into one
+/// character; below it the surfaces stay separate clusters.
+pub const ALIAS_MIN_CONFIDENCE: f64 = 0.5;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MentionKind {
@@ -57,8 +63,8 @@ pub struct NarrativeAnalysis {
     pub mentions: Vec<NarrativeMention>,
     /// One entry per requested quotation, in the caller's order.
     pub quotes: Vec<NarrativeQuote>,
-    /// The most frequent proper-name surface of each cluster; `None` for a
-    /// cluster with no proper mention.
+    /// The most frequent proper-name surface of each cluster, else its most
+    /// frequent nominal surface; `None` for a cluster of pronouns only.
     pub cluster_names: Vec<Option<String>>,
     pub windows: usize,
 }
@@ -170,17 +176,21 @@ pub fn analyze_with_backend(
             confidence: 1.0,
         })
         .collect();
-    let mut parent: Vec<usize> = (0..mentions.len()).collect();
+    // Overlapping windows score a mention twice; the decision from the window
+    // with more left context wins, and a quote keeps the window it sits most
+    // centrally in.
+    let mut mention_choice: Vec<Option<(usize, Option<usize>, f64)>> = vec![None; mentions.len()];
+    let mut quote_choice: Vec<Option<(usize, Option<usize>, f64)>> =
+        vec![None; sorted_quotes.len()];
     for window in &second {
         for (local, &global) in window.mentions.iter().enumerate() {
             let row = &window.antecedents[local];
             let (column, probability) = argmax_probability(&row[..=local], |_| true);
-            if column > 0 {
-                let antecedent = window.mentions[column - 1];
-                mentions[global].antecedent = Some(antecedent);
-                union(&mut parent, global, antecedent);
+            let context = spans[global].0.saturating_sub(window.start);
+            if mention_choice[global].is_none_or(|(best, _, _)| context >= best) {
+                let antecedent = (column > 0).then(|| window.mentions[column - 1]);
+                mention_choice[global] = Some((context, antecedent, probability));
             }
-            mentions[global].confidence = probability;
         }
         for (local, &global) in window.quotes.iter().enumerate() {
             let (quote_start, quote_end) = sorted_quotes[global];
@@ -191,7 +201,28 @@ pub fn analyze_with_backend(
                 }
             };
             let (column, probability) = argmax_probability(&window.speakers[local], outside);
-            quote_results[global].speaker = (column > 0).then(|| window.mentions[column - 1]);
+            let centrality = quote_start
+                .saturating_sub(window.start)
+                .min(window.end.saturating_sub(quote_end));
+            if quote_choice[global].is_none_or(|(best, _, _)| centrality >= best) {
+                let speaker = (column > 0).then(|| window.mentions[column - 1]);
+                quote_choice[global] = Some((centrality, speaker, probability));
+            }
+        }
+    }
+    let mut parent: Vec<usize> = (0..mentions.len()).collect();
+    for (global, choice) in mention_choice.into_iter().enumerate() {
+        if let Some((_, antecedent, probability)) = choice {
+            mentions[global].antecedent = antecedent;
+            mentions[global].confidence = probability;
+            if let Some(antecedent) = antecedent {
+                union(&mut parent, global, antecedent);
+            }
+        }
+    }
+    for (global, choice) in quote_choice.into_iter().enumerate() {
+        if let Some((_, speaker, probability)) = choice {
+            quote_results[global].speaker = speaker;
             quote_results[global].confidence = probability;
         }
     }
@@ -208,8 +239,49 @@ pub fn analyze_with_backend(
             }
         }
     }
+    // Alias pass: the antecedent head over the distinct proper surfaces listed in
+    // first-appearance order ("Elizabeth . Miss Bennet . Mr. Darcy"); a confident
+    // link merges the two surfaces' clusters.
+    let mut distinct: Vec<&str> = first_by_surface.keys().copied().collect();
+    distinct.sort_by_key(|surface| first_by_surface[surface]);
+    if distinct.len() >= 2 {
+        let mut alias_text = String::new();
+        let mut alias_spans = Vec::with_capacity(distinct.len());
+        for (index, surface) in distinct.iter().enumerate() {
+            if index > 0 {
+                alias_text.push_str(" . ");
+            }
+            let start = alias_text.len();
+            alias_text.push_str(surface);
+            alias_spans.push((start, alias_text.len()));
+        }
+        let alias_windows = checked::narrative(
+            backend,
+            &NarrativeRequest {
+                text: &alias_text,
+                mentions: &alias_spans,
+                quotes: &[],
+            },
+        )?;
+        for window in &alias_windows {
+            for (local, &global) in window.mentions.iter().enumerate() {
+                let row = &window.antecedents[local];
+                let (column, probability) = argmax_probability(&row[..=local], |_| true);
+                if column > 0 && probability >= ALIAS_MIN_CONFIDENCE {
+                    let other = window.mentions[column - 1];
+                    union(
+                        &mut parent,
+                        first_by_surface[distinct[global]],
+                        first_by_surface[distinct[other]],
+                    );
+                }
+            }
+        }
+    }
+    // A cluster is named by its most frequent proper surface, or, for a character
+    // the text never names ("the old man"), by its most frequent nominal surface.
     let mut cluster_of_root: HashMap<usize, usize> = HashMap::new();
-    let mut surfaces: Vec<HashMap<&str, (usize, usize)>> = Vec::new();
+    let mut surfaces: Vec<HashMap<&str, (bool, usize, usize)>> = Vec::new();
     for index in 0..mentions.len() {
         let root = find(&mut parent, index);
         let next = cluster_of_root.len();
@@ -218,10 +290,14 @@ pub fn analyze_with_backend(
             surfaces.push(HashMap::new());
         }
         mentions[index].cluster = cluster;
-        if mentions[index].kind == MentionKind::Proper {
+        if mentions[index].kind != MentionKind::Pronoun {
+            let proper = mentions[index].kind == MentionKind::Proper;
             let surface = text[mentions[index].start..mentions[index].end].trim();
-            let entry = surfaces[cluster].entry(surface).or_insert((0, index));
-            entry.0 += 1;
+            let entry = surfaces[cluster]
+                .entry(surface)
+                .or_insert((proper, 0, index));
+            entry.0 |= proper;
+            entry.1 += 1;
         }
     }
     let cluster_names = surfaces
@@ -230,10 +306,11 @@ pub fn analyze_with_backend(
             counts
                 .iter()
                 .max_by(|a, b| {
-                    (a.1.0, a.0.len(), std::cmp::Reverse(a.1.1)).cmp(&(
+                    (a.1.0, a.1.1, a.0.len(), std::cmp::Reverse(a.1.2)).cmp(&(
                         b.1.0,
+                        b.1.1,
                         b.0.len(),
-                        std::cmp::Reverse(b.1.1),
+                        std::cmp::Reverse(b.1.2),
                     ))
                 })
                 .map(|(surface, _)| (*surface).to_string())
@@ -320,7 +397,11 @@ mod tests {
             request: &NarrativeRequest<'_>,
         ) -> Result<Vec<NarrativeWindow>, ModelFailure> {
             let mut bounds = vec![0];
-            bounds.extend(&self.splits);
+            bounds.extend(
+                self.splits
+                    .iter()
+                    .map(|split| (*split).min(request.text.len())),
+            );
             bounds.push(request.text.len());
             Ok(bounds
                 .windows(2)
@@ -337,9 +418,10 @@ mod tests {
                     let mentions = inside(request.mentions);
                     let quotes = inside(request.quotes);
                     let proper = |index: usize| {
+                        let (start, end) = request.mentions[index];
                         self.entities
                             .iter()
-                            .any(|entity| (entity.2, entity.3) == request.mentions[index])
+                            .any(|entity| entity.0 == request.text[start..end])
                     };
                     let antecedents = (0..mentions.len())
                         .map(|i| {

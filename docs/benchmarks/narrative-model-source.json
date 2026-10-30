@@ -1,0 +1,34 @@
+{
+  "repository": "Writerslogic/narrative-multitask",
+  "url": "https://huggingface.co/Writerslogic/narrative-multitask",
+  "revision": "v1",
+  "profile": "narrative_multitask_v1",
+  "license": "Apache-2.0 (weights); training data LitBank CC BY 4.0 and PDNC CC BY 4.0",
+  "download": "hf download Writerslogic/narrative-multitask --revision v1 --local-dir narrative-multitask-v1",
+  "files": {
+    "model.onnx": {
+      "sha256": "46431556f5d60d74d1c2027d7ffc694ced9d8bd7e31b12b132731cb06eea2255",
+      "bytes": 126009904
+    },
+    "tokenizer.json": {
+      "sha256": "2bb1a22cfbe25b8e5a232b7fc4d7fc5073923b45724a5f813b00811bb6620f66",
+      "bytes": 3558642
+    },
+    "tokenizer.adapted.json": {
+      "sha256": "2bb1a22cfbe25b8e5a232b7fc4d7fc5073923b45724a5f813b00811bb6620f66",
+      "bytes": 3558642
+    },
+    "manifest.json": {
+      "sha256": "c04b0068dd2373d0aeaf3f065bf559330a48b7a6b6f009f3804456a191d9efc3",
+      "bytes": 530
+    },
+    "training.json": {
+      "sha256": "302c36a8828dd28d7db79d2d93f9c1b3a278fb947b0debed987436c012f473fa",
+      "bytes": 1020
+    }
+  },
+  "evidence": [
+    "docs/benchmarks/evidence/narrative-multitask-cv-apex-roberta-fold0-v1.json",
+    "docs/benchmarks/evidence/literary-development-narrative-v9.json"
+  ]
+}

@@ -36,6 +36,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) +
   (now with `windowTokens`) beside a `training.json` provenance file, pin the batch axis to 1,
   and strip shape annotations so tract loads them; the crate reads `windowTokens` and accepts
   RoBERTa's `<s>`/`</s>` special tokens.
+- The distilled RoBERTa-base narrative model is published at
+  `Writerslogic/narrative-multitask` on Hugging Face (revision `v1`, hashes pinned in
+  `docs/benchmarks/narrative-model-source.json`); the crate does not download it.
+- Narrative inference runs overlapping windows (half-window stride, best-context
+  selection), names clusters by nominal surfaces when no proper name exists, and merges
+  aliases with a final antecedent pass over the distinct proper surfaces. Window byte
+  ranges stay monotone for byte-level tokenizers whose pieces overlap at multi-byte
+  characters. `scripts/narrative_corpus.py pdnc` emits alias-list documents
+  (`pdnc_alias.jsonl`); `scripts/gutenberg_corpus.py` pins 100 unlabelled public-domain
+  novels for teacher-student self-training (`docs/benchmarks/gutenberg-source.json`).
 
 ### Changed
 - `count_syllables` no longer allocates per call; results are unchanged.

@@ -127,7 +127,7 @@ def windows(tok, doc, window, offset=0):
                         labels[t - a] = 2
         qs = [(ts - a + 1, te - a + 1, speaker) for ts, te, speaker, _, _ in quotes if ts >= a and te < b]
         quote_chars = [(s, e) for ts, te, _, s, e in quotes if ts >= a and te < b]
-        meta = {"key": key(doc), "chars": (offsets[a][0], offsets[b - 1][1]), "mentions": mention_chars, "quotes": quote_chars}
+        meta = {"key": key(doc), "chars": (offsets[a][0], offsets[b - 1][1]), "mentions": mention_chars, "quotes": quote_chars, "labelled": not doc.get("unlabeled", False)}
         out.append(([tok.cls_token_id] + ids[a:b] + [tok.sep_token_id], [IGNORE] + ent + [IGNORE], [IGNORE] + nom + [IGNORE], inside, qs, [(0, 0)] + offsets[a:b] + [(0, 0)], meta))
     return out
 
@@ -314,16 +314,19 @@ def losses(model, window, device, bf16=False, teacher=None, distill_weight=1.0):
         for name, logits in (("entity", ent_logits), ("nominal", nom_logits)):
             probs = teacher[name].to(device).float()
             out[name] = -(probs * torch.log_softmax(logits[0], -1)).sum(-1)[1:-1].mean()
+    labelled = window[6]["labelled"]
     if len(mentions) > 1:
         valid, gold = coref_targets(mentions, device)
         scores = torch.cat([torch.zeros(len(mentions), 1, device=device), coref], 1)
-        out["coref"] = marginal_loss(scores, gold, valid)
-        if teacher is not None:
+        if labelled:
+            out["coref"] = marginal_loss(scores, gold, valid)
+        if teacher is not None and "coref" in teacher:
             out["coref_distill"] = distill_weight * distill_rows(scores, teacher["coref"].to(device), valid)
     if quotes and mentions:
         valid, gold = attrib_targets(mentions, quotes, device)
-        out["attribution"] = marginal_loss(attrib, gold, valid)
-        if teacher is not None:
+        if labelled:
+            out["attribution"] = marginal_loss(attrib, gold, valid)
+        if teacher is not None and "attribution" in teacher:
             out["attribution_distill"] = distill_weight * distill_rows(attrib, teacher["attribution"].to(device), valid)
     return out
 
@@ -366,6 +369,83 @@ def teacher_outputs(model, teacher_tok, texts, windows_, device, bf16):
     if skipped:
         print(f"  teacher could not align {skipped} of {len(windows_)} windows", flush=True)
     return out
+
+
+PRONOUNS = {"he", "him", "his", "himself", "she", "her", "hers", "herself", "they", "them", "their", "theirs", "themselves"}
+
+
+def quotation_spans(text):
+    """Paired quotation marks (curly pairs, or straight quotes taken in turn), at most 1,000 characters each."""
+    spans, open_at, straight = [], None, None
+    for i, ch in enumerate(text):
+        if ch == "\u201c":
+            open_at = i
+        elif ch == "\u201d" and open_at is not None:
+            if i + 1 - open_at <= 1000:
+                spans.append((open_at, i + 1))
+            open_at = None
+        elif ch == '"':
+            if straight is None:
+                straight = i
+            else:
+                if i + 1 - straight <= 1000:
+                    spans.append((straight, i + 1))
+                straight = None
+    return spans
+
+
+def bio_char_spans(labels, offsets):
+    """Character spans of BIO-tagged tokens (label 1 opens, 2 continues), skipping specials with (0, 0) offsets."""
+    out, start, end = [], None, None
+    for label, (a, b) in zip(labels, offsets):
+        if (a, b) == (0, 0):
+            label = 0
+        if label == 1 or (label == 2 and start is None):
+            if start is not None:
+                out.append((start, end))
+            start, end = a, b
+        elif label == 2:
+            end = b
+        elif start is not None:
+            out.append((start, end))
+            start = None
+    if start is not None:
+        out.append((start, end))
+    return [(a, b) for a, b in out if b > a]
+
+
+@torch.no_grad()
+def pseudo_structure(model, tok, docs, window, device, bf16):
+    """Give unlabelled documents the mention and quotation spans the teacher's token heads
+    predict (plus the pronoun inventory and paired quotation marks); clusters stay empty
+    so only the teacher's distributions, never gold, supervise their pair heads."""
+    import re
+
+    model.eval()
+    for doc in docs:
+        text = doc["text"]
+        enc = tok(text, add_special_tokens=False, return_offsets_mapping=True, verbose=False)
+        ids, offsets = enc["input_ids"], enc["offset_mapping"]
+        proper, nominal = [], []
+        for a in range(0, len(ids), window):
+            b = min(a + window, len(ids))
+            batch = torch.tensor([[tok.cls_token_id] + ids[a:b] + [tok.sep_token_id]], device=device)
+            zero = torch.zeros(1, dtype=torch.long, device=device)
+            with autocast(device, bf16):
+                ent_logits, nom_logits, _, _ = model(batch, torch.ones_like(batch), zero, zero, zero, zero)
+            span_offsets = [(0, 0)] + offsets[a:b] + [(0, 0)]
+            proper.extend(bio_char_spans(ent_logits[0].argmax(-1).tolist(), span_offsets))
+            nominal.extend(bio_char_spans(nom_logits[0].argmax(-1).tolist(), span_offsets))
+        taken = set()
+        for span in proper:
+            taken.add(span)
+        pronoun = [(m.start(), m.end()) for m in re.finditer(r"[A-Za-z]+", text) if m.group().lower() in PRONOUNS]
+        doc["proper"] = [list(s) for s in proper]
+        doc["nominal"] = [list(s) for s in nominal if s not in taken]
+        doc["pronoun"] = [list(s) for s in pronoun]
+        doc["quotes"] = [{"start": s, "end": e, "speaker": -1} for s, e in quotation_spans(text)]
+        doc["clusters"] = []
+    return docs
 
 
 def train(model, train_windows, device, epochs, lr, accumulate, weights=None, bf16=False, teacher=None, distill_weight=1.0, label=""):
@@ -467,8 +547,11 @@ def group_key(doc):
 
 
 def folds(docs, k):
+    """Author-disjoint folds over the labelled documents; unlabelled ones always train."""
     by_group = defaultdict(list)
     for d in docs:
+        if d.get("unlabeled"):
+            continue
         by_group[group_key(d)].append(d)
     groups = sorted(by_group)
     random.Random(7).shuffle(groups)
@@ -509,17 +592,19 @@ def encode(tok, docs, args, offsets):
 
 
 def encode_all(docs, args):
-    """Student grids, teacher grids (the teacher's own tokenizer), and the texts both index."""
+    """Student grids, teacher grids (the teacher's own tokenizer), and the texts both index.
+    Unlabelled documents are structured later by the teacher, so they get no grids here."""
     tok = tokenizer(args.base)
-    evaluation, training = encode(tok, docs, args, args.offsets)
-    teacher_training = encode(tokenizer(args.teacher_base), docs, args, args.teacher_offsets)[1] if args.teacher_base else training
+    labelled = [d for d in docs if not d.get("unlabeled")]
+    evaluation, training = encode(tok, labelled, args, args.offsets)
+    teacher_training = encode(tokenizer(args.teacher_base), labelled, args, args.teacher_offsets)[1] if args.teacher_base else training
     return tok, evaluation, training, teacher_training, {key(d): d["text"] for d in docs}
 
 
 def training_windows(docs, training, held_keys, offsets, litbank_repeat):
     out = []
     for d in docs:
-        if key(d) in held_keys:
+        if key(d) in held_keys or d.get("unlabeled"):
             continue
         for offset in offsets:
             out.extend(training[key(d)][offset] * (litbank_repeat if d["source"] == "litbank" else 1))
@@ -542,7 +627,7 @@ def load_checkpoint(path, device):
     return model.to(device).eval()
 
 
-def fit(args, train_windows, teacher_windows, texts, device, teacher_checkpoint=None, label=""):
+def fit(args, train_windows, teacher_windows, texts, device, teacher_checkpoint=None, label="", unlabelled=(), tok=None):
     """Train the student on `train_windows`, optionally behind a teacher trained on `teacher_windows`
     (the same documents, usually only the plain window grid) that then labels every student window.
     A teacher checkpoint path is loaded when it exists and written after training otherwise."""
@@ -557,7 +642,15 @@ def fit(args, train_windows, teacher_windows, texts, device, teacher_checkpoint=
             train(teacher_model, teacher_windows, device, args.teacher_epochs, args.teacher_lr, args.accumulate, loss_weights(args), args.bf16, label=label + "teacher ")
             if teacher_checkpoint:
                 save_checkpoint(teacher_model, args.teacher_base, teacher_checkpoint)
-        teacher = teacher_outputs(teacher_model, tokenizer(args.teacher_base), texts, train_windows, device, args.bf16)
+        teacher_tok = tokenizer(args.teacher_base)
+        if unlabelled:
+            pseudo_structure(teacher_model, teacher_tok, list(unlabelled), args.window, device, args.bf16)
+            pool = [w for d in unlabelled for w in windows(tok, d, args.window) if w[3] or w[4]]
+            random.Random(args.seed).shuffle(pool)
+            extra = pool[: args.unlabeled_windows] if args.unlabeled_windows else pool
+            print(f"{label}{len(extra)} of {len(pool)} teacher-structured windows from {len(unlabelled)} unlabelled documents join the student's training set", flush=True)
+            train_windows = list(train_windows) + extra
+        teacher = teacher_outputs(teacher_model, teacher_tok, texts, train_windows, device, args.bf16)
         teacher_model.cpu()
         if device.type == "cuda":
             torch.cuda.empty_cache()
@@ -572,7 +665,8 @@ def fit(args, train_windows, teacher_windows, texts, device, teacher_checkpoint=
 def report_header(args, docs):
     return {"base": args.base, "teacherBase": args.teacher_base, "sources": args.sources, "documents": len(docs), "folds": args.folds, "epochs": args.epochs, "lr": args.lr,
             "teacherEpochs": args.teacher_epochs, "teacherLr": args.teacher_lr, "distillWeight": args.distill_weight, "lossWeights": loss_weights(args),
-            "novelWindows": args.novel_windows, "litbankRepeat": args.litbank_repeat, "window": args.window, "offsets": args.offsets, "teacherOffsets": args.teacher_offsets, "seed": args.seed}
+            "novelWindows": args.novel_windows, "litbankRepeat": args.litbank_repeat, "window": args.window, "offsets": args.offsets, "teacherOffsets": args.teacher_offsets,
+            "unlabeledWindows": args.unlabeled_windows, "unlabeledDocuments": sum(1 for d in docs if d.get("unlabeled")), "seed": args.seed}
 
 
 def cv(args):
@@ -589,7 +683,8 @@ def cv(args):
         teacher_windows = training_windows(docs, teacher_training, held_keys, args.teacher_offsets, args.litbank_repeat)
         eval_windows = [w for k in sorted(held_keys) for w in evaluation[k]]
         checkpoint = args.teacher_cache / f"fold{i}.pt" if args.teacher_cache else None
-        model, teacher_model = fit(args, train_windows, teacher_windows, texts, device, checkpoint, label=f"fold {i} ")
+        unlabelled = [d for d in docs if d.get("unlabeled")]
+        model, teacher_model = fit(args, train_windows, teacher_windows, texts, device, checkpoint, label=f"fold {i} ", unlabelled=unlabelled, tok=tok)
         result = evaluate(model, eval_windows, device, args.bf16)
         sources_held = sorted({k.rsplit("/", 1)[1] for k in held_keys})
         if len(sources_held) > 1:
@@ -636,7 +731,7 @@ def export(args):
     train_windows = training_windows(docs, training, set(), args.offsets, args.litbank_repeat)
     teacher_windows = training_windows(docs, teacher_training, set(), args.teacher_offsets, args.litbank_repeat)
     checkpoint = args.teacher_checkpoint or (args.teacher_cache / "all.pt" if args.teacher_cache else None)
-    model, _ = fit(args, train_windows, teacher_windows, texts, device, checkpoint)
+    model, _ = fit(args, train_windows, teacher_windows, texts, device, checkpoint, unlabelled=[d for d in docs if d.get("unlabeled")], tok=tok)
     if args.save:
         save_checkpoint(model, args.base, args.save)
     model = model.cpu().eval()
@@ -717,6 +812,7 @@ def main():
     parser.add_argument("--litbank-repeat", type=int, default=1, help="how many times LitBank windows recur per epoch")
     parser.add_argument("--only-fold", type=int, help="run a single fold (for comparing data mixes on one held-out set)")
     parser.add_argument("--limit-docs", type=int, default=0, help="documents per source (smoke tests)")
+    parser.add_argument("--unlabeled-windows", type=int, default=30000, help="teacher-structured windows sampled from unlabelled sources per run; 0 keeps all")
     parser.add_argument("--grad-checkpoint", action="store_true")
     parser.add_argument("--bf16", action="store_true", help="bfloat16 autocast on CUDA")
     args = parser.parse_args()

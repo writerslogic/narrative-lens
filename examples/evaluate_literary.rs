@@ -50,8 +50,8 @@ fn load_narrative_model(path: &Path) -> Result<serde_json::Value, Box<dyn std::e
     use narrative_lens::onnx::{self, checked::ModelKind, model::ModelManifest};
     let manifest =
         ModelManifest::from_json(&bounded_file(&path.join("manifest.json"), 16 * 1024)?)?;
-    let model = bounded_file(&path.join("model.onnx"), 128 * 1024 * 1024)?;
-    let tokenizer = bounded_file(&path.join("tokenizer.adapted.json"), 2 * 1024 * 1024)?;
+    let model = bounded_file(&path.join("model.onnx"), 256 * 1024 * 1024)?;
+    let tokenizer = bounded_file(&path.join("tokenizer.adapted.json"), 16 * 1024 * 1024)?;
     let identity = onnx::set_model_bytes_verified(
         ModelKind::NarrativeMultitask,
         &model,
