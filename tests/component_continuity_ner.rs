@@ -192,6 +192,8 @@ fn native_verified_ner_reports_actual_token_budget_failure() {
         .into_iter()
         .map(str::to_string)
         .collect(),
+        nominal_labels: Vec::new(),
+        window_tokens: None,
     };
     onnx::set_model_bytes_verified(ModelKind::Ner, bytes, &tokenizer, &profile).unwrap();
     for tokens in [0, 1, 2] {

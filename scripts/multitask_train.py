@@ -1,73 +1,81 @@
 """One encoder, four heads: the narrative multi-task model.
 
 Trains on the documents written by `narrative_corpus.py` (LitBank development split, and
-PDNC / GUM when present). A DistilBERT encoder initialised from the pinned
-`dslim/distilbert-NER` export feeds:
+PDNC when present). Any HuggingFace encoder with a fast tokenizer works as `--base`;
+a token-classification checkpoint with the pinned NER label set (the default
+`dslim/distilbert-NER`) also seeds the entity head. The heads:
 
 - `entity`: 9-label BIO token classifier (the pinned NER manifest's label set, so the
   head is a drop-in for the existing loader; only PER carries training signal)
 - `nominal`: 3-label BIO token classifier for nominal person mentions ("her mother")
-- `coref`: antecedent scorer over person mentions (proper, nominal, pronoun) in a window
+- `coref`: antecedent scorer over person mentions (proper, nominal, pronoun) in a window,
+  with a learned token-distance feature
 - `attribution`: speaker scorer over the person mentions near each quotation, with a
-  "speaker not in window" option
+  "speaker not in window" option and the same distance feature
 
-`cv` reports every head on held-out groups (authors / novels / documents); `export`
-trains on all documents and writes one ONNX graph with four outputs plus a manifest.
+`cv` reports every head on held-out groups (authors / novels); `export` trains on all
+documents and writes one ONNX graph with four outputs plus a manifest. With
+`--teacher-base` a larger teacher is trained first on the same training documents, its
+predictions label every training window (PDNC carries no span labels of its own), and
+the student is trained on gold plus the teacher's distributions.
 
-    uv run --no-project --with torch --with transformers --with onnx --with onnxruntime scripts/multitask_train.py cv
-    uv run --no-project --with torch --with transformers --with onnx --with onnxruntime scripts/multitask_train.py export
+    uv run --no-project --with torch --with transformers --with onnx --with onnxruntime --with sentencepiece --with protobuf scripts/multitask_train.py cv
+    uv run --no-project --with torch --with transformers --with onnx --with onnxruntime --with sentencepiece --with protobuf scripts/multitask_train.py export --sources litbank pdnc
 """
 
 import argparse
 import bisect
+import contextlib
 import hashlib
 import json
 import random
 import shutil
+import time
 from collections import defaultdict
 from pathlib import Path
 
 import torch
 from torch import nn
-from transformers import AutoModelForTokenClassification, PreTrainedTokenizerFast
+from transformers import AutoConfig, AutoModel, AutoModelForTokenClassification, AutoTokenizer
 
 ROOT = Path(__file__).resolve().parent.parent
-BASE_MODEL = "dslim/distilbert-NER"
-PINNED = ROOT / "target/external-validation/ner-model/3a19fe9404a4469d91aa3d551558a97f68872f67"
+DEFAULT_BASE = "dslim/distilbert-NER"
 CORPUS = ROOT / "target/external-validation/narrative-multitask"
 ENTITY_LABELS = ["O", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC", "B-MISC", "I-MISC"]
 NOMINAL_LABELS = ["O", "B-NOM", "I-NOM"]
-WINDOW = 400
 IGNORE = -100
-HIDDEN = 768
 SPAN = 256
+DISTANCE_BUCKETS = 18
+DISTANCE_DIM = 32
 
 
-def tokenizer():
-    return PreTrainedTokenizerFast(
-        tokenizer_file=str(PINNED / "tokenizer.json"),
-        cls_token="[CLS]", sep_token="[SEP]", pad_token="[PAD]", unk_token="[UNK]", mask_token="[MASK]",
-    )
+def tokenizer(base):
+    tok = AutoTokenizer.from_pretrained(base)
+    if not tok.is_fast or tok.cls_token_id is None or tok.sep_token_id is None:
+        raise SystemExit(f"{base} needs a fast tokenizer with CLS/SEP tokens")
+    return tok
 
 
-def load_documents(sources):
+def load_documents(sources, limit=0):
     docs = []
     for source in sources:
         path = CORPUS / f"{source}.jsonl"
         if path.exists():
-            docs.extend(json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+            loaded = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            docs.extend(loaded[:limit] if limit else loaded)
     if not docs:
         raise SystemExit(f"no documents under {CORPUS}; run scripts/narrative_corpus.py first")
     return docs
 
 
-def windows(tok, doc):
+def windows(tok, doc, window, offset=0):
     """Cut a document into token windows carrying mention, cluster, and quote indices.
 
     A window is (ids, entity_labels, nominal_labels, mentions, quotes, offsets) where
     mentions are (start_tok, end_tok, cluster, kind) with inclusive token positions in
-    the window (position 0 is [CLS]) and quotes are (start_tok, end_tok, speaker_cluster)."""
-    enc = tok(doc["text"], add_special_tokens=False, return_offsets_mapping=True)
+    the window (position 0 is [CLS]) and quotes are (start_tok, end_tok, speaker_cluster).
+    `offset` shifts the window grid so the same text is also seen with other boundaries."""
+    enc = tok(doc["text"], add_special_tokens=False, return_offsets_mapping=True, verbose=False)
     ids, offsets = enc["input_ids"], enc["offset_mapping"]
     starts = [a for a, _ in offsets]
     ends = [b for _, b in offsets]
@@ -89,47 +97,100 @@ def windows(tok, doc):
             if cluster is None:
                 cluster = next_singleton[0]
                 next_singleton[0] += 1
-            mentions.append((span[0], span[1], cluster, kind))
+            mentions.append((span[0], span[1], cluster, kind, s, e))
     mentions.sort()
     quotes = []
     for q in doc["quotes"]:
         span = token_span(q["start"], q["end"])
         if span is not None:
-            quotes.append((span[0], span[1], q["speaker"]))
+            quotes.append((span[0], span[1], q["speaker"], q["start"], q["end"]))
+    bounds, a = [], 0
+    while a < len(ids):
+        b = min(offset if (a == 0 and offset) else a + window, len(ids))
+        bounds.append((a, b))
+        a = b
     out = []
-    for a in range(0, len(ids), WINDOW):
-        b = min(a + WINDOW, len(ids))
+    for a, b in bounds:
         # Sources without span annotations (PDNC) must not teach the token heads that everything is O.
         fill = 0 if doc.get("token_labels", True) else IGNORE
         ent = [fill] * (b - a)
         nom = [fill] * (b - a)
-        inside = []
-        for ts, te, cluster, kind in mentions:
+        inside, mention_chars = [], []
+        for ts, te, cluster, kind, s, e in mentions:
             if ts >= a and te < b:
                 inside.append((ts - a + 1, te - a + 1, cluster, kind))
+                mention_chars.append((s, e))
                 labels = ent if kind == "proper" else nom if kind == "nominal" else None
                 if labels is not None and fill == 0:
                     labels[ts - a] = 1
                     for t in range(ts + 1, te + 1):
                         labels[t - a] = 2
-        qs = [(ts - a + 1, te - a + 1, speaker) for ts, te, speaker in quotes if ts >= a and te < b]
-        out.append(([tok.cls_token_id] + ids[a:b] + [tok.sep_token_id], [IGNORE] + ent + [IGNORE], [IGNORE] + nom + [IGNORE], inside, qs, [(0, 0)] + offsets[a:b] + [(0, 0)]))
+        qs = [(ts - a + 1, te - a + 1, speaker) for ts, te, speaker, _, _ in quotes if ts >= a and te < b]
+        quote_chars = [(s, e) for ts, te, _, s, e in quotes if ts >= a and te < b]
+        meta = {"key": key(doc), "chars": (offsets[a][0], offsets[b - 1][1]), "mentions": mention_chars, "quotes": quote_chars}
+        out.append(([tok.cls_token_id] + ids[a:b] + [tok.sep_token_id], [IGNORE] + ent + [IGNORE], [IGNORE] + nom + [IGNORE], inside, qs, [(0, 0)] + offsets[a:b] + [(0, 0)], meta))
     return out
 
 
+def teacher_view(teacher_tok, text, window):
+    """The same window (text span, mentions, quotes) tokenized for the teacher; None when a span does not map."""
+    meta = window[6]
+    cs, ce = meta["chars"]
+    enc = teacher_tok(text[cs:ce], add_special_tokens=False, return_offsets_mapping=True, verbose=False)
+    ids, offsets = enc["input_ids"], enc["offset_mapping"]
+    if not ids:
+        return None
+    starts = [a for a, _ in offsets]
+    ends = [b for _, b in offsets]
+
+    def token_span(s, e):
+        ts = bisect.bisect_right(ends, s - cs)
+        te = bisect.bisect_left(starts, e - cs) - 1
+        return (ts + 1, te + 1) if 0 <= ts <= te < len(ids) else None
+
+    mentions = [token_span(s, e) for s, e in meta["mentions"]]
+    quotes = [token_span(s, e) for s, e in meta["quotes"]]
+    if any(m is None for m in mentions) or any(q is None for q in quotes):
+        return None
+    return [teacher_tok.cls_token_id] + ids + [teacher_tok.sep_token_id], mentions, quotes, ends
+
+
+def distance_bucket(d):
+    """Signed log-scale bucket of a token distance: 0-8 for d >= 0, 9-17 for d < 0."""
+    magnitude = torch.log2(d.abs().float() + 1.0).floor().clamp(max=8).long()
+    return torch.where(d >= 0, magnitude, magnitude + 9)
+
+
 class MultiTask(nn.Module):
-    def __init__(self):
+    def __init__(self, base, grad_checkpoint=False):
         super().__init__()
-        base = AutoModelForTokenClassification.from_pretrained(BASE_MODEL, attn_implementation="eager")
-        assert [base.config.id2label[i] for i in range(len(ENTITY_LABELS))] == ENTITY_LABELS
-        self.encoder = base.distilbert
+        config = AutoConfig.from_pretrained(base)
+        id2label = getattr(config, "id2label", None) or {}
+        source_labels = [id2label.get(i) for i in range(len(id2label))]
+        if sorted(source_labels) == sorted(ENTITY_LABELS):
+            # A CoNLL-style NER head seeds the entity head; its rows are permuted into ENTITY_LABELS order.
+            classifier = AutoModelForTokenClassification.from_pretrained(base, attn_implementation="eager")
+            self.encoder = classifier.base_model
+            order = [source_labels.index(label) for label in ENTITY_LABELS]
+            self.entity = nn.Linear(classifier.classifier.in_features, len(ENTITY_LABELS))
+            with torch.no_grad():
+                self.entity.weight.copy_(classifier.classifier.weight[order])
+                self.entity.bias.copy_(classifier.classifier.bias[order])
+        else:
+            self.encoder = AutoModel.from_pretrained(base, attn_implementation="eager")
+            self.entity = nn.Linear(config.hidden_size, len(ENTITY_LABELS))
+        self.encoder.float(); self.entity.float()  # checkpoints stored in half precision must not mix with the fp32 heads
+        if grad_checkpoint:
+            self.encoder.gradient_checkpointing_enable()
+        hidden = config.hidden_size
         self.dropout = nn.Dropout(0.1)
-        self.entity = base.classifier
-        self.nominal = nn.Linear(HIDDEN, len(NOMINAL_LABELS))
-        self.span = nn.Sequential(nn.Linear(HIDDEN * 3, SPAN), nn.ReLU())
-        self.coref = nn.Sequential(nn.Linear(SPAN * 3, SPAN), nn.ReLU(), nn.Linear(SPAN, 1))
-        self.quote = nn.Sequential(nn.Linear(HIDDEN, SPAN), nn.ReLU())
-        self.attrib = nn.Sequential(nn.Linear(SPAN * 3, SPAN), nn.ReLU(), nn.Linear(SPAN, 1))
+        self.nominal = nn.Linear(hidden, len(NOMINAL_LABELS))
+        self.span = nn.Sequential(nn.Linear(hidden * 3, SPAN), nn.ReLU())
+        self.coref_distance = nn.Embedding(DISTANCE_BUCKETS, DISTANCE_DIM)
+        self.coref = nn.Sequential(nn.Linear(SPAN * 3 + DISTANCE_DIM, SPAN), nn.ReLU(), nn.Linear(SPAN, 1))
+        self.quote = nn.Sequential(nn.Linear(hidden, SPAN), nn.ReLU())
+        self.attrib_distance = nn.Embedding(DISTANCE_BUCKETS, DISTANCE_DIM)
+        self.attrib = nn.Sequential(nn.Linear(SPAN * 3 + DISTANCE_DIM, SPAN), nn.ReLU(), nn.Linear(SPAN, 1))
         self.attrib_dummy = nn.Linear(SPAN, 1)
 
     @staticmethod
@@ -141,16 +202,19 @@ class MultiTask(nn.Module):
     def span_reprs(self, hidden, starts, ends):
         return self.span(torch.cat([hidden[starts], hidden[ends], self.span_mean(hidden, starts, ends)], -1))
 
-    def coref_scores(self, spans):
-        a = spans[:, None, :].expand(spans.size(0), spans.size(0), SPAN)
-        b = spans[None, :, :].expand(spans.size(0), spans.size(0), SPAN)
-        return self.coref(torch.cat([a, b, a * b], -1)).squeeze(-1)
+    def coref_scores(self, spans, starts, ends):
+        m = spans.size(0)
+        a = spans[:, None, :].expand(m, m, SPAN)
+        b = spans[None, :, :].expand(m, m, SPAN)
+        distance = self.coref_distance(distance_bucket(starts[:, None] - ends[None, :]))
+        return self.coref(torch.cat([a, b, a * b, distance], -1)).squeeze(-1)
 
-    def attrib_scores(self, hidden, spans, qstarts, qends):
+    def attrib_scores(self, hidden, spans, qstarts, qends, mstarts):
         quotes = self.quote(self.span_mean(hidden, qstarts, qends))
         q = quotes[:, None, :].expand(quotes.size(0), spans.size(0), SPAN)
         s = spans[None, :, :].expand(quotes.size(0), spans.size(0), SPAN)
-        pair = self.attrib(torch.cat([q, s, q * s], -1)).squeeze(-1)
+        distance = self.attrib_distance(distance_bucket(mstarts[None, :] - qstarts[:, None]))
+        pair = self.attrib(torch.cat([q, s, q * s, distance], -1)).squeeze(-1)
         return torch.cat([self.attrib_dummy(quotes), pair], 1)
 
     def forward(self, input_ids, attention_mask, mention_starts, mention_ends, quote_starts, quote_ends):
@@ -160,8 +224,8 @@ class MultiTask(nn.Module):
         return (
             self.entity(hidden)[None],
             self.nominal(hidden)[None],
-            self.coref_scores(spans),
-            self.attrib_scores(hidden, spans, quote_starts, quote_ends),
+            self.coref_scores(spans, mention_starts, mention_ends),
+            self.attrib_scores(hidden, spans, quote_starts, quote_ends, mention_starts),
         )
 
 
@@ -176,8 +240,18 @@ def marginal_loss(scores, gold, valid):
     return (total - positive).mean()
 
 
+def distill_rows(scores, teacher_probs, valid):
+    """KL(teacher || student) over the valid columns of every row with a choice to make."""
+    rows = valid.sum(1) > 1
+    if not rows.any():
+        return scores.sum() * 0.0
+    log_student = torch.log_softmax(scores[rows].masked_fill(~valid[rows], float("-inf")), 1)
+    p = teacher_probs[rows].float()
+    return (p * (torch.log(p.clamp(min=1e-6)) - log_student)).masked_fill(~valid[rows], 0.0).sum(1).mean()
+
+
 def window_tensors(window, device):
-    ids, ent, nom, mentions, quotes, _ = window
+    ids, ent, nom, mentions, quotes = window[:5]
     t = lambda x, dtype=torch.long: torch.tensor(x, dtype=dtype, device=device)
     ms = t([m[0] for m in mentions] or [0])
     me = t([m[1] for m in mentions] or [0])
@@ -215,22 +289,87 @@ def attrib_targets(mentions, quotes, device):
     return valid, gold
 
 
-def losses(model, window, device):
+def autocast(device, enabled):
+    if enabled and device.type == "cuda":
+        return torch.autocast("cuda", dtype=torch.bfloat16)
+    return contextlib.nullcontext()
+
+
+def run_model(model, window, device, bf16):
     ids, mask, ent, nom, ms, me, qs, qe = window_tensors(window, device)
+    with autocast(device, bf16):
+        outputs = model(ids, mask, ms, me, qs, qe)
+    return (ent, nom), tuple(x.float() for x in outputs)
+
+
+def losses(model, window, device, bf16=False, teacher=None, distill_weight=1.0):
+    (ent, nom), (ent_logits, nom_logits, coref, attrib) = run_model(model, window, device, bf16)
     mentions, quotes = window[3], window[4]
-    ent_logits, nom_logits, coref, attrib = model(ids, mask, ms, me, qs, qe)
     ce = nn.functional.cross_entropy
-    out = {"entity": ce(ent_logits[0], ent[0], ignore_index=IGNORE), "nominal": ce(nom_logits[0], nom[0], ignore_index=IGNORE)}
+    out = {}
+    if any(label != IGNORE for label in window[1]):
+        out["entity"] = ce(ent_logits[0], ent[0], ignore_index=IGNORE)
+        out["nominal"] = ce(nom_logits[0], nom[0], ignore_index=IGNORE)
+    elif teacher is not None:
+        for name, logits in (("entity", ent_logits), ("nominal", nom_logits)):
+            probs = teacher[name].to(device).float()
+            out[name] = -(probs * torch.log_softmax(logits[0], -1)).sum(-1)[1:-1].mean()
     if len(mentions) > 1:
         valid, gold = coref_targets(mentions, device)
-        out["coref"] = marginal_loss(torch.cat([torch.zeros(len(mentions), 1, device=device), coref], 1), gold, valid)
+        scores = torch.cat([torch.zeros(len(mentions), 1, device=device), coref], 1)
+        out["coref"] = marginal_loss(scores, gold, valid)
+        if teacher is not None:
+            out["coref_distill"] = distill_weight * distill_rows(scores, teacher["coref"].to(device), valid)
     if quotes and mentions:
         valid, gold = attrib_targets(mentions, quotes, device)
         out["attribution"] = marginal_loss(attrib, gold, valid)
+        if teacher is not None:
+            out["attribution_distill"] = distill_weight * distill_rows(attrib, teacher["attribution"].to(device), valid)
     return out
 
 
-def train(model, train_windows, device, epochs, lr, accumulate):
+@torch.no_grad()
+def teacher_outputs(model, teacher_tok, texts, windows_, device, bf16):
+    """The teacher's distributions for every student window, kept on the CPU in half precision.
+
+    The teacher tokenizes the window's text itself; token distributions are projected onto
+    the student's tokens by character position and the pair matrices align through the
+    shared mention and quotation spans. Windows the teacher cannot align get no entry."""
+    model.eval()
+    out = []
+    skipped = 0
+    for window in windows_:
+        view = teacher_view(teacher_tok, texts[window[6]["key"]], window)
+        if view is None:
+            out.append(None); skipped += 1
+            continue
+        ids, mention_spans, quote_spans, ends = view
+        t = lambda x: torch.tensor(x, dtype=torch.long, device=device)
+        ms = t([a for a, _ in mention_spans] or [0]); me = t([b for _, b in mention_spans] or [0])
+        qs = t([a for a, _ in quote_spans] or [0]); qe = t([b for _, b in quote_spans] or [0])
+        with autocast(device, bf16):
+            ent_logits, nom_logits, coref, attrib = model(t([ids]), torch.ones(1, len(ids), dtype=torch.long, device=device), ms, me, qs, qe)
+        ent_probs, nom_probs = torch.softmax(ent_logits[0].float(), -1), torch.softmax(nom_logits[0].float(), -1)
+        cs = window[6]["chars"][0]
+        index = [0] + [min(bisect.bisect_right(ends, s - cs), len(ends) - 1) + 1 for s, _ in window[5][1:-1]] + [len(ids) - 1]
+        gather = torch.tensor(index, device=device)
+        mentions, quotes = window[3], window[4]
+        entry = {"entity": ent_probs[gather].half().cpu(), "nominal": nom_probs[gather].half().cpu()}
+        if len(mentions) > 1:
+            valid, _ = coref_targets(mentions, device)
+            scores = torch.cat([torch.zeros(len(mentions), 1, device=device), coref.float()], 1)
+            entry["coref"] = torch.softmax(scores.masked_fill(~valid, float("-inf")), 1).half().cpu()
+        if quotes and mentions:
+            valid, _ = attrib_targets(mentions, quotes, device)
+            entry["attribution"] = torch.softmax(attrib.float().masked_fill(~valid, float("-inf")), 1).half().cpu()
+        out.append(entry)
+    if skipped:
+        print(f"  teacher could not align {skipped} of {len(windows_)} windows", flush=True)
+    return out
+
+
+def train(model, train_windows, device, epochs, lr, accumulate, weights=None, bf16=False, teacher=None, distill_weight=1.0, label=""):
+    weights = weights or {}
     model.train()
     heads = [p for n, p in model.named_parameters() if not n.startswith("encoder.")]
     enc = [p for n, p in model.named_parameters() if n.startswith("encoder.")]
@@ -238,15 +377,26 @@ def train(model, train_windows, device, epochs, lr, accumulate):
     steps = epochs * ((len(train_windows) + accumulate - 1) // accumulate)
     warmup = max(1, steps // 10)
     schedule = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda s: min(1.0, (s + 1) / warmup) * max(0.0, (steps - s) / max(1, steps - warmup)))
-    for _ in range(epochs):
+    started = time.time()
+    for epoch in range(epochs):
         order = list(range(len(train_windows)))
         random.shuffle(order)
+        running = defaultdict(float)
         for i, j in enumerate(order):
-            loss = sum(losses(model, train_windows[j], device).values()) / accumulate
+            parts = losses(model, train_windows[j], device, bf16, teacher[j] if teacher else None, distill_weight)
+            if not parts:  # an unlabelled window with nothing to score
+                continue
+            loss = sum(weights.get(name, 1.0) * value for name, value in parts.items()) / accumulate
             loss.backward()
+            for name, value in parts.items():
+                running[name] += value.item()
             if (i + 1) % accumulate == 0 or i + 1 == len(order):
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 optimizer.step(); schedule.step(); optimizer.zero_grad()
+            if (i + 1) % 2000 == 0:
+                print(f"  {label}epoch {epoch + 1} window {i + 1}/{len(order)} {time.time() - started:.0f}s "
+                      + " ".join(f"{k} {v / (i + 1):.3f}" for k, v in sorted(running.items())), flush=True)
+        print(f"  {label}epoch {epoch + 1} done {time.time() - started:.0f}s " + " ".join(f"{k} {v / len(order):.3f}" for k, v in sorted(running.items())), flush=True)
     model.eval()
 
 
@@ -271,12 +421,12 @@ def gold_spans(labels):
 
 
 @torch.no_grad()
-def evaluate(model, eval_windows, device):
+def evaluate(model, eval_windows, device, bf16=False):
+    model.eval()
     c = defaultdict(int)
     for window in eval_windows:
-        ids, mask, ent, nom, ms, me, qs, qe = window_tensors(window, device)
+        _, (ent_logits, nom_logits, coref, attrib) = run_model(model, window, device, bf16)
         mentions, quotes = window[3], window[4]
-        ent_logits, nom_logits, coref, attrib = model(ids, mask, ms, me, qs, qe)
         for name, logits, labels in (("entity", ent_logits, window[1]), ("nominal", nom_logits, window[2])):
             pred = [p if l != IGNORE else 0 for p, l in zip(logits[0].argmax(-1).tolist(), labels)]
             predicted, gold = bio_spans(pred), gold_spans(labels)
@@ -286,7 +436,7 @@ def evaluate(model, eval_windows, device):
             scores = torch.cat([torch.zeros(len(mentions), 1, device=device), coref], 1).masked_fill(~valid, float("-inf"))
             pred = scores.argmax(1)
             correct = gold[torch.arange(len(mentions), device=device), pred]
-            for (ms_, me_, _, kind), ok in zip(mentions, correct.tolist()):
+            for (_, _, _, kind), ok in zip(mentions, correct.tolist()):
                 c["coref_" + kind + "_n"] += 1; c["coref_" + kind + "_ok"] += int(ok)
         if quotes and mentions:
             valid, gold = attrib_targets(mentions, quotes, device)
@@ -306,6 +456,11 @@ def evaluate(model, eval_windows, device):
     return report
 
 
+def summary(result):
+    return (f"entity F1 {result['entity']['f1']:.3f} nominal F1 {result['nominal']['f1']:.3f} "
+            f"pronoun antecedent {result['coref_pronoun_antecedent_accuracy']['accuracy'] or 0:.3f} attribution {result['attribution_accuracy']['accuracy'] or 0:.3f}")
+
+
 def group_key(doc):
     """Author surname: LitBank excerpts and PDNC novels by the same author (often the same novel) must share a fold."""
     return doc["group"].split(",")[0].strip().lower()
@@ -321,11 +476,18 @@ def folds(docs, k):
 
 
 def device_():
+    """CUDA, else MPS, else CPU; NARRATIVE_DEVICE overrides (DeBERTa's matmuls hit an MPS assertion, so use cpu there)."""
+    import os
+
+    if os.environ.get("NARRATIVE_DEVICE"):
+        return torch.device(os.environ["NARRATIVE_DEVICE"])
+    if torch.cuda.is_available():
+        return torch.device("cuda")
     return torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
 
 def select_windows(doc, ws, limit):
-    """Full novels (PDNC) are capped at `limit` windows each, preferring windows that hold quotations."""
+    """Full novels (PDNC) are capped at `limit` windows each, preferring windows that hold quotations; 0 keeps all."""
     if limit <= 0 or len(ws) <= limit or doc["source"] == "litbank":
         return ws
     with_quotes = [w for w in ws if w[4]]
@@ -333,60 +495,166 @@ def select_windows(doc, ws, limit):
     return random.Random(hash(doc["id"]) & 0xFFFF).sample(pool, limit)
 
 
+def key(doc):
+    return doc["id"] + "/" + doc["source"]
+
+
+def encode(tok, docs, args, offsets):
+    """Per document: evaluation windows on the plain grid and training windows per offset grid."""
+    evaluation, training = {}, {}
+    for d in docs:
+        evaluation[key(d)] = select_windows(d, windows(tok, d, args.window), args.novel_windows)
+        training[key(d)] = {offset: select_windows(d, windows(tok, d, args.window, offset), args.novel_windows) for offset in sorted(set(offsets))}
+    return evaluation, training
+
+
+def encode_all(docs, args):
+    """Student grids, teacher grids (the teacher's own tokenizer), and the texts both index."""
+    tok = tokenizer(args.base)
+    evaluation, training = encode(tok, docs, args, args.offsets)
+    teacher_training = encode(tokenizer(args.teacher_base), docs, args, args.teacher_offsets)[1] if args.teacher_base else training
+    return tok, evaluation, training, teacher_training, {key(d): d["text"] for d in docs}
+
+
+def training_windows(docs, training, held_keys, offsets, litbank_repeat):
+    out = []
+    for d in docs:
+        if key(d) in held_keys:
+            continue
+        for offset in offsets:
+            out.extend(training[key(d)][offset] * (litbank_repeat if d["source"] == "litbank" else 1))
+    return out
+
+
+def loss_weights(args):
+    return {"entity": args.entity_weight, "nominal": args.nominal_weight}
+
+
+def save_checkpoint(model, base, path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save({"base": base, "state": model.state_dict()}, path)
+
+
+def load_checkpoint(path, device):
+    saved = torch.load(path, map_location="cpu")
+    model = MultiTask(saved["base"])
+    model.load_state_dict(saved["state"])
+    return model.to(device).eval()
+
+
+def fit(args, train_windows, teacher_windows, texts, device, teacher_checkpoint=None, label=""):
+    """Train the student on `train_windows`, optionally behind a teacher trained on `teacher_windows`
+    (the same documents, usually only the plain window grid) that then labels every student window.
+    A teacher checkpoint path is loaded when it exists and written after training otherwise."""
+    teacher = None
+    if args.teacher_base or teacher_checkpoint:
+        if teacher_checkpoint and teacher_checkpoint.exists():
+            teacher_model = load_checkpoint(teacher_checkpoint, device)
+            print(f"{label}teacher loaded from {teacher_checkpoint}", flush=True)
+        else:
+            teacher_model = MultiTask(args.teacher_base, args.grad_checkpoint).to(device)
+            print(f"{label}training teacher {args.teacher_base} on {len(teacher_windows)} windows", flush=True)
+            train(teacher_model, teacher_windows, device, args.teacher_epochs, args.teacher_lr, args.accumulate, loss_weights(args), args.bf16, label=label + "teacher ")
+            if teacher_checkpoint:
+                save_checkpoint(teacher_model, args.teacher_base, teacher_checkpoint)
+        teacher = teacher_outputs(teacher_model, tokenizer(args.teacher_base), texts, train_windows, device, args.bf16)
+        teacher_model.cpu()
+        if device.type == "cuda":
+            torch.cuda.empty_cache()
+    else:
+        teacher_model = None
+    model = MultiTask(args.base).to(device)  # base-size students fit without checkpointing
+    print(f"{label}training {args.base} on {len(train_windows)} windows" + (" with distillation" if teacher else ""), flush=True)
+    train(model, train_windows, device, args.epochs, args.lr, args.accumulate, loss_weights(args), args.bf16, teacher, args.distill_weight, label=label)
+    return model, teacher_model
+
+
+def report_header(args, docs):
+    return {"base": args.base, "teacherBase": args.teacher_base, "sources": args.sources, "documents": len(docs), "folds": args.folds, "epochs": args.epochs, "lr": args.lr,
+            "teacherEpochs": args.teacher_epochs, "teacherLr": args.teacher_lr, "distillWeight": args.distill_weight, "lossWeights": loss_weights(args),
+            "novelWindows": args.novel_windows, "litbankRepeat": args.litbank_repeat, "window": args.window, "offsets": args.offsets, "teacherOffsets": args.teacher_offsets, "seed": args.seed}
+
+
 def cv(args):
     random.seed(args.seed); torch.manual_seed(args.seed)
-    device, tok = device_(), tokenizer()
-    docs = load_documents(args.sources)
-    encoded = {d["id"] + "/" + d["source"]: select_windows(d, windows(tok, d), args.novel_windows) for d in docs}
-    key = lambda d: d["id"] + "/" + d["source"]
-    report = {"sources": args.sources, "documents": len(docs), "folds": args.folds, "epochs": args.epochs, "lr": args.lr, "window": WINDOW, "perFold": []}
+    device = device_()
+    docs = load_documents(args.sources, args.limit_docs)
+    tok, evaluation, training, teacher_training, texts = encode_all(docs, args)
+    report = {**report_header(args, docs), "perFold": []}
     for i, held in enumerate(folds(docs, args.folds)):
         if args.only_fold is not None and i != args.only_fold:
             continue
         held_keys = {key(d) for d in held}
-        train_windows = [w for k, ws in encoded.items() if k not in held_keys for w in ws]
-        eval_windows = [w for k in sorted(held_keys) for w in encoded[k]]
-        model = MultiTask().to(device)
-        train(model, train_windows, device, args.epochs, args.lr, args.accumulate)
-        result = evaluate(model, eval_windows, device)
+        train_windows = training_windows(docs, training, held_keys, args.offsets, args.litbank_repeat)
+        teacher_windows = training_windows(docs, teacher_training, held_keys, args.teacher_offsets, args.litbank_repeat)
+        eval_windows = [w for k in sorted(held_keys) for w in evaluation[k]]
+        checkpoint = args.teacher_cache / f"fold{i}.pt" if args.teacher_cache else None
+        model, teacher_model = fit(args, train_windows, teacher_windows, texts, device, checkpoint, label=f"fold {i} ")
+        result = evaluate(model, eval_windows, device, args.bf16)
         sources_held = sorted({k.rsplit("/", 1)[1] for k in held_keys})
         if len(sources_held) > 1:
-            result["bySource"] = {src: evaluate(model, [w for k in sorted(held_keys) if k.endswith("/" + src) for w in encoded[k]], device) for src in sources_held}
+            result["bySource"] = {src: evaluate(model, [w for k in sorted(held_keys) if k.endswith("/" + src) for w in evaluation[k]], device, args.bf16) for src in sources_held}
+        if teacher_model is not None:
+            teacher_eval = [w for k in sorted(held_keys) for w in encode(tokenizer(args.teacher_base), [d for d in held if key(d) == k], args, [0])[0][k]]
+            result["teacher"] = evaluate(teacher_model.to(device), teacher_eval, device, args.bf16)
+            teacher_model.cpu()
+            print(f"fold {i} teacher: {summary(result['teacher'])}", flush=True)
         report["perFold"].append(result)
-        print(f"fold {i}: {len(held)} docs entity F1 {result['entity']['f1']:.3f} nominal F1 {result['nominal']['f1']:.3f} "
-              f"pronoun antecedent {result['coref_pronoun_antecedent_accuracy']['accuracy']:.3f} attribution {result['attribution_accuracy']['accuracy'] or 0:.3f}", flush=True)
+        print(f"fold {i}: {len(held)} docs {summary(result)}", flush=True)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(report, indent=2) + "\n")
+        del model, teacher_model
+        if device.type == "cuda":
+            torch.cuda.empty_cache()
     pooled = {}
     for name in ("entity", "nominal"):
         tp = sum(f[name]["tp"] for f in report["perFold"]); fp = sum(f[name]["fp"] for f in report["perFold"]); fn = sum(f[name]["fn"] for f in report["perFold"])
-        p, r = tp / (tp + fp), tp / (tp + fn)
-        pooled[name] = {"precision": p, "recall": r, "f1": 2 * p * r / (p + r)}
+        p, r = tp / max(1, tp + fp), tp / max(1, tp + fn)
+        pooled[name] = {"precision": p, "recall": r, "f1": 2 * p * r / (p + r) if p + r else 0.0}
     for name in ("coref_proper_antecedent_accuracy", "coref_nominal_antecedent_accuracy", "coref_pronoun_antecedent_accuracy", "attribution_accuracy"):
         n = sum(f[name]["n"] for f in report["perFold"]); ok = sum(round(f[name]["accuracy"] * f[name]["n"]) for f in report["perFold"] if f[name]["accuracy"] is not None)
         pooled[name] = {"n": n, "accuracy": ok / n if n else None}
     report["pooled"] = pooled
     print("pooled:", json.dumps({k: {kk: (round(vv, 3) if isinstance(vv, float) else vv) for kk, vv in v.items()} for k, v in pooled.items()}))
-    args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n")
+
+
+def strip_shape_annotations(path):
+    """Drop value_info so tract infers intermediate shapes from the inputs instead of unifying stale symbols."""
+    import onnx
+
+    graph = onnx.load(str(path))
+    del graph.graph.value_info[:]
+    onnx.save(graph, str(path))
 
 
 def export(args):
     random.seed(args.seed); torch.manual_seed(args.seed)
-    device, tok = device_(), tokenizer()
-    docs = load_documents(args.sources)
-    train_windows = [w for d in docs for w in select_windows(d, windows(tok, d), args.novel_windows)]
-    model = MultiTask().to(device)
-    train(model, train_windows, device, args.epochs, args.lr, args.accumulate)
+    device = device_()
+    docs = load_documents(args.sources, args.limit_docs)
+    tok, _, training, teacher_training, texts = encode_all(docs, args)
+    train_windows = training_windows(docs, training, set(), args.offsets, args.litbank_repeat)
+    teacher_windows = training_windows(docs, teacher_training, set(), args.teacher_offsets, args.litbank_repeat)
+    checkpoint = args.teacher_checkpoint or (args.teacher_cache / "all.pt" if args.teacher_cache else None)
+    model, _ = fit(args, train_windows, teacher_windows, texts, device, checkpoint)
+    if args.save:
+        save_checkpoint(model, args.base, args.save)
     model = model.cpu().eval()
     staging = args.output / "staging"
+    if staging.exists():
+        shutil.rmtree(staging)
     staging.mkdir(parents=True, exist_ok=True)
     ids = torch.tensor([[tok.cls_token_id] + tok("\"Come in,\" said Alice to her sister.", add_special_tokens=False)["input_ids"] + [tok.sep_token_id]])
     example = (ids, torch.ones_like(ids), torch.tensor([5, 7]), torch.tensor([5, 8]), torch.tensor([1]), torch.tensor([4]))
+    # The span heads index one window's hidden states, so the batch axis stays 1; a
+    # symbolic batch also breaks tract (wasm), which cannot shape a Flatten over
+    # batch x sequence. Intermediate shape annotations are dropped for the same reason.
     torch.onnx.export(
         model, example, str(staging / "model-fp32.onnx"),
         input_names=["input_ids", "attention_mask", "mention_starts", "mention_ends", "quote_starts", "quote_ends"],
         output_names=["entity_logits", "nominal_logits", "coref_scores", "attribution_scores"],
-        dynamic_axes={"input_ids": {0: "batch", 1: "sequence"}, "attention_mask": {0: "batch", 1: "sequence"}, "mention_starts": {0: "mentions"}, "mention_ends": {0: "mentions"},
-                      "quote_starts": {0: "quotes"}, "quote_ends": {0: "quotes"}, "entity_logits": {0: "batch", 1: "sequence"}, "nominal_logits": {0: "batch", 1: "sequence"},
+        dynamic_axes={"input_ids": {1: "sequence"}, "attention_mask": {1: "sequence"}, "mention_starts": {0: "mentions"}, "mention_ends": {0: "mentions"},
+                      "quote_starts": {0: "quotes"}, "quote_ends": {0: "quotes"}, "entity_logits": {1: "sequence"}, "nominal_logits": {1: "sequence"},
                       "coref_scores": {0: "mentions", 1: "mentions"}, "attribution_scores": {0: "quotes", 1: "mentions_plus_dummy"}},
         opset_version=14, dynamo=False,
     )
@@ -394,39 +662,66 @@ def export(args):
 
     quantize_dynamic(str(staging / "model-fp32.onnx"), str(staging / "model.onnx"), weight_type=QuantType.QInt8)
     (staging / "model-fp32.onnx").unlink()
+    strip_shape_annotations(staging / "model.onnx")
     sha = hashlib.sha256((staging / "model.onnx").read_bytes()).hexdigest()
     final = args.output / sha
     if final.exists():
         shutil.rmtree(final)
     staging.rename(final)
-    for name in ("tokenizer.json", "tokenizer.adapted.json"):
-        shutil.copy(PINNED / name, final / name)
+    backend = tok.backend_tokenizer
+    backend.save(str(final / "tokenizer.json"))
+    backend.no_padding(); backend.no_truncation()
+    backend.save(str(final / "tokenizer.adapted.json"))
+    # manifest.json is the crate's strict ModelManifest (profile narrative_multitask_v1); provenance goes beside it.
     manifest = {
         "schemaVersion": 1, "kind": "narrative_multitask", "profile": "narrative_multitask_v1", "modelSha256": sha,
-        "tokenizerSha256": hashlib.sha256((final / "tokenizer.adapted.json").read_bytes()).hexdigest(), "maxTokens": 512, "paddingTokenId": 0,
-        "entityLabels": ENTITY_LABELS, "nominalLabels": NOMINAL_LABELS,
+        "tokenizerSha256": hashlib.sha256((final / "tokenizer.adapted.json").read_bytes()).hexdigest(), "maxTokens": args.window + 2, "paddingTokenId": tok.pad_token_id or 0,
+        "labels": ENTITY_LABELS, "nominalLabels": NOMINAL_LABELS, "windowTokens": args.window,
+    }
+    provenance = {
+        "window": args.window,
         "inputs": ["input_ids", "attention_mask", "mention_starts", "mention_ends", "quote_starts", "quote_ends"],
         "outputs": ["entity_logits", "nominal_logits", "coref_scores", "attribution_scores"],
         "notes": "coref_scores[i][j] scores mention j as antecedent of mention i (j < i); 0 is the no-antecedent score. attribution_scores[q][0] is 'speaker not in window', column m+1 is mention m.",
-        "training": {"sources": args.sources, "documents": len(docs), "epochs": args.epochs, "lr": args.lr, "seed": args.seed, "base": BASE_MODEL},
+        "training": {**report_header(args, docs), "teacherCheckpoint": str(args.teacher_checkpoint) if args.teacher_checkpoint else None},
     }
     (final / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    (final / "training.json").write_text(json.dumps(provenance, indent=2) + "\n")
     print(final, (final / "model.onnx").stat().st_size)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["cv", "export"])
-    parser.add_argument("--sources", nargs="+", default=["litbank", "pdnc", "gum"])
+    parser.add_argument("--sources", nargs="+", default=["litbank", "pdnc"])
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--base", default=DEFAULT_BASE, help="HuggingFace encoder for the exported model")
+    parser.add_argument("--teacher-base", help="larger encoder trained first on the same windows; its distributions supervise the student")
+    parser.add_argument("--teacher-checkpoint", type=Path, help="export only: teacher checkpoint to load (or to write after training)")
+    parser.add_argument("--teacher-cache", type=Path, help="directory of per-fold teacher checkpoints (fold<i>.pt, all.pt) loaded when present and written otherwise")
+    parser.add_argument("--save", type=Path, help="export only: where to save the trained student checkpoint")
     parser.add_argument("--folds", type=int, default=5)
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--lr", type=float, default=3e-5)
+    parser.add_argument("--teacher-epochs", type=int, default=3)
+    parser.add_argument("--teacher-lr", type=float, default=2e-5)
+    parser.add_argument("--distill-weight", type=float, default=1.0)
     parser.add_argument("--accumulate", type=int, default=4)
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--entity-weight", type=float, default=1.0, help="multiplier on the entity head's loss")
+    parser.add_argument("--nominal-weight", type=float, default=1.0, help="multiplier on the nominal head's loss")
+    parser.add_argument("--window", type=int, default=400, help="content tokens per window (plus CLS and SEP)")
+    parser.add_argument("--offsets", type=int, nargs="+", default=[0], help="window grid offsets used for training (0 = plain grid)")
+    parser.add_argument("--teacher-offsets", type=int, nargs="+", default=None, help="window grid offsets for teacher training (default: --offsets)")
     parser.add_argument("--novel-windows", type=int, default=40, help="windows kept per full novel (PDNC); 0 keeps all")
+    parser.add_argument("--litbank-repeat", type=int, default=1, help="how many times LitBank windows recur per epoch")
     parser.add_argument("--only-fold", type=int, help="run a single fold (for comparing data mixes on one held-out set)")
+    parser.add_argument("--limit-docs", type=int, default=0, help="documents per source (smoke tests)")
+    parser.add_argument("--grad-checkpoint", action="store_true")
+    parser.add_argument("--bf16", action="store_true", help="bfloat16 autocast on CUDA")
     args = parser.parse_args()
+    if args.teacher_offsets is None:
+        args.teacher_offsets = args.offsets
     if args.output is None:
         args.output = ROOT / ("target/evaluation/narrative-multitask-cv.json" if args.mode == "cv" else "target/external-validation/narrative-multitask-model")
     (cv if args.mode == "cv" else export)(args)

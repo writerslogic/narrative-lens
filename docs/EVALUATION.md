@@ -202,12 +202,63 @@ its authors' novels held out as well
 ([benchmarks/evidence/narrative-multitask-cv-litbank-pdnc-fold0-v1.json](benchmarks/evidence/narrative-multitask-cv-litbank-pdnc-fold0-v1.json)):
 speaker accuracy over 2,100 held-out quotations from both corpora was 0.426, against
 0.225 on that fold's LitBank quotations alone, while the token heads lost about 0.04
-(entity 0.718, nominal 0.474) because PDNC windows carry no span labels. Loss weighting
-for the mix is the next tuning step. The entity head trails the single-task
-fine-tune above (0.864) at these settings; the shared encoder has not been tuned for the
-mix yet. The graph is not consumed by the crate: the next step is a model kind that
-builds windows with mention and quotation indices, runs it, and decodes both pair
-matrices, after which the heuristic coreference and attribution paths become fallbacks.
+(entity 0.718, nominal 0.474) because PDNC windows carry no span labels.
+
+The crate consumes the export as `ModelKind::NarrativeMultitask` (profile
+`narrative_multitask_v1`; the manifest lists the entity head under `labels` and the
+nominal head under `nominalLabels`). `continuity::narrative::analyze` tokenizes once,
+cuts 400-token windows, runs the graph twice per window (first for proper and nominal
+spans, then with those spans plus the resolver's third-person pronouns as mention
+candidates and the quotation ranges), decodes each mention's best earlier mention and
+each quotation's best speaker greedily inside the window, and merges clusters whose
+proper-name surfaces are identical across windows. `CoreferenceResolver::resolve_checked`
+and `dialogue::extract_dialogue_checked` call it first; without a configured model, or
+when it fails at runtime (`model_fallback:<code>` in diagnostics), the heuristic paths run
+unchanged. Explicit speech tags still win over the model's speaker. Confidences are
+softmax probabilities of the chosen link, not calibrated accuracies. The export keeps the
+batch axis at 1 and drops intermediate shape annotations because tract (the wasm runtime)
+cannot shape the encoder's Flatten over a symbolic batch × sequence; a native tract probe
+loads and runs such a graph, while the LitBank NER fine-tune export above still carries
+the symbolic batch axis and does not load in tract.
+
+```sh
+cargo run --locked --release --features onnx --example evaluate_literary -- target/external-validation/litbank-prepared-v4/inputs.json --ner-cache NER_DIR --narrative-model MODEL_DIR > predictions.jsonl
+NARRATIVE_LENS_NARRATIVE_MODEL=MODEL_DIR cargo test --features onnx --test component_narrative_model
+uv run scripts/narrative_model_reference.py MODEL_DIR   # onnxruntime decode of the test passage
+```
+
+`scripts/multitask_train.py` also runs a teacher-student program: `--teacher-base` trains a
+larger encoder (DeBERTa-v3-large) on the same training documents first, the teacher then
+labels every student window (PDNC carries no span labels of its own, so its 1.9M words get
+entity and nominal distributions this way), and the student trains on gold plus the
+teacher's distributions through its own tokenizer, aligned by character offsets. `--offsets`
+adds shifted window grids, `--litbank-repeat` oversamples the span-labelled works, and
+`--teacher-cache` keeps per-fold teachers so a second student reuses them. The export's
+`windowTokens` records the training window the crate must use. DeBERTa itself is not a
+deployable student: its ONNX export carries a data-dependent `If` that tract rejects and is
+244 MB at int8; RoBERTa-base (126 MB) and BERT-base (110 MB) both load in tract.
+
+Pipeline scores on the development split with the weight-3 export loaded beside the
+pinned NER model
+([benchmarks/evidence/literary-development-narrative-v7.json](benchmarks/evidence/literary-development-narrative-v7.json)
+against [literary-development-ner-v6.json](benchmarks/evidence/literary-development-ner-v6.json)).
+The model trained on these works, so the figures show the integration running end to end
+(76 works, no failures, no fallbacks), not generalization:
+
+| Development split, 76 works | pinned NER (v6) | + narrative model (v7) |
+| --- | ---: | ---: |
+| Supplied-cast pronoun resolution F1 (precision) | 0.458 (0.779) | 0.488 (0.730) |
+| Automatic-cast pronoun resolution F1 (precision) | 0.399 (0.671) | 0.482 (0.721) |
+| Explicit-mode speaker F1 (precision) | 0.226 (0.982) | 0.363 (0.519) |
+| Heuristic-mode speaker F1 (precision) | 0.335 (0.599) | 0.409 (0.561) |
+
+Person spans and the cast inventory are unchanged because the pinned NER model still
+produces them. The speaker head's probabilities are diffuse: keeping only model speakers
+scored at 0.3 or more retains 116 of 277 assessed decisions at precision 0.75, and 0.5
+retains 34 at 0.88, so no gate is applied and each line carries its probability for
+callers that prefer precision. Gating pronoun links moves precision only from 0.73 to
+0.76 at any recall.
+
 GUM was considered for coreference but deferred: its annotations are CC BY 4.0 while the
 fiction, essay, letter, and podcast texts are CC BY-NC-SA and Reddit is non-commercial.
 

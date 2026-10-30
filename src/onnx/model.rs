@@ -6,6 +6,23 @@ use serde::{Deserialize, Serialize};
 pub(super) const NER_LABEL_NAMES: [&str; 9] = [
     "O", "B-MISC", "I-MISC", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC",
 ];
+pub(super) const NOMINAL_LABEL_NAMES: [&str; 3] = ["O", "B-NOM", "I-NOM"];
+#[cfg(feature = "onnx")]
+pub(super) const NARRATIVE_INPUT_NAMES: [&str; 6] = [
+    "input_ids",
+    "attention_mask",
+    "mention_starts",
+    "mention_ends",
+    "quote_starts",
+    "quote_ends",
+];
+#[cfg(feature = "onnx")]
+pub(super) const NARRATIVE_OUTPUT_NAMES: [&str; 4] = [
+    "entity_logits",
+    "nominal_logits",
+    "coref_scores",
+    "attribution_scores",
+];
 
 #[cfg_attr(feature = "bindings", derive(ts_rs::TS, schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -15,6 +32,11 @@ pub enum ModelProfile {
     HuggingFaceBio9V1,
     HuggingFaceEkman7V1,
     HuggingFaceNli3V1,
+    /// Six int64 inputs (`input_ids`, `attention_mask`, `mention_starts`,
+    /// `mention_ends`, `quote_starts`, `quote_ends`) and four float outputs
+    /// (`entity_logits`, `nominal_logits`, `coref_scores`, `attribution_scores`)
+    /// over one 400-token window wrapped in `[CLS]`/`[SEP]`.
+    NarrativeMultitaskV1,
 }
 
 impl ModelProfile {
@@ -24,6 +46,7 @@ impl ModelProfile {
             Self::HuggingFaceBio9V1 => ModelKind::Ner,
             Self::HuggingFaceEkman7V1 => ModelKind::Emotion,
             Self::HuggingFaceNli3V1 => ModelKind::Nli,
+            Self::NarrativeMultitaskV1 => ModelKind::NarrativeMultitask,
         }
     }
 }
@@ -44,7 +67,24 @@ pub struct ModelManifest {
     pub max_tokens: usize,
     pub padding_token_id: u32,
     /// Exact supported label names in source-logit order; empty for embeddings.
+    /// The narrative model lists its entity head here.
     pub labels: Vec<String>,
+    /// The narrative model's nominal-mention labels in source-logit order
+    /// (`O`, `B-NOM`, `I-NOM`); empty for every other kind.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub nominal_labels: Vec<String>,
+    /// Content tokens per narrative window (the training window); defaults to 400.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub window_tokens: Option<usize>,
+}
+
+fn permutation_of(labels: &[String], canonical: &[&str]) -> bool {
+    labels.len() == canonical.len()
+        && labels.iter().all(|label| {
+            label.len() <= 32
+                && canonical.contains(&label.as_str())
+                && labels.iter().filter(|other| *other == label).count() == 1
+        })
 }
 
 impl ModelManifest {
@@ -67,15 +107,17 @@ impl ModelManifest {
                 return Err(ModelFailure::incompatible("model_manifest_digest_format"));
             }
         }
-        let canonical = canonical_labels(expected);
-        if self.labels.len() != canonical.len()
-            || self.labels.iter().any(|label| {
-                label.len() > 32
-                    || !canonical.contains(&label.as_str())
-                    || self.labels.iter().filter(|other| *other == label).count() != 1
-            })
+        if !permutation_of(&self.labels, canonical_labels(expected))
+            || !permutation_of(&self.nominal_labels, nominal_labels(expected))
         {
             return Err(ModelFailure::incompatible("model_profile_labels"));
+        }
+        if let Some(window) = self.window_tokens
+            && (expected != ModelKind::NarrativeMultitask
+                || window == 0
+                || window + 2 > self.max_tokens)
+        {
+            return Err(ModelFailure::incompatible("model_profile_window"));
         }
         Ok(())
     }
@@ -95,9 +137,16 @@ impl ModelManifest {
 fn canonical_labels(kind: ModelKind) -> &'static [&'static str] {
     match kind {
         ModelKind::Embedding => &[],
-        ModelKind::Ner => &NER_LABEL_NAMES,
+        ModelKind::Ner | ModelKind::NarrativeMultitask => &NER_LABEL_NAMES,
         ModelKind::Emotion => crate::craft::emotion::EKMAN_LABELS,
         ModelKind::Nli => crate::substrate::nli::NLI_LABELS,
+    }
+}
+
+fn nominal_labels(kind: ModelKind) -> &'static [&'static str] {
+    match kind {
+        ModelKind::NarrativeMultitask => &NOMINAL_LABEL_NAMES,
+        _ => &[],
     }
 }
 
@@ -143,6 +192,7 @@ impl ModelIdentity {
 pub(super) struct ModelMetadata {
     pub identity: ModelIdentity,
     canonical_to_source: Vec<usize>,
+    nominal_to_source: Vec<usize>,
 }
 
 #[cfg(feature = "onnx")]
@@ -151,6 +201,7 @@ impl ModelMetadata {
         Self {
             identity: ModelIdentity::unverified(kind),
             canonical_to_source: Vec::new(),
+            nominal_to_source: Vec::new(),
         }
     }
 
@@ -168,17 +219,20 @@ impl ModelMetadata {
         if sha256_hex(tokenizer) != manifest.tokenizer_sha256 {
             return Err(ModelFailure::incompatible("tokenizer_digest_mismatch"));
         }
-        let canonical = canonical_labels(expected);
+        let order = |canonical: &[&str], source: &[String]| -> Vec<usize> {
+            canonical
+                .iter()
+                .map(|label| source.iter().position(|v| v == label).unwrap())
+                .collect()
+        };
         Ok(Self {
             identity: ModelIdentity {
                 kind: expected,
                 verification: ModelVerification::VerifiedManifestV1,
                 manifest: Some(manifest.clone()),
             },
-            canonical_to_source: canonical
-                .iter()
-                .map(|label| manifest.labels.iter().position(|v| v == label).unwrap())
-                .collect(),
+            canonical_to_source: order(canonical_labels(expected), &manifest.labels),
+            nominal_to_source: order(nominal_labels(expected), &manifest.nominal_labels),
         })
     }
 
@@ -209,6 +263,16 @@ impl ModelMetadata {
             return Err(ModelFailure::execution("model_profile_token_limit"));
         }
         Ok(())
+    }
+
+    /// Content tokens per narrative window: the manifest's `windowTokens`, else the
+    /// default the first exports trained with.
+    pub fn window_tokens(&self) -> usize {
+        self.identity
+            .manifest
+            .as_ref()
+            .and_then(|manifest| manifest.window_tokens)
+            .unwrap_or(super::checked::NARRATIVE_WINDOW_TOKENS)
     }
 
     pub fn padding_id(&self) -> i64 {
@@ -249,31 +313,84 @@ impl ModelMetadata {
         super::decode::argmax_labels(logits, batch, max_len, num_labels, seq_len, order)
     }
 
+    /// Nominal-head labels in canonical `O`, `B-NOM`, `I-NOM` order.
+    pub fn nominal_labels(
+        &self,
+        logits: &[f32],
+        batch: usize,
+        max_len: usize,
+        seq_len: usize,
+    ) -> Vec<usize> {
+        let order = self
+            .identity
+            .manifest
+            .is_some()
+            .then_some(self.nominal_to_source.as_slice());
+        super::decode::argmax_labels(
+            logits,
+            batch,
+            max_len,
+            NOMINAL_LABEL_NAMES.len(),
+            seq_len,
+            order,
+        )
+    }
+
     pub fn validate_input_names<'a>(
         &self,
         names: impl IntoIterator<Item = &'a str>,
     ) -> Result<(), ModelFailure> {
-        let names: Vec<_> = names.into_iter().take(4).collect();
-        if self.identity.manifest.is_some()
-            && (!(2..=3).contains(&names.len())
-                || !names.contains(&"input_ids")
-                || !names.contains(&"attention_mask")
-                || names.iter().any(|name| {
-                    !matches!(*name, "input_ids" | "attention_mask" | "token_type_ids")
-                        || names.iter().filter(|other| *other == name).count() != 1
-                }))
-        {
+        if self.identity.manifest.is_none() {
+            return Ok(());
+        }
+        let names: Vec<_> = names.into_iter().take(8).collect();
+        let unique = names
+            .iter()
+            .all(|name| names.iter().filter(|other| *other == name).count() == 1);
+        let expected = match self.identity.kind {
+            ModelKind::NarrativeMultitask => {
+                names.len() == NARRATIVE_INPUT_NAMES.len()
+                    && NARRATIVE_INPUT_NAMES
+                        .iter()
+                        .all(|name| names.contains(name))
+            }
+            _ => {
+                (2..=3).contains(&names.len())
+                    && names.contains(&"input_ids")
+                    && names.contains(&"attention_mask")
+                    && names.iter().all(|name| {
+                        matches!(*name, "input_ids" | "attention_mask" | "token_type_ids")
+                    })
+            }
+        };
+        if !(unique && expected) {
             return Err(ModelFailure::incompatible("model_profile_inputs"));
         }
         Ok(())
     }
 
-    pub fn output_shape(&self) -> Vec<Option<usize>> {
+    /// Tensor rank a profile input must have: token tensors are `[batch, sequence]`,
+    /// the narrative model's span-index inputs are one-dimensional.
+    pub fn input_rank(&self, name: &str) -> usize {
+        match name {
+            "mention_starts" | "mention_ends" | "quote_starts" | "quote_ends" => 1,
+            _ => 2,
+        }
+    }
+
+    /// Expected output tensors in graph order; `None` dimensions are dynamic.
+    pub fn output_shapes(&self) -> Vec<Vec<Option<usize>>> {
         match self.identity.kind {
-            ModelKind::Embedding => vec![None, None, None],
-            ModelKind::Ner => vec![None, None, Some(9)],
-            ModelKind::Emotion => vec![None, Some(7)],
-            ModelKind::Nli => vec![None, Some(3)],
+            ModelKind::Embedding => vec![vec![None, None, None]],
+            ModelKind::Ner => vec![vec![None, None, Some(9)]],
+            ModelKind::Emotion => vec![vec![None, Some(7)]],
+            ModelKind::Nli => vec![vec![None, Some(3)]],
+            ModelKind::NarrativeMultitask => vec![
+                vec![None, None, Some(NER_LABEL_NAMES.len())],
+                vec![None, None, Some(NOMINAL_LABEL_NAMES.len())],
+                vec![None, None],
+                vec![None, None],
+            ],
         }
     }
 }

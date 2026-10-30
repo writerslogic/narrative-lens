@@ -150,6 +150,20 @@ pub(super) fn decode_entities(
     words: &[Option<u32>],
     text: &str,
 ) -> Vec<(String, String, usize, usize)> {
+    let mut entities = decode_bio(predicted, offsets, words, text, &NER_LABEL_NAMES);
+    attach_person_titles(&mut entities, text);
+    entities
+}
+
+/// BIO span grouping over any label set (`label_names[id]`, `"O"` outside);
+/// see [`decode_entities`] for the token, offset, and wordpiece conventions.
+pub(super) fn decode_bio(
+    predicted: &[usize],
+    offsets: &[(usize, usize)],
+    words: &[Option<u32>],
+    text: &str,
+    label_names: &[&str],
+) -> Vec<(String, String, usize, usize)> {
     let mut entities: Vec<(String, String, usize, usize)> = Vec::new();
     let mut cur_type: Option<&str> = None;
     let mut cur_start = 0usize;
@@ -176,11 +190,7 @@ pub(super) fn decode_entities(
             }
             continue;
         }
-        let label = if lid < NER_LABEL_NAMES.len() {
-            NER_LABEL_NAMES[lid]
-        } else {
-            "O"
-        };
+        let label = label_names.get(lid).copied().unwrap_or("O");
         if label.starts_with("B-") {
             if let Some(et) = cur_type.take() {
                 flush_entity(&mut entities, text, et, cur_start, cur_end);
@@ -207,7 +217,6 @@ pub(super) fn decode_entities(
     if let Some(et) = cur_type {
         flush_entity(&mut entities, text, et, cur_start, cur_end);
     }
-    attach_person_titles(&mut entities, text);
     entities
 }
 

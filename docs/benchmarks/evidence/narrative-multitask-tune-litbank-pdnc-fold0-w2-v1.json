@@ -1,0 +1,150 @@
+{
+  "sources": [
+    "litbank",
+    "pdnc"
+  ],
+  "documents": 100,
+  "folds": 5,
+  "epochs": 4,
+  "lr": 5e-05,
+  "lossWeights": {
+    "entity": 2.0,
+    "nominal": 1.0
+  },
+  "novelWindows": 40,
+  "window": 400,
+  "perFold": [
+    {
+      "entity": {
+        "tp": 388,
+        "fp": 110,
+        "fn": 69,
+        "precision": 0.7791164658634538,
+        "recall": 0.849015317286652,
+        "f1": 0.812565445026178
+      },
+      "nominal": {
+        "tp": 687,
+        "fp": 758,
+        "fn": 478,
+        "precision": 0.4754325259515571,
+        "recall": 0.5896995708154507,
+        "f1": 0.5264367816091954
+      },
+      "coref_proper_antecedent_accuracy": {
+        "n": 2912,
+        "accuracy": 0.8197115384615384
+      },
+      "coref_nominal_antecedent_accuracy": {
+        "n": 1168,
+        "accuracy": 0.7936643835616438
+      },
+      "coref_pronoun_antecedent_accuracy": {
+        "n": 2992,
+        "accuracy": 0.8338903743315508
+      },
+      "attribution_accuracy": {
+        "n": 2121,
+        "accuracy": 0.438000942951438
+      },
+      "bySource": {
+        "litbank": {
+          "entity": {
+            "tp": 388,
+            "fp": 110,
+            "fn": 69,
+            "precision": 0.7791164658634538,
+            "recall": 0.849015317286652,
+            "f1": 0.812565445026178
+          },
+          "nominal": {
+            "tp": 687,
+            "fp": 758,
+            "fn": 478,
+            "precision": 0.4754325259515571,
+            "recall": 0.5896995708154507,
+            "f1": 0.5264367816091954
+          },
+          "coref_proper_antecedent_accuracy": {
+            "n": 456,
+            "accuracy": 0.6754385964912281
+          },
+          "coref_nominal_antecedent_accuracy": {
+            "n": 1168,
+            "accuracy": 0.7936643835616438
+          },
+          "coref_pronoun_antecedent_accuracy": {
+            "n": 2618,
+            "accuracy": 0.8437738731856379
+          },
+          "attribution_accuracy": {
+            "n": 205,
+            "accuracy": 0.4
+          }
+        },
+        "pdnc": {
+          "entity": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "nominal": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "coref_proper_antecedent_accuracy": {
+            "n": 2456,
+            "accuracy": 0.8464983713355049
+          },
+          "coref_nominal_antecedent_accuracy": {
+            "n": 0,
+            "accuracy": null
+          },
+          "coref_pronoun_antecedent_accuracy": {
+            "n": 374,
+            "accuracy": 0.7647058823529411
+          },
+          "attribution_accuracy": {
+            "n": 1916,
+            "accuracy": 0.4420668058455115
+          }
+        }
+      }
+    }
+  ],
+  "pooled": {
+    "entity": {
+      "precision": 0.7791164658634538,
+      "recall": 0.849015317286652,
+      "f1": 0.812565445026178
+    },
+    "nominal": {
+      "precision": 0.4754325259515571,
+      "recall": 0.5896995708154507,
+      "f1": 0.5264367816091954
+    },
+    "coref_proper_antecedent_accuracy": {
+      "n": 2912,
+      "accuracy": 0.8197115384615384
+    },
+    "coref_nominal_antecedent_accuracy": {
+      "n": 1168,
+      "accuracy": 0.7936643835616438
+    },
+    "coref_pronoun_antecedent_accuracy": {
+      "n": 2992,
+      "accuracy": 0.8338903743315508
+    },
+    "attribution_accuracy": {
+      "n": 2121,
+      "accuracy": 0.438000942951438
+    }
+  }
+}

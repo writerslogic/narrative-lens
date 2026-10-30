@@ -683,6 +683,8 @@ fn cli_loads_pinned_nli_and_reports_identity_then_rejects_tampering() {
         labels: ["contradiction", "neutral", "entailment"]
             .map(String::from)
             .into(),
+        nominal_labels: Vec::new(),
+        window_tokens: None,
     };
     let profile = f.file("pins.json", &serde_json::to_string(&manifest).unwrap());
     let root = root.to_str().unwrap();

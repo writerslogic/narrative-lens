@@ -18,9 +18,10 @@
 //! backend numerical parity remains a tolerance-based runtime check.
 
 use super::InferenceBackend;
-use super::checked::{ModelFailure, ModelKind};
+use super::checked::{ModelFailure, ModelKind, NarrativeRequest, NarrativeWindow};
 use super::decode::{decode_entities, masked_mean_pool};
-use super::model::{ModelIdentity, ModelManifest, ModelMetadata};
+use super::model::{ModelIdentity, ModelManifest, ModelMetadata, NARRATIVE_OUTPUT_NAMES};
+use super::narrative;
 use std::sync::{Arc, Mutex, OnceLock};
 use tokenizers::Tokenizer;
 use tract_onnx::prelude::*;
@@ -29,6 +30,7 @@ type RunnableModel = TypedRunnableModel;
 struct TractModel {
     model: Arc<RunnableModel>,
     input_names: Vec<String>,
+    output_names: Vec<String>,
     tokenizer: Tokenizer,
     metadata: ModelMetadata,
 }
@@ -44,6 +46,7 @@ static SBERT_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
 static NER_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
 static EMOTION_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
 static NLI_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
+static NARRATIVE_MODEL: OnceLock<Mutex<ModelSlot>> = OnceLock::new();
 pub fn backend() -> &'static dyn InferenceBackend {
     &BACKEND
 }
@@ -96,12 +99,13 @@ fn validate_model(model: &TypedModel, metadata: &ModelMetadata) -> Result<(), Mo
             .iter()
             .map(|outlet| model.node(outlet.node).name.as_str()),
     )?;
-    for i in 0..model.inputs.len() {
+    for (i, outlet) in model.inputs.iter().enumerate() {
+        let rank = metadata.input_rank(&model.node(outlet.node).name);
         let fact = model
             .input_fact(i)
             .map_err(|_| ModelFailure::incompatible("model_profile_input_tensor"))?;
         if fact.datum_type != DatumType::I64
-            || fact.shape.rank() != 2
+            || fact.shape.rank() != rank
             || fact
                 .shape
                 .iter()
@@ -110,23 +114,25 @@ fn validate_model(model: &TypedModel, metadata: &ModelMetadata) -> Result<(), Mo
             return Err(ModelFailure::incompatible("model_profile_input_tensor"));
         }
     }
-    if model.outputs.len() != 1 {
+    let expected = metadata.output_shapes();
+    if model.outputs.len() != expected.len() {
         return Err(ModelFailure::incompatible("model_profile_outputs"));
     }
-    let fact = model
-        .output_fact(0)
-        .map_err(|_| ModelFailure::incompatible("model_profile_output_tensor"))?;
-    if fact.datum_type != DatumType::F32 {
-        return Err(ModelFailure::incompatible("model_profile_output_tensor"));
-    }
-    let expected = metadata.output_shape();
-    if fact.shape.rank() != expected.len()
-        || fact.shape.iter().zip(expected).any(|(actual, expected)| {
-            actual.as_i64().is_some_and(|n| n <= 0)
-                || expected.is_some_and(|n| actual.as_i64() != Some(n as i64))
-        })
-    {
-        return Err(ModelFailure::incompatible("model_profile_output_shape"));
+    for (i, expected) in expected.into_iter().enumerate() {
+        let fact = model
+            .output_fact(i)
+            .map_err(|_| ModelFailure::incompatible("model_profile_output_tensor"))?;
+        if fact.datum_type != DatumType::F32 {
+            return Err(ModelFailure::incompatible("model_profile_output_tensor"));
+        }
+        if fact.shape.rank() != expected.len()
+            || fact.shape.iter().zip(expected).any(|(actual, expected)| {
+                actual.as_i64().is_some_and(|n| n <= 0)
+                    || expected.is_some_and(|n| actual.as_i64() != Some(n as i64))
+            })
+        {
+            return Err(ModelFailure::incompatible("model_profile_output_shape"));
+        }
     }
     Ok(())
 }
@@ -152,12 +158,22 @@ fn load_model(
         .iter()
         .map(|outlet| typed.node(outlet.node).name.clone())
         .collect();
+    let output_names = typed
+        .outputs
+        .iter()
+        .map(|outlet| {
+            typed
+                .outlet_label(*outlet)
+                .map_or_else(|| typed.node(outlet.node).name.clone(), str::to_string)
+        })
+        .collect();
     let model = typed
         .into_runnable()
         .map_err(|_| ModelFailure::incompatible("model_load_failed"))?;
     Ok(Arc::new(TractModel {
         model,
         input_names,
+        output_names,
         tokenizer,
         metadata,
     }))
@@ -215,6 +231,9 @@ fn emotion_model() -> Result<Arc<TractModel>, ModelFailure> {
 fn nli_model() -> Result<Arc<TractModel>, ModelFailure> {
     configured_model(&NLI_MODEL, ModelKind::Nli)
 }
+fn narrative_model() -> Result<Arc<TractModel>, ModelFailure> {
+    configured_model(&NARRATIVE_MODEL, ModelKind::NarrativeMultitask)
+}
 
 fn slot_for_kind(kind: ModelKind) -> &'static OnceLock<Mutex<ModelSlot>> {
     match kind {
@@ -222,7 +241,95 @@ fn slot_for_kind(kind: ModelKind) -> &'static OnceLock<Mutex<ModelSlot>> {
         ModelKind::Ner => &NER_MODEL,
         ModelKind::Emotion => &EMOTION_MODEL,
         ModelKind::Nli => &NLI_MODEL,
+        ModelKind::NarrativeMultitask => &NARRATIVE_MODEL,
     }
+}
+
+/// One run per 400-token window, inputs in the graph's declared order and
+/// outputs located by their ONNX names (falling back to graph order).
+fn narrative_inner_checked(
+    request: &NarrativeRequest<'_>,
+) -> std::result::Result<Vec<NarrativeWindow>, ModelFailure> {
+    let model = narrative_model()?;
+    let tokens = narrative::tokenize(&model.tokenizer, request.text)?;
+    let plans = narrative::plan_windows(&tokens, request, model.metadata.window_tokens())?;
+    let mut windows = Vec::with_capacity(plans.len());
+    for plan in &plans {
+        let inputs = narrative::window_inputs(&tokens, plan);
+        let length = inputs.ids.len();
+        model.metadata.validate_tokens(length)?;
+        let (m, q) = (inputs.mention_starts.len(), inputs.quote_starts.len());
+        let tensor = |shape: &[usize], data: &[i64]| {
+            Tensor::from_shape(shape, data)
+                .map_err(|_| ModelFailure::execution("onnx_execution_failed"))
+        };
+        let mut values: TVec<TValue> = tvec!();
+        for name in &model.input_names {
+            let value = match name.as_str() {
+                "input_ids" => tensor(&[1, length], &inputs.ids)?,
+                "attention_mask" => tensor(&[1, length], &vec![1i64; length])?,
+                "mention_starts" => tensor(&[m], &inputs.mention_starts)?,
+                "mention_ends" => tensor(&[m], &inputs.mention_ends)?,
+                "quote_starts" => tensor(&[q], &inputs.quote_starts)?,
+                "quote_ends" => tensor(&[q], &inputs.quote_ends)?,
+                _ => return Err(ModelFailure::incompatible("model_profile_inputs")),
+            };
+            values.push(value.into());
+        }
+        let outputs = model
+            .model
+            .run(values)
+            .map_err(|_| ModelFailure::execution("onnx_execution_failed"))?;
+        if outputs.len() != NARRATIVE_OUTPUT_NAMES.len() {
+            return Err(ModelFailure::incompatible("model_profile_outputs"));
+        }
+        let named = NARRATIVE_OUTPUT_NAMES
+            .iter()
+            .all(|name| model.output_names.iter().any(|actual| actual == name));
+        let extract = |name: &str,
+                       expected: &[Option<usize>]|
+         -> std::result::Result<Vec<f32>, ModelFailure> {
+            let index = if named {
+                model
+                    .output_names
+                    .iter()
+                    .position(|actual| actual == name)
+                    .expect("every narrative output name is present")
+            } else {
+                NARRATIVE_OUTPUT_NAMES
+                    .iter()
+                    .position(|candidate| *candidate == name)
+                    .expect("known narrative output")
+            };
+            let view = outputs[index]
+                .to_plain_array_view::<f32>()
+                .map_err(|_| ModelFailure::incompatible("model_output_not_float32"))?;
+            let shape = view.shape().iter().map(|n| *n as i64).collect::<Vec<_>>();
+            if view.len() > 16 * 1024 * 1024 {
+                return Err(ModelFailure::incompatible("model_output_allocation_limit"));
+            }
+            let data = view.iter().copied().collect::<Vec<_>>();
+            super::checked::tensor_shape(&shape, expected, &data)?;
+            Ok(data)
+        };
+        let entity = extract("entity_logits", &[Some(1), Some(length), Some(9)])?;
+        let nominal = extract("nominal_logits", &[Some(1), Some(length), Some(3)])?;
+        let antecedent = extract("coref_scores", &[Some(m), Some(m)])?;
+        let speaker = extract("attribution_scores", &[Some(q), Some(m + 1)])?;
+        windows.push(narrative::decode_window(
+            request.text,
+            &tokens,
+            plan,
+            &model.metadata,
+            narrative::WindowOutputs {
+                entity: &entity,
+                nominal: &nominal,
+                antecedent: &antecedent,
+                speaker: &speaker,
+            },
+        ));
+    }
+    Ok(windows)
 }
 
 pub fn set_model_bytes_verified(
@@ -596,6 +703,12 @@ impl InferenceBackend for TractBackend {
         )?;
         classify_pairs_inner_checked(pairs)
     }
+    fn narrative_checked(
+        &self,
+        request: &NarrativeRequest<'_>,
+    ) -> std::result::Result<Vec<NarrativeWindow>, ModelFailure> {
+        narrative_inner_checked(request)
+    }
 
     fn check_model(
         &self,
@@ -606,6 +719,7 @@ impl InferenceBackend for TractBackend {
             ModelKind::Ner => ner_model(),
             ModelKind::Emotion => emotion_model(),
             ModelKind::Nli => nli_model(),
+            ModelKind::NarrativeMultitask => narrative_model(),
         }
         .map(|_| ())
     }

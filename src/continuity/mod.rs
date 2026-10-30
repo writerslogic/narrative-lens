@@ -6,6 +6,7 @@ pub mod entity;
 pub mod epistemic_engine;
 pub mod gap_analysis;
 pub mod mental_model;
+pub mod narrative;
 pub mod ner;
 pub mod timeline;
 pub mod world_state;
