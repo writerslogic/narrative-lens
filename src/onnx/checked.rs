@@ -192,10 +192,11 @@ pub struct NarrativeRequest<'a> {
     pub quotes: &'a [(usize, usize)],
 }
 
-/// One decoded window of a narrative-model call.
+/// One decoded window of a narrative-model call. Windows advance by half a
+/// window, so consecutive windows overlap and a mention may appear in two.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct NarrativeWindow {
-    /// Byte range the window's tokens cover.
+    /// Byte range the window's tokens cover; starts are non-decreasing.
     pub start: usize,
     pub end: usize,
     pub entities: super::NerSpans,
@@ -270,9 +271,9 @@ fn validate_narrative_windows(
     windows: &[NarrativeWindow],
 ) -> Result<(), ModelFailure> {
     let text = request.text;
-    let mut previous_end = 0usize;
+    let mut previous_start = 0usize;
     for window in windows {
-        if window.start < previous_end
+        if window.start < previous_start
             || window.start > window.end
             || window.end > text.len()
             || !text.is_char_boundary(window.start)
@@ -280,7 +281,7 @@ fn validate_narrative_windows(
         {
             return Err(ModelFailure::incompatible("narrative_window_range"));
         }
-        previous_end = window.end;
+        previous_start = window.start;
         for (quote, label, start, end) in &window.entities {
             if start >= end
                 || text.get(*start..*end) != Some(quote.as_str())

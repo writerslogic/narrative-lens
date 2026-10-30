@@ -28,6 +28,10 @@ pub(super) struct Tokens {
 pub(super) struct WindowPlan {
     pub token_start: usize,
     pub token_end: usize,
+    /// Byte range the window covers; consecutive windows never overlap even when
+    /// byte-level tokenizers give adjacent tokens overlapping offsets.
+    pub start: usize,
+    pub end: usize,
     pub mentions: Vec<(usize, usize, usize)>,
     pub quotes: Vec<(usize, usize, usize)>,
 }
@@ -115,17 +119,33 @@ pub(super) fn plan_windows(
             .ok_or_else(|| ModelFailure::execution("narrative_window_span_limit"))
     };
     let total = tokens.ids.len();
-    let mut plans = Vec::with_capacity(total.div_ceil(window.max(1)));
+    if total == 0 {
+        return Ok(Vec::new());
+    }
+    // Windows advance by half their length so every mention past the first half
+    // window is scored once with a full half window of left context.
+    let window = window.max(1);
+    let stride = (window / 2).max(1);
+    let mut plans = Vec::with_capacity(total.div_ceil(stride));
     let mut a = 0usize;
-    while a < total {
-        let b = (a + window.max(1)).min(total);
+    let mut previous_start = 0usize;
+    loop {
+        let b = (a + window).min(total);
+        let start = tokens.offsets[a].0.max(previous_start);
+        let end = tokens.offsets[b - 1].1.max(start);
+        previous_start = start;
         plans.push(WindowPlan {
             token_start: a,
             token_end: b,
+            start,
+            end,
             mentions: inside(&mentions, a, b)?,
             quotes: inside(&quotes, a, b)?,
         });
-        a = b;
+        if b == total {
+            break;
+        }
+        a += stride;
     }
     Ok(plans)
 }
@@ -205,8 +225,8 @@ pub(super) fn decode_window(
         .map(|q| outputs.speaker[q * stride..q * stride + m + 1].to_vec())
         .collect();
     NarrativeWindow {
-        start: tokens.offsets[a].0,
-        end: tokens.offsets[b - 1].1,
+        start: plan.start,
+        end: plan.end,
         entities: decode_entities(&entity_labels, &offsets, &words, text),
         nominals,
         mentions: plan.mentions.iter().map(|span| span.0).collect(),
@@ -286,11 +306,33 @@ mod tests {
         );
         assert_eq!(plans[0].mentions, vec![(0, 1, 1), (1, 6, 6)]);
         assert_eq!(plans[0].quotes, vec![(0, 2, 4)]);
-        assert_eq!(plans[1].mentions, vec![(3, 2, 2)]);
+        // The second window starts half a window later, so the mention that
+        // straddled the first boundary is now whole inside it.
+        let half = NARRATIVE_WINDOW_TOKENS / 2;
+        assert_eq!(
+            (plans[1].token_start, plans[1].token_end),
+            (half, NARRATIVE_WINDOW_TOKENS + 3)
+        );
+        assert_eq!(
+            plans[1].mentions,
+            vec![
+                (
+                    2,
+                    NARRATIVE_WINDOW_TOKENS - half,
+                    NARRATIVE_WINDOW_TOKENS - half + 1
+                ),
+                (
+                    3,
+                    NARRATIVE_WINDOW_TOKENS - half + 2,
+                    NARRATIVE_WINDOW_TOKENS - half + 2
+                )
+            ]
+        );
         assert!(plans[1].quotes.is_empty());
         let inputs = window_inputs(&tokens, &plans[1]);
-        assert_eq!(inputs.ids, vec![101, 400, 401, 402, 102]);
-        assert_eq!(inputs.mention_starts, vec![2]);
+        assert_eq!(inputs.ids.len(), NARRATIVE_WINDOW_TOKENS + 3 - half + 2);
+        assert_eq!(inputs.ids[0], 101);
+        assert_eq!(inputs.ids[1], half as i64);
         assert_eq!(inputs.quote_starts, vec![0]);
         assert_eq!(inputs.quote_ends, vec![0]);
     }
@@ -337,6 +379,31 @@ mod tests {
         assert_eq!(window.quotes, vec![0]);
         assert_eq!(window.antecedents[1], vec![0.0, 2.0, 0.0, 0.0]);
         assert_eq!(window.speakers, vec![vec![0.1, 3.0, 0.2, 0.3]]);
+    }
+
+    #[test]
+    fn overlapping_byte_level_offsets_still_give_monotone_window_ranges() {
+        // Byte-level BPE splits a multi-byte character into pieces whose offsets
+        // overlap: the second piece starts before the first one ends.
+        let text = "ab’cd ef";
+        let offsets = vec![(0, 2), (2, 5), (4, 5), (5, 7), (8, 10)];
+        let tokens = Tokens {
+            ids: (0..offsets.len() as i64).collect(),
+            words: (0..offsets.len() as u32).map(Some).collect(),
+            offsets,
+            cls: 0,
+            sep: 2,
+        };
+        let request = NarrativeRequest {
+            text,
+            mentions: &[],
+            quotes: &[],
+        };
+        let plans = plan_windows(&tokens, &request, 2).unwrap();
+        let ranges: Vec<_> = plans.iter().map(|plan| (plan.start, plan.end)).collect();
+        assert_eq!(ranges, [(0, 5), (2, 5), (4, 7), (5, 10)]);
+        assert!(ranges.windows(2).all(|pair| pair[0].0 <= pair[1].0));
+        assert!(ranges.iter().all(|(start, end)| start <= end));
     }
 
     #[test]

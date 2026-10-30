@@ -238,26 +238,52 @@ adds shifted window grids, `--litbank-repeat` oversamples the span-labelled work
 deployable student: its ONNX export carries a data-dependent `If` that tract rejects and is
 244 MB at int8; RoBERTa-base (126 MB) and BERT-base (110 MB) both load in tract.
 
-Pipeline scores on the development split with the weight-3 export loaded beside the
-pinned NER model
-([benchmarks/evidence/literary-development-narrative-v7.json](benchmarks/evidence/literary-development-narrative-v7.json)
-against [literary-development-ner-v6.json](benchmarks/evidence/literary-development-ner-v6.json)).
-The model trained on these works, so the figures show the integration running end to end
-(76 works, no failures, no fallbacks), not generalization:
+Inference runs windows at half-window stride (a mention is decided in the window that
+gives it the most left context, a quotation in the window it sits most centrally in), names
+a cluster by its most frequent proper surface or, failing that, its most frequent nominal
+surface, and ends with an alias pass: the antecedent head scores the list of distinct
+proper surfaces ("Elizabeth . Miss Bennet . Mr. Darcy") and merges two surfaces' clusters
+when it links them with probability 0.5 or more. `scripts/narrative_corpus.py pdnc` also
+writes `pdnc_alias.jsonl`, shuffled alias lists from PDNC's `character_info.csv` clustered
+by character, so the head is trained on that distribution. `scripts/gutenberg_corpus.py`
+pins 100 public-domain novels ([benchmarks/gutenberg-source.json](benchmarks/gutenberg-source.json);
+English prose fiction, lowest Gutenberg ids first, LitBank source novels excluded by id)
+as unlabelled text: the teacher's token heads give them mention spans, paired quotation
+marks give quotations, and the student learns from the teacher's distributions alone on
+those windows (`--unlabeled-windows` caps how many join a run).
 
-| Development split, 76 works | pinned NER (v6) | + narrative model (v7) |
-| --- | ---: | ---: |
-| Supplied-cast pronoun resolution F1 (precision) | 0.458 (0.779) | 0.488 (0.730) |
-| Automatic-cast pronoun resolution F1 (precision) | 0.399 (0.671) | 0.482 (0.721) |
-| Explicit-mode speaker F1 (precision) | 0.226 (0.982) | 0.363 (0.519) |
-| Heuristic-mode speaker F1 (precision) | 0.335 (0.599) | 0.409 (0.561) |
+Pipeline scores on the development split, each run loading the model beside the pinned
+NER model (evidence `literary-development-narrative-v{7,8,9}.json` against
+[literary-development-ner-v6.json](benchmarks/evidence/literary-development-ner-v6.json)).
+Every model trained on these works, so the figures show the integration end to end, not
+generalization; v7 is the DistilBERT candidate, v8 the distilled RoBERTa student with
+disjoint windows, v9 the same student with overlapping windows, nominal cluster names, and
+the alias pass:
+
+| Development split, 76 works | pinned NER (v6) | v7 | v8 | v9 |
+| --- | ---: | ---: | ---: | ---: |
+| Supplied-cast pronoun resolution F1 (precision) | 0.458 (0.779) | 0.488 (0.730) | 0.625 (0.860) | 0.786 (0.797) |
+| Automatic-cast pronoun resolution F1 (precision) | 0.399 (0.671) | 0.482 (0.721) | 0.615 (0.846) | 0.781 (0.792) |
+| Explicit-mode speaker F1 (precision) | 0.226 (0.982) | 0.363 (0.519) | 0.534 (0.788) | 0.657 (0.716) |
+| Heuristic-mode speaker F1 (precision) | 0.335 (0.599) | 0.409 (0.561) | 0.559 (0.763) | 0.692 (0.774) |
+| Unresolved gold pronouns | | | 2,961 | 190 |
 
 Person spans and the cast inventory are unchanged because the pinned NER model still
-produces them. The speaker head's probabilities are diffuse: keeping only model speakers
-scored at 0.3 or more retains 116 of 277 assessed decisions at precision 0.75, and 0.5
-retains 34 at 0.88, so no gate is applied and each line carries its probability for
-callers that prefer precision. Gating pronoun links moves precision only from 0.73 to
-0.76 at any recall.
+produces them. Confidences are softmax probabilities of the chosen link and each line
+carries its probability for callers that prefer precision.
+
+The unseen-author check for the distilled student is the first fold of the
+author-disjoint cross-validation on LitBank plus PDNC
+([benchmarks/evidence/narrative-multitask-cv-apex-roberta-fold0-v1.json](benchmarks/evidence/narrative-multitask-cv-apex-roberta-fold0-v1.json);
+teacher DeBERTa-v3-large, 2 epochs, student RoBERTa-base, 3 epochs, 510-token windows,
+offsets 0 and 255, all PDNC windows, LitBank repeated 4x, entity weight 3, nominal 2):
+
+| Fold 0, unseen authors | DistilBERT (weight 3) | RoBERTa student | DeBERTa-large teacher |
+| --- | ---: | ---: | ---: |
+| Proper person spans, exact F1 | 0.811 | 0.812 | 0.829 |
+| Nominal person mentions, exact F1 | 0.536 | 0.704 | 0.641 |
+| Antecedent accuracy, pronouns | 0.834 | 0.908 | 0.923 |
+| Quotation speaker accuracy (LitBank / PDNC quotes) | 0.419 | 0.814 (0.561 / 0.819) | 0.863 |
 
 GUM was considered for coreference but deferred: its annotations are CC BY 4.0 while the
 fiction, essay, letter, and podcast texts are CC BY-NC-SA and Reddit is non-commercial.

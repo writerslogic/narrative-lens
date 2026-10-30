@@ -47,7 +47,8 @@ def token_span(s, e):
 ms = [token_span(s, e) for s, e in mentions]
 qs = [token_span(s, e) for s, e in quotes]
 print("mention token spans:", ms)
-cls, sep = tok.token_to_id("[CLS]"), tok.token_to_id("[SEP]")
+cls = tok.token_to_id("[CLS]") if tok.token_to_id("[CLS]") is not None else tok.token_to_id("<s>")
+sep = tok.token_to_id("[SEP]") if tok.token_to_id("[SEP]") is not None else tok.token_to_id("</s>")
 window = [cls] + ids + [sep]
 session = ort.InferenceSession(f"{directory}/model.onnx", providers=["CPUExecutionProvider"])
 feeds = {
