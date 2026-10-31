@@ -140,9 +140,14 @@ def evalset(args):
         print(f"  {c['id']:>8} {c['group']:16s} {c['title'][:40]:40s} quote density {c['quoteDensity']}{c['note']}")
 
 
+def normalize_space(text):
+    """Collapse any run of whitespace (Gutenberg's hard-wrapped line breaks included) to one space."""
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def context(text, start, end, width=160):
     lo, hi = max(0, start - width), min(len(text), end + width)
-    return (text[lo:start] + "⟦" + text[start:end] + "⟧" + text[end:hi]).replace("\n", " ")
+    return normalize_space(text[lo:start]) + " ⟦" + normalize_space(text[start:end]) + "⟧ " + normalize_space(text[end:hi])
 
 
 def rows_from_predictions(inputs, predictions, key_suffix):
@@ -154,8 +159,8 @@ def rows_from_predictions(inputs, predictions, key_suffix):
             r = line["range"]
             start, end = r["byteStart"], r["byteEnd"]
             bstart, bend = len(text.encode()[:start].decode("utf-8", "ignore")), len(text.encode()[:end].decode("utf-8", "ignore"))
-            speaker = line["line"]["speaker"]
-            rows.append({"excerpt": p["id"], "kind": "quote", "start": start, "end": end, "text": text[bstart:bend][:120], "context": context(text, bstart, bend),
+            speaker = normalize_space(line["line"]["speaker"])
+            rows.append({"excerpt": p["id"], "kind": "quote", "start": start, "end": end, "text": normalize_space(text[bstart:bend])[:120], "context": context(text, bstart, bend),
                          "model_answer": "" if speaker in ("Unknown", "") else speaker, "confidence": f"{line['line']['confidence']:.3f}", "method": line["line"]["method"]})
         for mention in p.get("coreference" + key_suffix, {}).get("mentions", []):
             if not mention.get("isPronoun"):
@@ -164,8 +169,8 @@ def rows_from_predictions(inputs, predictions, key_suffix):
             end = start + len(mention["text"].encode())
             bstart = len(text.encode()[:start].decode("utf-8", "ignore"))
             bend = bstart + len(mention["text"])
-            rows.append({"excerpt": p["id"], "kind": "pronoun", "start": start, "end": end, "text": mention["text"], "context": context(text, bstart, bend),
-                         "model_answer": mention.get("resolvedTo") or "", "confidence": f"{mention.get('confidence', 0):.3f}", "method": mention.get("resolutionBasis") or ""})
+            rows.append({"excerpt": p["id"], "kind": "pronoun", "start": start, "end": end, "text": normalize_space(text[bstart:bend]), "context": context(text, bstart, bend),
+                         "model_answer": normalize_space(mention.get("resolvedTo") or ""), "confidence": f"{mention.get('confidence', 0):.3f}", "method": mention.get("resolutionBasis") or ""})
     return rows
 
 

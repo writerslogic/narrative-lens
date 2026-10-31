@@ -1,0 +1,85 @@
+{
+  "description": "Human-reviewed quotation speaker and pronoun resolution accuracy for the v2 narrative-multitask model on 11 public-domain Gutenberg novel excerpts outside LitBank and PDNC (one excerpt, a critical essay rather than fiction, was excluded). 9 titles share an author with LitBank/PDNC training data; 2 do not.",
+  "excerpts": [
+    {
+      "id": "71865",
+      "title": "Mrs. Dalloway",
+      "group": "woolf"
+    },
+    {
+      "id": "64317",
+      "title": "The Great Gatsby",
+      "group": "fitzgerald"
+    },
+    {
+      "id": "2775",
+      "title": "The Good Soldier",
+      "group": "ford"
+    },
+    {
+      "id": "2814",
+      "title": "Dubliners",
+      "group": "joyce"
+    },
+    {
+      "id": "1429",
+      "title": "The Garden Party, and Other Stories",
+      "group": "mansfield"
+    },
+    {
+      "id": "4240",
+      "title": "Women in Love",
+      "group": "lawrence"
+    },
+    {
+      "id": "15408",
+      "title": "Three Lives",
+      "group": "stein"
+    },
+    {
+      "id": "71853",
+      "title": "Manhattan Transfer",
+      "group": "dos passos"
+    },
+    {
+      "id": "67138",
+      "title": "The Sun Also Rises",
+      "group": "hemingway"
+    },
+    {
+      "id": "60093",
+      "title": "Cane",
+      "group": "toomer"
+    },
+    {
+      "id": "433",
+      "title": "",
+      "group": "phillips"
+    }
+  ],
+  "review": {
+    "method": "scripts/review_sheet.py sheet generated a CSV of every model-predicted quotation speaker and pronoun antecedent in context; rows were graded for correctness by an OpenAI gpt-6.1-sol Batch API job given the full excerpt as context, with a sample manually graded and spot-checked by the project owner",
+    "excludedExcerpt": "416 (Winesburg, Ohio excerpt is a critical essay about the book, not Anderson's fiction)"
+  },
+  "quote": {
+    "reviewed": 1116,
+    "withGoldAnswer": 1104,
+    "decided": 1084,
+    "correct": 893,
+    "precision": 0.8238007380073801,
+    "recall": 0.8088768115942029,
+    "abstained": 20,
+    "falseAnswersWhereGoldHasNone": 0
+  },
+  "pronoun": {
+    "reviewed": 1624,
+    "withGoldAnswer": 1615,
+    "decided": 1483,
+    "correct": 1230,
+    "precision": 0.8293998651382333,
+    "recall": 0.7616099071207431,
+    "abstained": 132,
+    "falseAnswersWhereGoldHasNone": 0
+  },
+  "unreviewedRows": 130
+}
