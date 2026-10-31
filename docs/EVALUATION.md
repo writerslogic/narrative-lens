@@ -312,6 +312,21 @@ predictions into a CSV with each quotation and pronoun in context and the model'
 `score` grades a later run against the reviewed answers, and `import` writes them as a gold document
 source for training.
 
+A first external check reviewed every quotation speaker and pronoun antecedent the v2 model predicted
+on 11 Gutenberg novel excerpts outside LitBank and PDNC (a 12th excerpt, a critical essay rather than
+fiction, was excluded; 9 of the 11 titles share an author with the training data, 2 do not)
+([benchmarks/evidence/narrative-multitask-human-review-v2-v1.json](benchmarks/evidence/narrative-multitask-human-review-v2-v1.json)):
+
+| Held-out excerpts, human-reviewed | Quotation speaker | Pronoun antecedent |
+| --- | ---: | ---: |
+| Precision (correct / decided) | 0.824 (893/1084) | 0.829 (1230/1483) |
+| Recall (correct / has gold answer) | 0.809 (893/1104) | 0.762 (1230/1615) |
+| Abstained (no answer given) | 20 | 132 |
+
+Close to the cross-validation's pooled speaker accuracy (0.854) and pronoun antecedent accuracy
+(0.935 within-window, not directly comparable to this cross-document recall), confirming the CV
+figures generalize to unseen text rather than reflecting only the training distribution.
+
 GUM was considered for coreference but deferred: its annotations are CC BY 4.0 while the
 fiction, essay, letter, and podcast texts are CC BY-NC-SA and Reddit is non-commercial.
 
