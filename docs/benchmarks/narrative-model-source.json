@@ -29,7 +29,7 @@
   },
   "evidence": [
     "docs/benchmarks/evidence/literary-development-narrative-v10.json",
-    "docs/benchmarks/evidence/narrative-multitask-cv-apex-roberta-fold0-v1.json"
+    "docs/benchmarks/evidence/narrative-multitask-cv-apex-v2-roberta-v1.json"
   ],
   "previousRevisions": {
     "v1": "46431556f5d60d74d1c2027d7ffc694ced9d8bd7e31b12b132731cb06eea2255"
