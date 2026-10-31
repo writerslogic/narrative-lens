@@ -279,18 +279,32 @@ Person spans and the cast inventory are unchanged because the pinned NER model s
 produces them. Confidences are softmax probabilities of the chosen link and each line
 carries its probability for callers that prefer precision.
 
-The unseen-author check for the distilled student is the first fold of the
-author-disjoint cross-validation on LitBank plus PDNC
-([benchmarks/evidence/narrative-multitask-cv-apex-roberta-fold0-v1.json](benchmarks/evidence/narrative-multitask-cv-apex-roberta-fold0-v1.json);
+The unseen-author check for the v2 distilled student is a full author-disjoint 5-fold
+cross-validation on LitBank, PDNC, and the PDNC alias-list documents
+([benchmarks/evidence/narrative-multitask-cv-apex-v2-roberta-v1.json](benchmarks/evidence/narrative-multitask-cv-apex-v2-roberta-v1.json);
 teacher DeBERTa-v3-large, 2 epochs, student RoBERTa-base, 3 epochs, 510-token windows,
-offsets 0 and 255, all PDNC windows, LitBank repeated 4x, entity weight 3, nominal 2):
+offsets 0 and 255, all PDNC windows, LitBank repeated 4x, entity weight 3, nominal 2, plus
+~29,200 teacher-structured windows from 100 unlabelled Gutenberg novels per fold):
 
-| Fold 0, unseen authors | DistilBERT (weight 3) | RoBERTa student | DeBERTa-large teacher |
-| --- | ---: | ---: | ---: |
-| Proper person spans, exact F1 | 0.811 | 0.812 | 0.829 |
-| Nominal person mentions, exact F1 | 0.536 | 0.704 | 0.641 |
-| Antecedent accuracy, pronouns | 0.834 | 0.908 | 0.923 |
-| Quotation speaker accuracy (LitBank / PDNC quotes) | 0.419 | 0.814 (0.561 / 0.819) | 0.863 |
+| Pooled over 5 folds, unseen authors | RoBERTa student | DeBERTa-large teacher |
+| --- | ---: | ---: |
+| Proper person spans, exact F1 (precision / recall) | 0.822 (0.779 / 0.870) | varies by fold, 0.633-0.906 |
+| Nominal person mentions, exact F1 | 0.708 | 0.604-0.686 |
+| Antecedent accuracy, proper mentions | 0.937 | - |
+| Antecedent accuracy, nominal mentions | 0.859 | - |
+| Antecedent accuracy, pronouns | 0.935 | 0.925-0.954 |
+| Quotation speaker accuracy | 0.854 | 0.849-0.898 |
+
+Per fold the student is consistently close to or ahead of its own teacher on every head
+except speaker accuracy, where the teacher stays a few points ahead; the teacher's token-head
+scores vary more fold to fold because LitBank's entity and nominal labels are the only
+supervision they get and the teacher trains on one window grid for two epochs against the
+student's two grids repeated four times on LitBank. The superseded single-fold check
+(DistilBERT weight-3 baseline against the v1 student and its teacher, same recipe without
+alias lists or Gutenberg self-training) is in
+[benchmarks/evidence/narrative-multitask-cv-apex-roberta-fold0-v1.json](benchmarks/evidence/narrative-multitask-cv-apex-roberta-fold0-v1.json):
+proper spans 0.811 / 0.812 / 0.829, nominal 0.536 / 0.704 / 0.641, pronoun antecedent
+0.834 / 0.908 / 0.923, speaker accuracy 0.419 / 0.814 / 0.863 (DistilBERT / v1 student / v1 teacher).
 
 Human review: `scripts/review_sheet.py evalset` picks dialogue-dense 2,000-word excerpts (Gutenberg
 titles by name, or your own text files kept outside the repository), `sheet` turns the evaluator's
